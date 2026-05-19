@@ -152,7 +152,6 @@ function Index() {
 
   return (
     <main className="min-h-screen bg-background flex justify-center">
-      <Toaster position="top-center" />
       <div className="w-full max-w-md flex flex-col px-6 pt-12 pb-8 min-h-screen">
         <header className="mb-10">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
