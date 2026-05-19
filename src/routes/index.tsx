@@ -281,3 +281,86 @@ function Index() {
     </main>
   );
 }
+
+function ResultScreen({
+  variant,
+  onReset,
+}: {
+  variant: "success-good" | "success-critical";
+  onReset: () => void;
+}) {
+  const isGood = variant === "success-good";
+  return (
+    <main className="min-h-screen bg-background flex justify-center">
+      <div className="w-full max-w-md flex flex-col px-6 pt-16 pb-8 min-h-screen">
+        <div className="flex flex-col items-center text-center flex-1">
+          <div
+            className={cn(
+              "h-20 w-20 rounded-full flex items-center justify-center mb-6 animate-in zoom-in-50 fade-in duration-500",
+              isGood
+                ? "bg-yellow-400/15 text-yellow-500"
+                : "bg-primary/10 text-primary",
+            )}
+          >
+            {isGood ? (
+              <Sparkles className="h-10 w-10" strokeWidth={1.75} />
+            ) : (
+              <CheckCircle2 className="h-10 w-10" strokeWidth={1.75} />
+            )}
+          </div>
+
+          {isGood ? (
+            <>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                Wow, danke!
+              </h1>
+              <p className="mt-3 text-base text-muted-foreground leading-relaxed">
+                Deine <span className="font-semibold text-foreground">500 Credits</span>{" "}
+                sind bereits auf deinem Konto. Hilf uns zu wachsen und bewerte uns auf
+                Google!
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                Danke für deine ehrliche Kritik.
+              </h1>
+              <p className="mt-3 text-base text-muted-foreground leading-relaxed">
+                Das entspricht nicht unserem Standard. Unser Qualitäts-Team prüft deine
+                Meldung sofort. Danach schreiben wir dir{" "}
+                <span className="font-semibold text-foreground">500 Credits</span> gut.
+              </p>
+            </>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {isGood && (
+            <a
+              href="https://www.google.com/maps"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all"
+            >
+              <MapPin className="h-5 w-5" />
+              Zu Google Maps
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={onReset}
+            className={cn(
+              "w-full rounded-2xl py-4 text-base font-semibold transition-all active:scale-[0.98]",
+              isGood
+                ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                : "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:opacity-90",
+            )}
+          >
+            Zurück zum Start
+          </button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
