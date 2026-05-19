@@ -303,7 +303,7 @@ function ResultScreen({
             )}
           >
             {isGood ? (
-              <Sparkles className="h-10 w-10" strokeWidth={1.75} />
+              <Gift className="h-10 w-10" strokeWidth={1.75} />
             ) : (
               <Mail className="h-10 w-10" strokeWidth={1.75} />
             )}
@@ -312,12 +312,13 @@ function ResultScreen({
           {isGood ? (
             <>
               <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                Wow, danke!
+                Wow, danke für das tolle Feedback! 🎁
               </h1>
               <p className="mt-3 text-base text-muted-foreground leading-relaxed">
-                Deine <span className="font-semibold text-foreground">500 Credits</span>{" "}
-                sind bereits auf deinem Konto. Hilf uns zu wachsen und bewerte uns auf
-                Google!
+                Als kleine Überraschung haben wir dir soeben{" "}
+                <span className="font-semibold text-foreground">300 weitere Credits</span>{" "}
+                auf dein Konto gutgeschrieben. Wir würden uns riesig freuen, wenn du uns
+                hilfst zu wachsen und deine Erfahrung auch auf Google teilst!
               </p>
             </>
           ) : (
