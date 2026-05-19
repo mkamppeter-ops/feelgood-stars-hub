@@ -3,6 +3,15 @@ import { useState, useRef } from "react";
 import { Star, Camera, X, Mail, Gift, MapPin, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const LOCATIONS = ["Pub Berlin", "Pub München", "Pub Hamburg"] as const;
 
 export const Route = createFileRoute("/")({
   component: Index,
