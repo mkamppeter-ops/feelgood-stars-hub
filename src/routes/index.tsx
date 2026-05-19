@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef } from "react";
-import { Star, Camera, X, CheckCircle2, Sparkles, MapPin } from "lucide-react";
+import { Star, Camera, X, Mail, Sparkles, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -305,7 +305,7 @@ function ResultScreen({
             {isGood ? (
               <Sparkles className="h-10 w-10" strokeWidth={1.75} />
             ) : (
-              <CheckCircle2 className="h-10 w-10" strokeWidth={1.75} />
+              <Mail className="h-10 w-10" strokeWidth={1.75} />
             )}
           </div>
 
@@ -326,9 +326,8 @@ function ResultScreen({
                 Danke für deine ehrliche Kritik.
               </h1>
               <p className="mt-3 text-base text-muted-foreground leading-relaxed">
-                Das entspricht nicht unserem Standard. Unser Qualitäts-Team prüft deine
-                Meldung sofort. Danach schreiben wir dir{" "}
-                <span className="font-semibold text-foreground">500 Credits</span> gut.
+                Das entspricht nicht unserem Standard. Unser Qualitäts-Team schaut sich
+                das genau an und wird sich in Kürze bei dir melden.
               </p>
             </>
           )}
