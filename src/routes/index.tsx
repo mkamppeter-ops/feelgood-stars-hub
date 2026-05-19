@@ -126,7 +126,7 @@ function Index() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const complete = CATEGORIES.every((c) => ratings[c] > 0);
+  const complete = CATEGORIES.every((c) => ratings[c] > 0) && location !== "";
   const hasLowRating = CATEGORIES.some(
     (c) => ratings[c] > 0 && ratings[c] <= 3,
   );
