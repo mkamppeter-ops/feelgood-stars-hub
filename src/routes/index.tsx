@@ -165,6 +165,7 @@ function Index() {
       problem_tags: allTags,
       free_text: comment.trim() || null,
       photo_url: null,
+      location,
     });
 
     setSubmitting(false);
