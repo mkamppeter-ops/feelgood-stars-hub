@@ -143,6 +143,7 @@ function Index() {
   const reset = () => {
     setRatings({ Getränke: 0, Atmosphäre: 0, Service: 0, Sauberkeit: 0 });
     setSelectedTags({ Getränke: [], Atmosphäre: [], Service: [], Sauberkeit: [] });
+    setLocation("");
     setComment("");
     setPhoto(null);
     setSubmitError(null);
