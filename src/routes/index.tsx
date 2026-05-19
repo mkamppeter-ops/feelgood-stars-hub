@@ -119,6 +119,7 @@ function Index() {
     Service: [],
     Sauberkeit: [],
   });
+  const [location, setLocation] = useState<string>("");
   const [comment, setComment] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
