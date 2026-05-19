@@ -5,7 +5,61 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Star } from "lucide-react";
+import { Star, Copy } from "lucide-react";
+
+const PROJECT_REF = "mlrbsgkrptbucbmuanrb";
+const CONNECTION_DETAILS: { label: string; value: string; hint?: string }[] = [
+  { label: "Host (Transaction Pooler, empfohlen)", value: `aws-0-eu-central-1.pooler.supabase.com`, hint: "Region ggf. im Backend prüfen" },
+  { label: "Host (Direct)", value: `db.${PROJECT_REF}.supabase.co` },
+  { label: "Port (Pooler)", value: "6543" },
+  { label: "Port (Direct)", value: "5432" },
+  { label: "Database", value: "postgres" },
+  { label: "User (Pooler)", value: `postgres.${PROJECT_REF}` },
+  { label: "User (Direct)", value: "postgres" },
+];
+
+function CopyButton({ value }: { value: string }) {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={async () => {
+        await navigator.clipboard.writeText(value);
+        toast.success("Kopiert");
+      }}
+    >
+      <Copy /> Kopieren
+    </Button>
+  );
+}
+
+function ConnectionDetails() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Make.com – PostgreSQL Connection</CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Passwort separat im Backend unter Project Settings → Database setzen/zurücksetzen.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {CONNECTION_DETAILS.map((d) => (
+          <div
+            key={d.label}
+            className="flex items-center justify-between gap-3 rounded-md border p-3"
+          >
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">{d.label}</p>
+              <p className="truncate font-mono text-sm">{d.value}</p>
+              {d.hint && <p className="text-xs text-muted-foreground">{d.hint}</p>}
+            </div>
+            <CopyButton value={d.value} />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -106,6 +160,8 @@ function AdminPage() {
             {loading ? "Lädt…" : "Aktualisieren"}
           </Button>
         </header>
+
+        <ConnectionDetails />
 
         {loading ? (
           <p className="text-muted-foreground">Lade Einträge…</p>
