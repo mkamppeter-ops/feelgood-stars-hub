@@ -290,19 +290,27 @@ function Index() {
           </div>
         </div>
 
+        {submitError && (
+          <p className="mt-4 text-sm text-destructive text-center" role="alert">
+            {submitError}
+          </p>
+        )}
+
         <button
           type="button"
-          disabled={!complete}
+          disabled={!complete || submitting}
           onClick={handleSubmit}
           className={cn(
-            "mt-8 w-full rounded-2xl py-4 text-base font-semibold transition-all",
-            complete
+            "mt-6 w-full rounded-2xl py-4 text-base font-semibold transition-all flex items-center justify-center gap-2",
+            complete && !submitting
               ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98]"
               : "bg-muted text-muted-foreground cursor-not-allowed",
           )}
         >
-          Feedback senden
+          {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
+          {submitting ? "Wird gesendet…" : "Feedback senden"}
         </button>
+
       </div>
     </main>
   );
