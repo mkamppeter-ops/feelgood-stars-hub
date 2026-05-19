@@ -184,6 +184,28 @@ function Index() {
         return;
       }
 
+      // Webhook an Make.com senden (non-blocking)
+      try {
+        await fetch("https://hook.eu1.make.com/trijhyazoxfafqi84irbsk89eo5taph5", {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location,
+            ratings: {
+              drinks: ratings["Getränke"],
+              atmosphere: ratings["Atmosphäre"],
+              service: ratings["Service"],
+              cleanliness: ratings["Sauberkeit"],
+            },
+            problem_tags: allTags,
+            free_text: comment.trim() || null,
+          }),
+        });
+      } catch (webhookError) {
+        console.error("Make.com Webhook fehlgeschlagen:", webhookError);
+      }
+
       setView(hasLowRating ? "success-critical" : "success-good");
     } catch (error) {
       console.error("Unerwarteter Fehler beim Speichern des Feedbacks:", {
