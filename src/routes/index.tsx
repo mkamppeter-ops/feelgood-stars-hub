@@ -112,6 +112,8 @@ function Index() {
   });
   const [comment, setComment] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const complete = CATEGORIES.every((c) => ratings[c] > 0);
@@ -133,11 +135,34 @@ function Index() {
     setSelectedTags({ Getränke: [], Atmosphäre: [], Service: [], Sauberkeit: [] });
     setComment("");
     setPhoto(null);
+    setSubmitError(null);
     setView("form");
   };
 
-  const handleSubmit = () => {
-    if (!complete) return;
+  const handleSubmit = async () => {
+    if (!complete || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+
+    const allTags = CATEGORIES.flatMap((c) => selectedTags[c]);
+
+    const { error } = await supabase.from("feedbacks").insert({
+      rating_drinks: ratings["Getränke"],
+      rating_atmosphere: ratings["Atmosphäre"],
+      rating_service: ratings["Service"],
+      rating_cleanliness: ratings["Sauberkeit"],
+      problem_tags: allTags,
+      free_text: comment.trim() || null,
+      photo_url: null,
+    });
+
+    setSubmitting(false);
+
+    if (error) {
+      setSubmitError("Ups, das hat nicht geklappt. Bitte versuche es erneut.");
+      return;
+    }
+
     setView(hasLowRating ? "success-critical" : "success-good");
   };
 
