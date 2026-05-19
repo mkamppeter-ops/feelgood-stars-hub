@@ -200,6 +200,24 @@ function Index() {
           </p>
         </header>
 
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm mb-4">
+          <label className="text-base font-semibold text-card-foreground mb-3 block">
+            In welchem Pub&amp;Go warst du?
+          </label>
+          <Select value={location} onValueChange={setLocation}>
+            <SelectTrigger className="h-11 rounded-xl">
+              <SelectValue placeholder="Filiale auswählen…" />
+            </SelectTrigger>
+            <SelectContent>
+              {LOCATIONS.map((loc) => (
+                <SelectItem key={loc} value={loc}>
+                  {loc}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <section className="flex flex-col gap-4 flex-1">
           {CATEGORIES.map((cat) => {
             const showTags = ratings[cat] > 0 && ratings[cat] <= 3;
