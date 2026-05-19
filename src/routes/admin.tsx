@@ -161,6 +161,8 @@ function AdminPage() {
           </Button>
         </header>
 
+        <ConnectionDetails />
+
         {loading ? (
           <p className="text-muted-foreground">Lade Einträge…</p>
         ) : items.length === 0 ? (
