@@ -3,6 +3,15 @@ import { useState, useRef } from "react";
 import { Star, Camera, X, Mail, Gift, MapPin, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const LOCATIONS = ["Pub Berlin", "Pub München", "Pub Hamburg"] as const;
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -110,13 +119,14 @@ function Index() {
     Service: [],
     Sauberkeit: [],
   });
+  const [location, setLocation] = useState<string>("");
   const [comment, setComment] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const complete = CATEGORIES.every((c) => ratings[c] > 0);
+  const complete = CATEGORIES.every((c) => ratings[c] > 0) && location !== "";
   const hasLowRating = CATEGORIES.some(
     (c) => ratings[c] > 0 && ratings[c] <= 3,
   );
@@ -133,6 +143,7 @@ function Index() {
   const reset = () => {
     setRatings({ Getränke: 0, Atmosphäre: 0, Service: 0, Sauberkeit: 0 });
     setSelectedTags({ Getränke: [], Atmosphäre: [], Service: [], Sauberkeit: [] });
+    setLocation("");
     setComment("");
     setPhoto(null);
     setSubmitError(null);
@@ -154,6 +165,7 @@ function Index() {
       problem_tags: allTags,
       free_text: comment.trim() || null,
       photo_url: null,
+      location,
     });
 
     setSubmitting(false);
@@ -187,6 +199,24 @@ function Index() {
             Bewerte jede Kategorie mit 1 bis 5 Sternen.
           </p>
         </header>
+
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm mb-4">
+          <label className="text-base font-semibold text-card-foreground mb-3 block">
+            In welchem Pub&amp;Go warst du?
+          </label>
+          <Select value={location} onValueChange={setLocation}>
+            <SelectTrigger className="h-11 rounded-xl">
+              <SelectValue placeholder="Filiale auswählen…" />
+            </SelectTrigger>
+            <SelectContent>
+              {LOCATIONS.map((loc) => (
+                <SelectItem key={loc} value={loc}>
+                  {loc}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <section className="flex flex-col gap-4 flex-1">
           {CATEGORIES.map((cat) => {
