@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef } from "react";
-import { Star, Camera, X, Mail, Gift, MapPin } from "lucide-react";
+import { Star, Camera, X, Mail, Gift, MapPin, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -111,6 +112,8 @@ function Index() {
   });
   const [comment, setComment] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const complete = CATEGORIES.every((c) => ratings[c] > 0);
@@ -132,11 +135,34 @@ function Index() {
     setSelectedTags({ Getränke: [], Atmosphäre: [], Service: [], Sauberkeit: [] });
     setComment("");
     setPhoto(null);
+    setSubmitError(null);
     setView("form");
   };
 
-  const handleSubmit = () => {
-    if (!complete) return;
+  const handleSubmit = async () => {
+    if (!complete || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+
+    const allTags = CATEGORIES.flatMap((c) => selectedTags[c]);
+
+    const { error } = await supabase.from("feedbacks").insert({
+      rating_drinks: ratings["Getränke"],
+      rating_atmosphere: ratings["Atmosphäre"],
+      rating_service: ratings["Service"],
+      rating_cleanliness: ratings["Sauberkeit"],
+      problem_tags: allTags,
+      free_text: comment.trim() || null,
+      photo_url: null,
+    });
+
+    setSubmitting(false);
+
+    if (error) {
+      setSubmitError("Ups, das hat nicht geklappt. Bitte versuche es erneut.");
+      return;
+    }
+
     setView(hasLowRating ? "success-critical" : "success-good");
   };
 
@@ -264,19 +290,27 @@ function Index() {
           </div>
         </div>
 
+        {submitError && (
+          <p className="mt-4 text-sm text-destructive text-center" role="alert">
+            {submitError}
+          </p>
+        )}
+
         <button
           type="button"
-          disabled={!complete}
+          disabled={!complete || submitting}
           onClick={handleSubmit}
           className={cn(
-            "mt-8 w-full rounded-2xl py-4 text-base font-semibold transition-all",
-            complete
+            "mt-6 w-full rounded-2xl py-4 text-base font-semibold transition-all flex items-center justify-center gap-2",
+            complete && !submitting
               ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98]"
               : "bg-muted text-muted-foreground cursor-not-allowed",
           )}
         >
-          Feedback senden
+          {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
+          {submitting ? "Wird gesendet…" : "Feedback senden"}
         </button>
+
       </div>
     </main>
   );
