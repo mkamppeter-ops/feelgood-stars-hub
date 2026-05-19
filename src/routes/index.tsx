@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import { Star, Camera, X, Mail, Gift, MapPin, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -157,7 +158,7 @@ function Index() {
 
     const allTags = CATEGORIES.flatMap((c) => selectedTags[c]);
 
-    const { error } = await supabase.from("feedbacks").insert({
+    const feedbackPayload = {
       rating_drinks: ratings["Getränke"],
       rating_atmosphere: ratings["Atmosphäre"],
       rating_service: ratings["Service"],
@@ -166,16 +167,38 @@ function Index() {
       free_text: comment.trim() || null,
       photo_url: null,
       location,
-    });
+    };
 
-    setSubmitting(false);
+    try {
+      const { error } = await supabase.from("feedbacks").insert(feedbackPayload);
 
-    if (error) {
+      if (error) {
+        console.error("Feedback konnte nicht in die Datenbank geschrieben werden:", {
+          error,
+          payload: feedbackPayload,
+        });
+        setSubmitError("Ups, das hat nicht geklappt. Bitte versuche es erneut.");
+        toast.error("Feedback konnte nicht gespeichert werden", {
+          description: error.message,
+        });
+        return;
+      }
+
+      setView(hasLowRating ? "success-critical" : "success-good");
+    } catch (error) {
+      console.error("Unerwarteter Fehler beim Speichern des Feedbacks:", {
+        error,
+        payload: feedbackPayload,
+      });
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
       setSubmitError("Ups, das hat nicht geklappt. Bitte versuche es erneut.");
+      toast.error("Feedback konnte nicht gespeichert werden", {
+        description: message,
+      });
+    } finally {
+      setSubmitting(false);
       return;
     }
-
-    setView(hasLowRating ? "success-critical" : "success-good");
   };
 
   if (view !== "form") {
