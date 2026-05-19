@@ -14,7 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      feedbacks: {
+        Row: {
+          created_at: string
+          free_text: string | null
+          id: string
+          photo_url: string | null
+          problem_tags: string[]
+          rating_atmosphere: number | null
+          rating_cleanliness: number | null
+          rating_drinks: number | null
+          rating_service: number | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          free_text?: string | null
+          id?: string
+          photo_url?: string | null
+          problem_tags?: string[]
+          rating_atmosphere?: number | null
+          rating_cleanliness?: number | null
+          rating_drinks?: number | null
+          rating_service?: number | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          free_text?: string | null
+          id?: string
+          photo_url?: string | null
+          problem_tags?: string[]
+          rating_atmosphere?: number | null
+          rating_cleanliness?: number | null
+          rating_drinks?: number | null
+          rating_service?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
