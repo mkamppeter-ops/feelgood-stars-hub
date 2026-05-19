@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef } from "react";
-import { Star, Camera, X, Mail, Sparkles, MapPin } from "lucide-react";
+import { Star, Camera, X, Mail, Gift, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
