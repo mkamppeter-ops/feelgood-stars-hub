@@ -197,7 +197,6 @@ function Index() {
       });
     } finally {
       setSubmitting(false);
-      return;
     }
   };
 
