@@ -19,6 +19,7 @@ export type Database = {
           created_at: string
           free_text: string | null
           id: string
+          location: string | null
           photo_url: string | null
           problem_tags: string[]
           rating_atmosphere: number | null
@@ -31,6 +32,7 @@ export type Database = {
           created_at?: string
           free_text?: string | null
           id?: string
+          location?: string | null
           photo_url?: string | null
           problem_tags?: string[]
           rating_atmosphere?: number | null
@@ -43,6 +45,7 @@ export type Database = {
           created_at?: string
           free_text?: string | null
           id?: string
+          location?: string | null
           photo_url?: string | null
           problem_tags?: string[]
           rating_atmosphere?: number | null

@@ -1,0 +1,1 @@
+ALTER TABLE public.feedbacks ADD COLUMN IF NOT EXISTS location text;
