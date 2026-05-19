@@ -95,7 +95,10 @@ function TagPills({
   );
 }
 
+type View = "form" | "success-good" | "success-critical";
+
 function Index() {
+  const [view, setView] = useState<View>("form");
   const [ratings, setRatings] = useState<Record<Category, number>>({
     Getränke: 0,
     Atmosphäre: 0,
@@ -126,10 +129,28 @@ function Index() {
     }));
   };
 
+  const reset = () => {
+    setRatings({ Getränke: 0, Atmosphäre: 0, Service: 0, Sauberkeit: 0 });
+    setSelectedTags({ Getränke: [], Atmosphäre: [], Service: [], Sauberkeit: [] });
+    setComment("");
+    setPhoto(null);
+    setView("form");
+  };
+
   const handleSubmit = () => {
     if (!complete) return;
-    toast.success("Danke für dein Feedback!");
+    setView(hasLowRating ? "success-critical" : "success-good");
   };
+
+  if (view !== "form") {
+    return (
+      <ResultScreen
+        variant={view}
+        onReset={reset}
+      />
+    );
+  }
+
 
   return (
     <main className="min-h-screen bg-background flex justify-center">
