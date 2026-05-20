@@ -6,7 +6,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Check, Phone, Star, Globe, Smartphone, ChevronDown } from "lucide-react";
-import { FEEDBACK, CATEGORY_META, type FeedbackItem, type CategoryKey, type CategoryRating } from "@/lib/feedback-mock";
+import { FEEDBACK, CATEGORY_META, CATEGORY_ORDER, type FeedbackItem, type CategoryKey, type CategoryRating } from "@/lib/feedback-mock";
 import { PUBS } from "@/lib/pubs-mock";
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -211,7 +211,7 @@ function ReviewCard({
                   Kategorie-Check
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {(Object.keys(CATEGORY_META) as CategoryKey[]).map((k) => (
+                  {CATEGORY_ORDER.map((k) => (
                     <CategoryRow key={k} k={k} rating={item.categories![k]} />
                   ))}
                 </div>
