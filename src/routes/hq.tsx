@@ -245,6 +245,10 @@ function HQPage() {
               </Card>
             </TabsContent>
 
+            <TabsContent value="sales" className="mt-0">
+              <SalesOps data={SALES_GLOBAL} factor={factor} />
+            </TabsContent>
+
             <TabsContent value="feedback" className="mt-0">
               <LiveFeedback />
             </TabsContent>
