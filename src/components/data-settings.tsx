@@ -303,6 +303,21 @@ export function DataSettings() {
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">EUR</span>
                   </div>
                 </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="active-users">Ziel Active Users</Label>
+                  <div className="relative">
+                    <Input
+                      id="active-users"
+                      type="number"
+                      min={0}
+                      step={10}
+                      value={form.active_users_target}
+                      onChange={(e) => setForm((f) => ({ ...f, active_users_target: Math.max(0, parseInt(e.target.value) || 0) }))}
+                      className="pr-12"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">Users</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
