@@ -118,8 +118,9 @@ function HQPage() {
                   <TableBody>
                     {PUBS.map((p) => (
                       <TableRow
-                        key={p.name}
-                        className={p.rank === 1 ? "bg-amber-50/60 dark:bg-amber-500/5" : ""}
+                        key={p.id}
+                        onClick={() => navigate({ to: "/hq/$pubId", params: { pubId: p.id } })}
+                        className={`cursor-pointer group ${p.rank === 1 ? "bg-amber-50/60 dark:bg-amber-500/5" : ""}`}
                       >
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -131,7 +132,7 @@ function HQPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium">{p.name}</div>
+                          <div className="font-medium group-hover:text-primary transition-colors">{p.name}</div>
                           <div className="text-xs text-muted-foreground">{p.city}</div>
                         </TableCell>
                         <TableCell className="text-right">
