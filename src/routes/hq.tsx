@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,29 +23,7 @@ export const Route = createFileRoute("/hq")({
   component: HQPage,
 });
 
-type Pub = {
-  rank: number;
-  name: string;
-  city: string;
-  manager: string;
-  phone: string;
-  whatsapp: string;
-  score: number;
-  bookingRatio: number;
-  feedback: number;
-  spendPerBooking: number;
-};
-
-const PUBS: Pub[] = [
-  { rank: 1, name: "The Crown & Anchor", city: "München", manager: "Lena Hofbauer", phone: "+4915112345678", whatsapp: "4915112345678", score: 94, bookingRatio: 88, feedback: 4.9, spendPerBooking: 38 },
-  { rank: 2, name: "Red Lion Tavern", city: "Berlin", manager: "Marcus Weber", phone: "+4915223456789", whatsapp: "4915223456789", score: 89, bookingRatio: 82, feedback: 4.7, spendPerBooking: 34 },
-  { rank: 3, name: "The Foggy Dog", city: "Hamburg", manager: "Sophie Brandt", phone: "+4915334567890", whatsapp: "4915334567890", score: 86, bookingRatio: 79, feedback: 4.6, spendPerBooking: 31 },
-  { rank: 4, name: "Old Oak House", city: "Köln", manager: "Tobias Richter", phone: "+4915445678901", whatsapp: "4915445678901", score: 82, bookingRatio: 75, feedback: 4.5, spendPerBooking: 29 },
-  { rank: 5, name: "The Iron Barrel", city: "Frankfurt", manager: "Aylin Demir", phone: "+4915556789012", whatsapp: "4915556789012", score: 78, bookingRatio: 71, feedback: 4.4, spendPerBooking: 27 },
-  { rank: 6, name: "Black Sheep Inn", city: "Stuttgart", manager: "Jonas Keller", phone: "+4915667890123", whatsapp: "4915667890123", score: 74, bookingRatio: 68, feedback: 4.3, spendPerBooking: 26 },
-  { rank: 7, name: "The Tipsy Fox", city: "Leipzig", manager: "Mira Sokolov", phone: "+4915778901234", whatsapp: "4915778901234", score: 71, bookingRatio: 64, feedback: 4.2, spendPerBooking: 24 },
-  { rank: 8, name: "Whistling Kettle", city: "Düsseldorf", manager: "Paul Lehmann", phone: "+4915889012345", whatsapp: "4915889012345", score: 67, bookingRatio: 61, feedback: 4.0, spendPerBooking: 23 },
-];
+import { PUBS } from "@/lib/pubs-mock";
 
 const chartData = PUBS.slice(0, 5).map((p) => ({
   name: p.name.replace(/^The /, ""),
@@ -53,6 +31,7 @@ const chartData = PUBS.slice(0, 5).map((p) => ({
 }));
 
 function HQPage() {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-muted/30 flex">
       {/* Sidebar */}
@@ -140,8 +119,9 @@ function HQPage() {
                   <TableBody>
                     {PUBS.map((p) => (
                       <TableRow
-                        key={p.name}
-                        className={p.rank === 1 ? "bg-amber-50/60 dark:bg-amber-500/5" : ""}
+                        key={p.id}
+                        onClick={() => navigate({ to: "/hq/$pubId", params: { pubId: p.id } })}
+                        className={`cursor-pointer group ${p.rank === 1 ? "bg-amber-50/60 dark:bg-amber-500/5" : ""}`}
                       >
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -153,7 +133,7 @@ function HQPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium">{p.name}</div>
+                          <div className="font-medium group-hover:text-primary transition-colors">{p.name}</div>
                           <div className="text-xs text-muted-foreground">{p.city}</div>
                         </TableCell>
                         <TableCell className="text-right">
