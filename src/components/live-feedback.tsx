@@ -28,22 +28,24 @@ function Stars({ value, size = "sm" }: { value: number; size?: "sm" | "md" }) {
   );
 }
 
-export function LiveFeedback() {
+export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
   const [source, setSource] = useState<"all" | "app" | "google">("all");
   const [rating, setRating] = useState<"all" | "low" | "high">("all");
-  const [pubId, setPubId] = useState<string>("all");
+  const [pubId, setPubId] = useState<string>(lockedPubId ?? "all");
   const [done, setDone] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const effectivePubId = lockedPubId ?? pubId;
 
   const filtered = useMemo(() => {
     return FEEDBACK.filter((f) => {
       if (source !== "all" && f.source !== source) return false;
       if (rating === "low" && f.stars > 2) return false;
       if (rating === "high" && f.stars < 4) return false;
-      if (pubId !== "all" && f.pubId !== pubId) return false;
+      if (effectivePubId !== "all" && f.pubId !== effectivePubId) return false;
       return true;
     });
-  }, [source, rating, pubId]);
+  }, [source, rating, effectivePubId]);
 
   const toggleDone = (id: string) =>
     setDone((prev) => {
@@ -88,18 +90,20 @@ export function LiveFeedback() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Filiale</span>
-            <Select value={pubId} onValueChange={setPubId}>
-              <SelectTrigger className="h-8 w-[200px] text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Pubs</SelectItem>
-                {PUBS.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {!lockedPubId && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Filiale</span>
+              <Select value={pubId} onValueChange={setPubId}>
+                <SelectTrigger className="h-8 w-[200px] text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Pubs</SelectItem>
+                  {PUBS.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="ml-auto text-xs text-muted-foreground">
             {filtered.length} Bewertungen · {done.size} erledigt
           </div>

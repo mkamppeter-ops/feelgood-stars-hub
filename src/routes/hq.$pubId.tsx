@@ -13,6 +13,7 @@ import { getPub, type Pub } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 import { SalesOps } from "@/components/sales-ops";
+import { LiveFeedback } from "@/components/live-feedback";
 
 export const Route = createFileRoute("/hq/$pubId")({
   loader: ({ params }) => {
@@ -165,61 +166,45 @@ function PubDetailPage() {
           <SalesOps data={SALES_BY_PUB[pub.id]} factor={factor} />
         </section>
 
-        {/* Chart + Reviews */}
-        <section className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <Card className="shadow-sm lg:col-span-3">
-            <CardHeader>
-              <CardTitle className="text-base">Score-Verlauf · letzte 7 Tage</CardTitle>
-              <p className="text-xs text-muted-foreground mt-1">Tagesentwicklung des Performance Scores</p>
-            </CardHeader>
-            <CardContent className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={pub.scoreHistory} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                  <XAxis dataKey="day" tickLine={false} axisLine={false} fontSize={12} />
-                  <YAxis domain={[40, 100]} tickLine={false} axisLine={false} fontSize={12} />
-                  <Tooltip
-                    cursor={{ stroke: "hsl(var(--border))" }}
-                    contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", fontSize: 12 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="score"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2.5}
-                    dot={{ r: 4, fill: "hsl(var(--primary))" }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        {/* Score history chart */}
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base">Score-Verlauf · letzte 7 Tage</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">Tagesentwicklung des Performance Scores</p>
+          </CardHeader>
+          <CardContent className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={pub.scoreHistory} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="day" tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis domain={[40, 100]} tickLine={false} axisLine={false} fontSize={12} />
+                <Tooltip
+                  cursor={{ stroke: "hsl(var(--border))" }}
+                  contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", fontSize: 12 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="score"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2.5}
+                  dot={{ r: 4, fill: "hsl(var(--primary))" }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-          <Card className="shadow-sm lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-base">Feedback-Stream</CardTitle>
-              <p className="text-xs text-muted-foreground mt-1">Letzte Gästebewertungen</p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {pub.reviews.map((r, i) => (
-                <div key={i} className="p-3 rounded-lg border bg-card space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="h-7 w-7 rounded-full bg-muted text-foreground text-xs font-medium flex items-center justify-center shrink-0">
-                        {r.author.split(" ").map((n) => n[0]).join("")}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium truncate">{r.author}</div>
-                        <div className="text-[11px] text-muted-foreground">{r.date}</div>
-                      </div>
-                    </div>
-                    <Stars value={r.stars} />
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">„{r.text}"</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+        {/* Live Feedback — auf Filial-Ebene, mit Detail-Aufschlüsselung & Aktionen */}
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">Live Feedback</h2>
+            <p className="text-xs text-muted-foreground">
+              Alle Bewertungen dieser Filiale — Klick auf eine Karte zeigt die Kategorie-Aufschlüsselung.
+              Erledigt markieren oder direkt kontaktieren.
+            </p>
+          </div>
+          <LiveFeedback lockedPubId={pub.id} />
         </section>
       </main>
     </div>
