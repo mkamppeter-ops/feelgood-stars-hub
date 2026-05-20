@@ -132,9 +132,18 @@ function HQPage() {
 
             <TabsContent value="overview" className="space-y-6 mt-0">
               {/* KPIs */}
-              <section key={pulseKey} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 animate-in fade-in duration-500">
+              <section key={pulseKey} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 animate-in fade-in duration-500">
                 <KpiCard icon={Gauge} label="Ø Pub Performance Score" value={`${kpis.score}`} suffix="/100" delta="+3.2%" tone="primary" />
                 <KpiCard icon={Target} label="Ø Umsatz-Ziel" value={`${kpis.revenueGoal}`} suffix="%" delta="+2.4%" tone={kpis.revenueGoal >= 100 ? "emerald" : "amber"} />
+                <KpiCard
+                  icon={Smartphone}
+                  label="Ø App-User Reach"
+                  value={`${kpis.appReach}`}
+                  suffix="%"
+                  delta="+5.1%"
+                  tone={kpis.appReach >= 100 ? "emerald" : kpis.appReach >= 80 ? "amber" : "primary"}
+                  sub={`${kpis.appUsers.toLocaleString("de-DE")} / ${kpis.appTarget.toLocaleString("de-DE")} User`}
+                />
                 <KpiCard icon={Users} label="Ø Walk-In Ratio" value={`${kpis.walkIn}`} suffix="%" delta="+0.8%" tone="amber" />
                 <KpiCard icon={Star} label="Ø Gäste-Feedback" value={`${kpis.feedback}`} suffix=" ⭐" delta="+0.1" tone="violet" />
               </section>
@@ -366,11 +375,12 @@ function HQPage() {
 }
 
 function KpiCard({
-  icon: Icon, label, value, suffix, delta, tone, negative,
+  icon: Icon, label, value, suffix, delta, tone, negative, sub,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string; value: string; suffix?: string; delta: string;
   tone: "primary" | "emerald" | "amber" | "violet"; negative?: boolean;
+  sub?: string;
 }) {
   const toneMap = {
     primary: "bg-primary/10 text-primary",
@@ -394,6 +404,7 @@ function KpiCard({
           <div className="mt-1 text-3xl font-semibold tracking-tight tabular-nums">
             {value}<span className="text-base text-muted-foreground font-normal">{suffix}</span>
           </div>
+          {sub && <div className="mt-1 text-[11px] text-muted-foreground tabular-nums">{sub}</div>}
         </div>
       </CardContent>
     </Card>
