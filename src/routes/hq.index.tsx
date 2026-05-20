@@ -20,6 +20,7 @@ import { ArrowUpRight } from "lucide-react";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 import { LiveFeedback } from "@/components/live-feedback";
 import { SalesOps } from "@/components/sales-ops";
+import { Sortiment } from "@/components/sortiment";
 
 export const Route = createFileRoute("/hq/")({
   head: () => ({
