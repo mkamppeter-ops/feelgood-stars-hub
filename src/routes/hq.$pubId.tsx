@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import {
   ArrowLeft, Phone, Gauge, TrendingUp, Target, Star, MapPin, Trophy,
 } from "lucide-react";
 import { getPub, type Pub } from "@/lib/pubs-mock";
+import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 
 export const Route = createFileRoute("/hq/$pubId")({
   loader: ({ params }) => {
@@ -60,19 +62,37 @@ function Stars({ value }: { value: number }) {
 
 function PubDetailPage() {
   const { pub } = Route.useLoaderData() as { pub: Pub };
+  const [range, setRange] = useState<DateRange>("last7");
+  const [pulseKey, setPulseKey] = useState(0);
+  const factor = RANGE_FACTOR[range];
+
+  const kpis = useMemo(() => ({
+    score: Math.max(0, Math.min(100, Math.round(pub.score * factor))),
+    booking: Math.max(0, Math.min(100, Math.round(pub.bookingRatio * factor))),
+    revenue: Math.round(pub.revenueTarget * factor),
+    feedback: Math.min(5, +(pub.feedback * (0.96 + factor * 0.04)).toFixed(1)),
+  }), [factor, pub]);
+
+  const handleRange = (v: DateRange) => {
+    setRange(v);
+    setPulseKey((k) => k + 1);
+  };
 
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Sticky breadcrumb bar */}
       <div className="sticky top-0 z-10 bg-card/80 backdrop-blur border-b">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between gap-3">
           <Link to="/hq" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" /> Zurück zum HQ
           </Link>
-          <div className="text-xs text-muted-foreground">
-            <Link to="/hq" className="hover:text-foreground">HQ</Link>
-            <span className="mx-2">/</span>
-            <span className="text-foreground font-medium">{pub.name}</span>
+          <div className="flex items-center gap-3">
+            <DateRangePicker value={range} onChange={handleRange} />
+            <div className="hidden md:block text-xs text-muted-foreground">
+              <Link to="/hq" className="hover:text-foreground">HQ</Link>
+              <span className="mx-2">/</span>
+              <span className="text-foreground font-medium">{pub.name}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -94,6 +114,9 @@ function PubDetailPage() {
                   <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
                     <MapPin className="h-3 w-3" /> {pub.city}
                   </span>
+                  <Badge variant="outline" className="font-normal text-[10px] uppercase tracking-wide">
+                    {RANGE_LABELS[range]}
+                  </Badge>
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight">{pub.name}</h1>
                 <div className="flex items-center gap-3 pt-1">
@@ -123,12 +146,13 @@ function PubDetailPage() {
         </Card>
 
         {/* KPIs */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <PubKpi icon={Gauge} label="Performance Score" value={`${pub.score}`} suffix="/100" tone="primary" />
-          <PubKpi icon={TrendingUp} label="Booking Ratio" value={`${pub.bookingRatio}`} suffix="%" tone="emerald" />
-          <PubKpi icon={Target} label="Umsatz-Ziel" value={`${pub.revenueTarget}`} suffix="%" tone={pub.revenueTarget >= 100 ? "emerald" : "amber"} />
-          <PubKpi icon={Star} label="Gäste-Feedback" value={pub.feedback.toFixed(1)} suffix=" ⭐" tone="violet" />
+        <section key={pulseKey} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in duration-500">
+          <PubKpi icon={Gauge} label="Performance Score" value={`${kpis.score}`} suffix="/100" tone="primary" />
+          <PubKpi icon={TrendingUp} label="Booking Ratio" value={`${kpis.booking}`} suffix="%" tone="emerald" />
+          <PubKpi icon={Target} label="Umsatz-Ziel" value={`${kpis.revenue}`} suffix="%" tone={kpis.revenue >= 100 ? "emerald" : "amber"} />
+          <PubKpi icon={Star} label="Gäste-Feedback" value={kpis.feedback.toFixed(1)} suffix=" ⭐" tone="violet" />
         </section>
+
 
         {/* Chart + Reviews */}
         <section className="grid grid-cols-1 lg:grid-cols-5 gap-6">
