@@ -10,7 +10,9 @@ import {
   ArrowLeft, Phone, Gauge, TrendingUp, Target, Star, MapPin, Trophy,
 } from "lucide-react";
 import { getPub, type Pub } from "@/lib/pubs-mock";
+import { SALES_BY_PUB } from "@/lib/sales-mock";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
+import { SalesOps } from "@/components/sales-ops";
 
 export const Route = createFileRoute("/hq/$pubId")({
   loader: ({ params }) => {
@@ -153,6 +155,15 @@ function PubDetailPage() {
           <PubKpi icon={Star} label="Gäste-Feedback" value={kpis.feedback.toFixed(1)} suffix=" ⭐" tone="violet" />
         </section>
 
+
+        {/* Sales & Operations — auf Filial-Ebene */}
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">Sales &amp; Operations</h2>
+            <p className="text-xs text-muted-foreground">Umsatz, Bons und Top-Seller dieser Filiale</p>
+          </div>
+          <SalesOps data={SALES_BY_PUB[pub.id]} factor={factor} />
+        </section>
 
         {/* Chart + Reviews */}
         <section className="grid grid-cols-1 lg:grid-cols-5 gap-6">
