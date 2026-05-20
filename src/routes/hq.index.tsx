@@ -138,6 +138,10 @@ function HQPage() {
               </TabsTrigger>
             </TabsList>
 
+            <TabsContent value="active-ops" className="mt-0">
+              <ActiveOps />
+            </TabsContent>
+
             <TabsContent value="overview" className="space-y-6 mt-0">
               {/* KPIs */}
               <section key={pulseKey} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 animate-in fade-in duration-500">
