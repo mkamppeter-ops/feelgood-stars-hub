@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as HqRouteImport } from './routes/hq'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HqPubIdRouteImport } from './routes/hq.$pubId'
 
 const HqRoute = HqRouteImport.update({
   id: '/hq',
@@ -28,35 +29,43 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HqPubIdRoute = HqPubIdRouteImport.update({
+  id: '/$pubId',
+  path: '/$pubId',
+  getParentRoute: () => HqRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/hq': typeof HqRoute
+  '/hq': typeof HqRouteWithChildren
+  '/hq/$pubId': typeof HqPubIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/hq': typeof HqRoute
+  '/hq': typeof HqRouteWithChildren
+  '/hq/$pubId': typeof HqPubIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/hq': typeof HqRoute
+  '/hq': typeof HqRouteWithChildren
+  '/hq/$pubId': typeof HqPubIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/hq'
+  fullPaths: '/' | '/admin' | '/hq' | '/hq/$pubId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/hq'
-  id: '__root__' | '/' | '/admin' | '/hq'
+  to: '/' | '/admin' | '/hq' | '/hq/$pubId'
+  id: '__root__' | '/' | '/admin' | '/hq' | '/hq/$pubId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
-  HqRoute: typeof HqRoute
+  HqRoute: typeof HqRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -82,14 +91,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hq/$pubId': {
+      id: '/hq/$pubId'
+      path: '/$pubId'
+      fullPath: '/hq/$pubId'
+      preLoaderRoute: typeof HqPubIdRouteImport
+      parentRoute: typeof HqRoute
+    }
   }
 }
+
+interface HqRouteChildren {
+  HqPubIdRoute: typeof HqPubIdRoute
+}
+
+const HqRouteChildren: HqRouteChildren = {
+  HqPubIdRoute: HqPubIdRoute,
+}
+
+const HqRouteWithChildren = HqRoute._addFileChildren(HqRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
-  HqRoute: HqRoute,
+  HqRoute: HqRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
