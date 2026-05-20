@@ -233,6 +233,47 @@ function HQPage() {
                 </Card>
               </section>
 
+              {/* Booking Ratio overview */}
+              <Card className="shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                  <div>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <CalendarCheck className="h-4 w-4 text-emerald-600" />
+                      Booking Ratio nach Filiale
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Anteil reservierter Tische — Ø {kpis.booking}% über alle {PUBS.length} Pubs
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="font-normal tabular-nums">Ø {kpis.booking}%</Badge>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[...PUBS].sort((a, b) => b.bookingRatio - a.bookingRatio).map((p) => (
+                    <div
+                      key={p.id}
+                      onClick={() => navigate({ to: "/hq/$pubId", params: { pubId: p.id } })}
+                      className="cursor-pointer rounded-lg border p-3 hover:border-primary/40 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium truncate">{p.name}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">{p.city}</div>
+                        </div>
+                        <span className={`text-base font-semibold tabular-nums ${
+                          p.bookingRatio >= 80 ? "text-emerald-600" : p.bookingRatio >= 70 ? "text-foreground" : "text-amber-600"
+                        }`}>{p.bookingRatio}%</span>
+                      </div>
+                      <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${p.bookingRatio >= 80 ? "bg-emerald-500" : p.bookingRatio >= 70 ? "bg-primary" : "bg-amber-500"}`}
+                          style={{ width: `${p.bookingRatio}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
               {/* Chart */}
               <Card className="shadow-sm">
                 <CardHeader>
