@@ -7,8 +7,10 @@ import {
 } from "recharts";
 import { Euro, Receipt, TrendingUp, CalendarCheck, Footprints, Megaphone, Users, Building, Package, ShoppingBasket, Sparkles } from "lucide-react";
 import { type SalesSnapshot, formatEUR } from "@/lib/sales-mock";
+import { useT } from "@/lib/use-t";
 
 export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: number }) {
+  const tt = useT();
   const scaled = useMemo(() => ({
     revenue: Math.round(data.revenue * factor),
     orders: Math.round(data.orders * factor),
@@ -26,8 +28,8 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
 
   const totalSplit = scaled.reservationsRevenue + scaled.walkInsRevenue;
   const splitData = [
-    { name: "Reservierungen", value: scaled.reservationsRevenue, color: "hsl(var(--primary))" },
-    { name: "Walk-ins",       value: scaled.walkInsRevenue,      color: "hsl(var(--primary) / 0.35)" },
+    { name: tt("Reservierungen", "Reservations"), value: scaled.reservationsRevenue, color: "hsl(var(--primary))" },
+    { name: "Walk-ins",                            value: scaled.walkInsRevenue,      color: "hsl(var(--primary) / 0.35)" },
   ];
 
   const ratio = (n: number) => (scaled.revenue > 0 ? (n / scaled.revenue) * 100 : 0);
@@ -41,9 +43,9 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
     <div className="space-y-6">
       {/* KPI scorecards */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        <SalesKpi icon={Euro}    label="Gesamtumsatz"            value={formatEUR(scaled.revenue)} delta="+8.4%" tone="primary" />
-        <SalesKpi icon={Receipt} label="Bestellungen (Bons)"     value={scaled.orders.toLocaleString("de-DE")} delta="+5.1%" tone="emerald" />
-        <SalesKpi icon={TrendingUp} label="Ø Bon (Spend / Head)" value={formatEUR(scaled.avgTicket)} delta="+2.3%" tone="violet" />
+        <SalesKpi icon={Euro}    label={tt("Gesamtumsatz", "Total revenue")}                  value={formatEUR(scaled.revenue)} delta="+8.4%" tone="primary" />
+        <SalesKpi icon={Receipt} label={tt("Bestellungen (Bons)", "Orders (tickets)")}        value={scaled.orders.toLocaleString()} delta="+5.1%" tone="emerald" />
+        <SalesKpi icon={TrendingUp} label={tt("Ø Bon (Spend / Head)", "Avg ticket (spend/head)")} value={formatEUR(scaled.avgTicket)} delta="+2.3%" tone="violet" />
       </section>
 
       {/* EBITDA hero */}
@@ -57,25 +59,25 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">EBITDA</span>
-                  <Badge variant="secondary" className="font-normal text-[10px]">vor Steuern · Zinsen · Abschreibungen</Badge>
+                  <Badge variant="secondary" className="font-normal text-[10px]">{tt("vor Steuern · Zinsen · Abschreibungen", "before taxes · interest · depreciation")}</Badge>
                 </div>
                 <div className="mt-1 flex items-baseline gap-3">
                   <span className={`text-4xl font-semibold tracking-tight tabular-nums ${ebitda >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                     {formatEUR(ebitda)}
                   </span>
                   <span className={`text-lg font-medium tabular-nums ${ebitda >= 0 ? "text-emerald-600/80" : "text-red-600/80"}`}>
-                    {ebitdaMargin.toFixed(1)}% Marge
+                    {ebitdaMargin.toFixed(1)}% {tt("Marge", "margin")}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1 tabular-nums">
-                  Umsatz {formatEUR(scaled.revenue)} − Kosten {formatEUR(totalCosts)}
+                  {tt("Umsatz", "Revenue")} {formatEUR(scaled.revenue)} − {tt("Kosten", "Costs")} {formatEUR(totalCosts)}
                 </p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3 lg:min-w-[320px]">
-              <MiniStat label="Umsatz"  value={formatEUR(scaled.revenue)}  tone="primary" />
-              <MiniStat label="Kosten"  value={formatEUR(totalCosts)}      tone="slate" />
-              <MiniStat label="EBITDA"  value={formatEUR(ebitda)}          tone="emerald" />
+              <MiniStat label={tt("Umsatz", "Revenue")} value={formatEUR(scaled.revenue)}  tone="primary" />
+              <MiniStat label={tt("Kosten", "Costs")}   value={formatEUR(totalCosts)}      tone="slate" />
+              <MiniStat label="EBITDA"                   value={formatEUR(ebitda)}          tone="emerald" />
             </div>
           </div>
         </CardContent>
@@ -85,9 +87,9 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
       <Card className="shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
-            <CardTitle className="text-base">Kostenstruktur</CardTitle>
+            <CardTitle className="text-base">{tt("Kostenstruktur", "Cost structure")}</CardTitle>
             <p className="text-xs text-muted-foreground mt-1">
-              Ausgaben in % vom Umsatz · niedriger = besser
+              {tt("Ausgaben in % vom Umsatz · niedriger = besser", "Spending as % of revenue · lower is better")}
             </p>
           </div>
           <Badge variant="secondary" className="font-normal tabular-nums">
@@ -96,14 +98,13 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            <CostRatio icon={ShoppingBasket} label="Wareneinsatz" amount={scaled.costs.cogs}     ratio={ratio(scaled.costs.cogs)}      target={30} tone="rose" />
-            <CostRatio icon={Users}     label="Personal"     amount={scaled.costs.staff}     ratio={ratio(scaled.costs.staff)}     target={30} tone="primary" />
-            <CostRatio icon={Building}  label="Miete"        amount={scaled.costs.rent}      ratio={ratio(scaled.costs.rent)}      target={10} tone="amber" />
-            <CostRatio icon={Megaphone} label="Marketing"    amount={scaled.costs.marketing} ratio={ratio(scaled.costs.marketing)} target={5}  tone="violet" />
-            <CostRatio icon={Package}   label="Sonstige (HQ)" amount={scaled.costs.other}    ratio={ratio(scaled.costs.other)}     target={7}  tone="slate" />
+            <CostRatio icon={ShoppingBasket} label={tt("Wareneinsatz", "COGS")}      amount={scaled.costs.cogs}     ratio={ratio(scaled.costs.cogs)}      target={30} tone="rose" />
+            <CostRatio icon={Users}     label={tt("Personal", "Staff")}              amount={scaled.costs.staff}     ratio={ratio(scaled.costs.staff)}     target={30} tone="primary" />
+            <CostRatio icon={Building}  label={tt("Miete", "Rent")}                  amount={scaled.costs.rent}      ratio={ratio(scaled.costs.rent)}      target={10} tone="amber" />
+            <CostRatio icon={Megaphone} label="Marketing"                            amount={scaled.costs.marketing} ratio={ratio(scaled.costs.marketing)} target={5}  tone="violet" />
+            <CostRatio icon={Package}   label={tt("Sonstige (HQ)", "Other (HQ)")}    amount={scaled.costs.other}    ratio={ratio(scaled.costs.other)}     target={7}  tone="slate" />
           </div>
 
-          {/* Stacked cost bar */}
           <div>
             <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
               <div className="bg-rose-500"        style={{ width: `${ratio(scaled.costs.cogs)}%` }} />
@@ -114,11 +115,11 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
               <div className="bg-emerald-500/70"  style={{ width: `${Math.max(0, ratio(ebitda))}%` }} />
             </div>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-              <LegendDot color="bg-rose-500"       label={`Wareneinsatz ${ratio(scaled.costs.cogs).toFixed(1)}%`} />
-              <LegendDot color="bg-primary"        label={`Personal ${ratio(scaled.costs.staff).toFixed(1)}%`} />
-              <LegendDot color="bg-amber-500"      label={`Miete ${ratio(scaled.costs.rent).toFixed(1)}%`} />
+              <LegendDot color="bg-rose-500"       label={`${tt("Wareneinsatz", "COGS")} ${ratio(scaled.costs.cogs).toFixed(1)}%`} />
+              <LegendDot color="bg-primary"        label={`${tt("Personal", "Staff")} ${ratio(scaled.costs.staff).toFixed(1)}%`} />
+              <LegendDot color="bg-amber-500"      label={`${tt("Miete", "Rent")} ${ratio(scaled.costs.rent).toFixed(1)}%`} />
               <LegendDot color="bg-violet-500"     label={`Marketing ${ratio(scaled.costs.marketing).toFixed(1)}%`} />
-              <LegendDot color="bg-slate-400"      label={`Sonstige ${ratio(scaled.costs.other).toFixed(1)}%`} />
+              <LegendDot color="bg-slate-400"      label={`${tt("Sonstige", "Other")} ${ratio(scaled.costs.other).toFixed(1)}%`} />
               <LegendDot color="bg-emerald-500/70" label={`EBITDA ${ebitdaMargin.toFixed(1)}%`} />
             </div>
           </div>
@@ -132,8 +133,8 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
       {/* Revenue split */}
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base">Umsatz-Split</CardTitle>
-          <p className="text-xs text-muted-foreground mt-1">Reservierungen vs. Walk-ins</p>
+          <CardTitle className="text-base">{tt("Umsatz-Split", "Revenue split")}</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">{tt("Reservierungen vs. Walk-ins", "Reservations vs. walk-ins")}</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
@@ -166,7 +167,7 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
             <div className="grid grid-cols-1 gap-3">
               <SplitStat
                 icon={CalendarCheck}
-                label="Reservierungen"
+                label={tt("Reservierungen", "Reservations")}
                 value={formatEUR(scaled.reservationsRevenue)}
                 share={(scaled.reservationsRevenue / totalSplit) * 100}
                 tone="primary"
@@ -187,8 +188,8 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
       {/* Revenue trend */}
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base">Umsatzverlauf — Letzte 7 Tage</CardTitle>
-          <p className="text-xs text-muted-foreground mt-1">Tagesumsatz in € (Mock)</p>
+          <CardTitle className="text-base">{tt("Umsatzverlauf — Letzte 7 Tage", "Revenue trend — last 7 days")}</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">{tt("Tagesumsatz in € (Mock)", "Daily revenue in € (mock)")}</p>
         </CardHeader>
         <CardContent className="h-64">
           <ResponsiveContainer width="100%" height="100%">
@@ -201,7 +202,7 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
                   borderRadius: 8, border: "1px solid hsl(var(--border))",
                   background: "hsl(var(--card))", fontSize: 12,
                 }}
-                formatter={(v: number) => [formatEUR(v), "Umsatz"]}
+                formatter={(v: number) => [formatEUR(v), tt("Umsatz", "Revenue")]}
               />
               <Line
                 type="monotone"
@@ -257,6 +258,7 @@ function SplitStat({
   icon: React.ComponentType<{ className?: string }>;
   label: string; value: string; share: number; tone: "primary" | "muted";
 }) {
+  const tt = useT();
   return (
     <div className="rounded-lg border p-3">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -264,7 +266,7 @@ function SplitStat({
         {label}
       </div>
       <div className="text-base font-semibold tabular-nums mt-1">{value}</div>
-      <div className="text-[11px] text-muted-foreground">{share.toFixed(1)}% des Umsatzes</div>
+      <div className="text-[11px] text-muted-foreground">{share.toFixed(1)}% {tt("des Umsatzes", "of revenue")}</div>
     </div>
   );
 }
@@ -284,6 +286,7 @@ function CostRatio({
     rose:    { chip: "bg-rose-500/10 text-rose-600", bar: "bg-rose-500" },
   } as const;
   const overBudget = ratio > target;
+  const tt = useT();
   return (
     <div className="rounded-lg border p-4 bg-card">
       <div className="flex items-center justify-between gap-2">
@@ -293,11 +296,11 @@ function CostRatio({
         <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
           overBudget ? "text-red-600 bg-red-500/10" : "text-emerald-600 bg-emerald-500/10"
         }`}>
-          Ziel ≤{target}%
+          {tt("Ziel", "Target")} ≤{target}%
         </span>
       </div>
       <div className="mt-3">
-        <div className="text-xs text-muted-foreground">{label} Ratio</div>
+        <div className="text-xs text-muted-foreground">{label} {tt("Quote", "ratio")}</div>
         <div className="text-2xl font-semibold tracking-tight tabular-nums">
           {ratio.toFixed(1)}<span className="text-base text-muted-foreground font-normal">%</span>
         </div>

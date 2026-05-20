@@ -7,17 +7,11 @@ import { Trophy, AlertTriangle, BarChart3, AlertCircle } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { getProductMatrix, formatEUR, type TopSeller } from "@/lib/sales-mock";
 import { PUBS } from "@/lib/pubs-mock";
+import { useT } from "@/lib/use-t";
 
 type Cat = TopSeller["category"];
 const CAT_FILTERS: ("all" | Cat)[] = ["all", "Drinks", "Food", "Cocktails"];
-const CAT_LABEL: Record<"all" | Cat, string> = {
-  all: "Alle",
-  Drinks: "Getränke",
-  Food: "Speisen",
-  Cocktails: "Cocktails",
-};
 
-// Color band based on index vs. chain average (100 = chain avg)
 function cellStyle(idx: number): { className: string; intensity: "high" | "low" | "neutral" } {
   if (idx >= 130) return { className: "bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 font-semibold", intensity: "high" };
   if (idx >= 110) return { className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300", intensity: "high" };
@@ -27,11 +21,18 @@ function cellStyle(idx: number): { className: string; intensity: "high" | "low" 
 }
 
 export function SortimentMatrix() {
+  const tt = useT();
   const [filter, setFilter] = useState<"all" | Cat>("all");
   const [sortMode, setSortMode] = useState<"revenue" | "spread">("revenue");
   const matrix = useMemo(() => getProductMatrix(), []);
 
-  // pub display order = same as PUBS (by rank)
+  const CAT_LABEL: Record<"all" | Cat, string> = {
+    all: tt("Alle", "All"),
+    Drinks: tt("Getränke", "Drinks"),
+    Food: tt("Speisen", "Food"),
+    Cocktails: "Cocktails",
+  };
+
   const pubList = useMemo(
     () => PUBS.filter((p) => matrix.pubIds.includes(p.id)),
     [matrix.pubIds],
@@ -60,7 +61,6 @@ export function SortimentMatrix() {
       );
   }, [matrix, filter, sortMode, pubList]);
 
-  // Insights
   const insights = useMemo(() => {
     let topPerformer = { idx: -Infinity, product: "", pub: "", qty: 0 };
     let biggestGap = { idx: Infinity, product: "", pub: "", qty: 0 };
@@ -81,9 +81,12 @@ export function SortimentMatrix() {
       <CardHeader className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
-            <CardTitle className="text-base">Sortiment nach Filiale</CardTitle>
+            <CardTitle className="text-base">{tt("Sortiment nach Filiale", "Assortment by branch")}</CardTitle>
             <p className="text-xs text-muted-foreground mt-1">
-              Index vs. Kettendurchschnitt (100 = Schnitt) — hebt Top-Performer und Sortimentslücken hervor
+              {tt(
+                "Index vs. Kettendurchschnitt (100 = Schnitt) — hebt Top-Performer und Sortimentslücken hervor",
+                "Index vs. chain average (100 = avg) — highlights top performers and assortment gaps",
+              )}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -107,7 +110,7 @@ export function SortimentMatrix() {
                 className="h-7 text-xs px-2.5"
                 onClick={() => setSortMode("revenue")}
               >
-                Nach Umsatz
+                {tt("Nach Umsatz", "By revenue")}
               </Button>
               <Button
                 size="sm"
@@ -115,34 +118,33 @@ export function SortimentMatrix() {
                 className="h-7 text-xs px-2.5"
                 onClick={() => setSortMode("spread")}
               >
-                Größte Streuung
+                {tt("Größte Streuung", "Largest spread")}
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Insights */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <InsightChip
             icon={Trophy}
             tone="emerald"
-            label="Top-Abweichler"
+            label={tt("Top-Abweichler", "Top performer")}
             value={`${insights.topPerformer.product} @ ${insights.topPerformer.pub}`}
             delta={`+${insights.topPerformer.idx - 100}%`}
           />
           <InsightChip
             icon={AlertTriangle}
             tone="rose"
-            label="Größte Lücke"
+            label={tt("Größte Lücke", "Biggest gap")}
             value={`${insights.biggestGap.product} @ ${insights.biggestGap.pub}`}
             delta={`${insights.biggestGap.idx - 100}%`}
           />
           <InsightChip
             icon={BarChart3}
             tone="slate"
-            label="Ø Streuung"
-            value={`${insights.avgSpread} Punkte`}
-            delta={insights.avgSpread > 100 ? "hoch" : insights.avgSpread > 60 ? "mittel" : "niedrig"}
+            label={tt("Ø Streuung", "Avg spread")}
+            value={`${insights.avgSpread} ${tt("Punkte", "points")}`}
+            delta={insights.avgSpread > 100 ? tt("hoch", "high") : insights.avgSpread > 60 ? tt("mittel", "medium") : tt("niedrig", "low")}
           />
         </div>
       </CardHeader>
@@ -154,7 +156,7 @@ export function SortimentMatrix() {
               <thead>
                 <tr>
                   <th className="sticky left-0 z-10 bg-card text-left font-medium text-xs text-muted-foreground py-2 pr-3 min-w-[160px]">
-                    Produkt
+                    {tt("Produkt", "Product")}
                   </th>
                   {pubList.map((p) => (
                     <th key={p.id} className="px-1 py-2 text-center">
@@ -201,9 +203,9 @@ export function SortimentMatrix() {
                               <div className="font-medium">{c.pub.name}</div>
                               <div className="text-muted-foreground">{row.product.name}</div>
                               <div className="mt-1 space-y-0.5">
-                                <div>Menge: <span className="font-medium text-foreground">{c.qty}×</span></div>
-                                <div>Umsatz: <span className="font-medium text-foreground">{formatEUR(c.revenue)}</span></div>
-                                <div>vs. Schnitt: <span className={`font-medium ${c.idx >= 100 ? "text-emerald-500" : "text-rose-500"}`}>{c.idx >= 100 ? "+" : ""}{c.idx - 100}%</span></div>
+                                <div>{tt("Menge", "Quantity")}: <span className="font-medium text-foreground">{c.qty}×</span></div>
+                                <div>{tt("Umsatz", "Revenue")}: <span className="font-medium text-foreground">{formatEUR(c.revenue)}</span></div>
+                                <div>{tt("vs. Schnitt", "vs. avg")}: <span className={`font-medium ${c.idx >= 100 ? "text-emerald-500" : "text-rose-500"}`}>{c.idx >= 100 ? "+" : ""}{c.idx - 100}%</span></div>
                               </div>
                             </TooltipContent>
                           </Tooltip>
@@ -217,9 +219,8 @@ export function SortimentMatrix() {
           </div>
         </TooltipProvider>
 
-        {/* Legend */}
         <div className="flex flex-wrap items-center gap-3 mt-4 text-[11px] text-muted-foreground">
-          <span>Index-Skala:</span>
+          <span>{tt("Index-Skala", "Index scale")}:</span>
           <LegendSwatch className="bg-rose-500/25" label="≤ 70" />
           <LegendSwatch className="bg-rose-500/10" label="71–90" />
           <LegendSwatch className="bg-muted/60" label="91–109" />
