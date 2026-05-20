@@ -213,7 +213,22 @@ export function DataSettings() {
                   Kosten
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="revenue">Umsatzziel / Monat</Label>
+                  <div className="relative">
+                    <Input
+                      id="revenue"
+                      type="number"
+                      min={0}
+                      step={500}
+                      value={form.revenue_target_monthly}
+                      onChange={(e) => setForm((f) => ({ ...f, revenue_target_monthly: Number(e.target.value) || 0 }))}
+                      className="pr-12"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">EUR</span>
+                  </div>
+                </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="staff">Personalkosten / Monat</Label>
                   <div className="relative">
