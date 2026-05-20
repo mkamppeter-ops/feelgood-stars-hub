@@ -85,6 +85,7 @@ export function DataSettings() {
       ? {
           staff_costs_monthly: Number(existing.staff_costs_monthly),
           rent_monthly: Number(existing.rent_monthly),
+          revenue_target_monthly: Number((existing as PubSettings).revenue_target_monthly ?? 0),
           seats: existing.seats,
           opening_hour: existing.opening_hour,
           closing_hour: existing.closing_hour,
