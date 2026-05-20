@@ -7,9 +7,9 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import {
-  ArrowLeft, Phone, Gauge, Target, Star, MapPin, Trophy, Users, CalendarCheck,
+  ArrowLeft, Phone, Gauge, Target, Star, MapPin, Trophy, Users, CalendarCheck, Smartphone, AlertTriangle,
 } from "lucide-react";
-import { getPub, computeScore, type Pub } from "@/lib/pubs-mock";
+import { getPub, computeScore, getAppReach, type Pub } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 import { SalesOps } from "@/components/sales-ops";
@@ -157,6 +157,52 @@ function PubDetailPage() {
           <PubKpi icon={Users} label="Walk-In Ratio" value={`${kpis.walkIn}`} suffix="%" tone="amber" />
           <PubKpi icon={Star} label="Gäste-Feedback" value={kpis.feedback.toFixed(1)} suffix=" ⭐" tone="violet" />
         </section>
+
+        {/* Aktive App-Nutzer — Marketing-Reach für Umsatzziel */}
+        {(() => {
+          const reach = getAppReach(pub);
+          const tone = reach >= 100 ? "emerald" : reach >= 80 ? "primary" : "amber";
+          const barColor = reach >= 100 ? "bg-emerald-500" : reach >= 80 ? "bg-primary" : "bg-amber-500";
+          const toneBg = tone === "emerald" ? "bg-emerald-500/10 text-emerald-600"
+            : tone === "primary" ? "bg-primary/10 text-primary"
+            : "bg-amber-500/10 text-amber-600";
+          return (
+            <Card className="shadow-sm">
+              <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex items-center gap-3 sm:min-w-[240px]">
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${toneBg}`}>
+                    <Smartphone className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Aktive App-Nutzer</div>
+                    <div className="text-2xl font-semibold tabular-nums">
+                      {pub.activeAppUsers.toLocaleString("de-DE")}
+                      <span className="text-base text-muted-foreground font-normal"> / {pub.appUsersTarget.toLocaleString("de-DE")}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1 w-full">
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="text-muted-foreground">Reach gegen Marketing-Zielwert</span>
+                    <span className={`font-semibold tabular-nums ${reach >= 100 ? "text-emerald-600" : reach >= 80 ? "text-foreground" : "text-amber-600"}`}>{reach}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(100, reach)}%` }} />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Zielwert sichert 100 % Umsatzziel. Marketing füllt die Pipeline aktiver App-Nutzer im Einzugsgebiet.
+                  </p>
+                  {reach < 80 && (
+                    <div className="mt-2 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-500">
+                      <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                      <span>Marketing aufstocken — App-Reach unter Zielmarke; Umsatzziel gefährdet.</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* Booking Ratio — separate Kennzahl */}
         <Card className="shadow-sm">
