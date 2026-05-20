@@ -17,14 +17,25 @@ import { FEEDBACK, CATEGORY_META, CATEGORY_ORDER, type FeedbackItem } from "@/li
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 import { SalesOps } from "@/components/sales-ops";
 
+import { RequireRole, LogoutButton } from "@/components/auth-guard";
+import { useSession } from "@/lib/auth-mock";
+import { Badge } from "@/components/ui/badge";
+
 export const Route = createFileRoute("/pub")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    mode: (s.mode === "staff" ? "staff" : "manager") as "manager" | "staff",
+  }),
   head: () => ({
     meta: [
       { title: "Pub Ops Navigator — Local View" },
       { name: "description", content: "Lokales Dashboard für den Bar-Manager: Performance, Umsätze und Gast-Feedback der eigenen Filiale." },
     ],
   }),
-  component: PubLocalView,
+  component: () => (
+    <RequireRole roles={["pub_manager", "bar_staff"]}>
+      <PubLocalView />
+    </RequireRole>
+  ),
 });
 
 function PubLocalView() {

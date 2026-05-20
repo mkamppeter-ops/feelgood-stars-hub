@@ -16,6 +16,8 @@ import { SalesOps } from "@/components/sales-ops";
 import { Sortiment } from "@/components/sortiment";
 import { LiveFeedback } from "@/components/live-feedback";
 
+import { RequireRole } from "@/components/auth-guard";
+
 export const Route = createFileRoute("/hq/$pubId")({
   loader: ({ params }) => {
     const pub = getPub(params.pubId);
@@ -43,7 +45,11 @@ export const Route = createFileRoute("/hq/$pubId")({
       </div>
     </div>
   ),
-  component: PubDetailPage,
+  component: () => (
+    <RequireRole roles={["hq_admin"]}>
+      <PubDetailPage />
+    </RequireRole>
+  ),
 });
 
 function WhatsAppIcon({ className }: { className?: string }) {
