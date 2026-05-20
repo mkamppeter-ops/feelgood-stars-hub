@@ -191,15 +191,18 @@ const RELATIVE = ["vor 12 Min.", "vor 1 Std.", "vor 3 Std.", "vor 5 Std.", "gest
 
 export const FEEDBACK: FeedbackItem[] = SAMPLES.map((s, i) => {
   const pub = PUBS[i % PUBS.length];
+  const customerId = `c-${s.author.toLowerCase().replace(/[^a-z]+/g, "-")}`;
   const base: FeedbackItem = {
     id: `f-${i}`,
     pubId: pub.id,
     source: s.source,
     stars: s.stars,
     author: s.author,
+    customerId,
     text: s.text,
     date: RELATIVE[i % RELATIVE.length],
     timestamp: Date.now() - i * 1000 * 60 * 47,
+    googleStatus: "none",
   };
   if (s.source === "app") {
     base.categories = s.categories;
@@ -209,3 +212,17 @@ export const FEEDBACK: FeedbackItem[] = SAMPLES.map((s, i) => {
   }
   return base;
 }).sort((a, b) => b.timestamp - a.timestamp);
+
+// Seed: ein paar Kunden haben Google bereits bewertet (Einmal-Sperre greift)
+// und ein paar haben bereits eine Auto-Einladung erhalten (Cooldown läuft).
+const REVIEWED_CUSTOMERS = new Set(["c-mira-l-", "c-carla-d-"]);
+const RECENTLY_INVITED = new Set(["c-nina-h-"]);
+for (const f of FEEDBACK) {
+  if (REVIEWED_CUSTOMERS.has(f.customerId)) {
+    f.googleStatus = "reviewed";
+  } else if (RECENTLY_INVITED.has(f.customerId)) {
+    f.googleStatus = "cooldown";
+    f.googleInvitedAt = Date.now() - 1000 * 60 * 60 * 24 * 14; // vor 14 Tagen
+  }
+}
+
