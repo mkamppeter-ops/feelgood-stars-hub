@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { setSession, getSession, defaultRouteForRole, type Role } from "@/lib/auth-mock";
+import { PUBS } from "@/lib/pubs-mock";
 
 export const Route = createFileRoute("/")({
   component: LoginPage,
@@ -38,7 +39,9 @@ function LoginPage() {
   }
 
   function loginAs(role: Role) {
-    setSession(role);
+    // Demo: assign a fixed pub to non-HQ roles
+    const pubId = role === "hq_admin" ? undefined : PUBS[2].id;
+    setSession(role, pubId);
     navigate({ to: defaultRouteForRole(role) });
   }
 

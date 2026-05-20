@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 export type Role = "hq_admin" | "pub_manager" | "bar_staff";
-export type Session = { role: Role; loggedInAt: number };
+export type Session = { role: Role; loggedInAt: number; pubId?: string };
 
 const KEY = "pubgo.session";
 
@@ -18,9 +18,9 @@ export function getSession(): Session | null {
   }
 }
 
-export function setSession(role: Role): void {
+export function setSession(role: Role, pubId?: string): void {
   if (typeof window === "undefined") return;
-  const session: Session = { role, loggedInAt: Date.now() };
+  const session: Session = { role, loggedInAt: Date.now(), pubId };
   window.localStorage.setItem(KEY, JSON.stringify(session));
   // Manually notify same-tab listeners (storage event only fires cross-tab)
   window.dispatchEvent(new StorageEvent("storage", { key: KEY }));
