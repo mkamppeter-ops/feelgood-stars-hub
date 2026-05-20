@@ -10,9 +10,9 @@ import {
 
 import {
   Trophy, TrendingUp, Users, Star, Gauge, Phone, LayoutDashboard,
-  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck,
+  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone,
 } from "lucide-react";
-import { PUBS, computeScore } from "@/lib/pubs-mock";
+import { PUBS, computeScore, getAppReach } from "@/lib/pubs-mock";
 import { SALES_GLOBAL, SALES_BY_PUB, formatEUR } from "@/lib/sales-mock";
 import { ArrowUpRight } from "lucide-react";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
@@ -44,12 +44,18 @@ function HQPage() {
     const avgFeedback      = PUBS.reduce((s, p) => s + p.feedback, 0) / PUBS.length;
     const avgBooking       = PUBS.reduce((s, p) => s + p.bookingRatio, 0) / PUBS.length;
     const avgScore         = PUBS.reduce((s, p) => s + computeScore(p), 0) / PUBS.length;
+    const totalAppUsers    = PUBS.reduce((s, p) => s + p.activeAppUsers, 0);
+    const totalAppTarget   = PUBS.reduce((s, p) => s + p.appUsersTarget, 0);
+    const appReach         = Math.round((totalAppUsers / totalAppTarget) * 100);
     return {
       score:        Math.round(avgScore * factor),
       revenueGoal:  Math.round(avgRevenueTarget * factor),
       walkIn:       Math.round(avgWalkIn * factor),
       feedback:     Math.min(5, +(avgFeedback * (0.96 + factor * 0.04)).toFixed(1)),
       booking:      Math.round(avgBooking * factor),
+      appReach,
+      appUsers:     totalAppUsers,
+      appTarget:    totalAppTarget,
     };
   }, [factor]);
 
