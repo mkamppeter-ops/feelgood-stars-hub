@@ -11,8 +11,9 @@ import {
 
 import {
   Trophy, TrendingUp, Users, Star, Gauge, Phone, LayoutDashboard,
-  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone, Gift, Activity,
+  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone, Gift, Activity, Megaphone,
 } from "lucide-react";
+import { Marketing } from "@/components/marketing";
 import { PUBS, computeScore, getAppReach } from "@/lib/pubs-mock";
 import { SALES_GLOBAL, SALES_BY_PUB, formatEUR } from "@/lib/sales-mock";
 import { ArrowUpRight } from "lucide-react";
@@ -100,6 +101,7 @@ function HQPage() {
             { icon: Building2, label: t("nav.sortiment"), tab: "sortiment" },
             { icon: CalendarCheck, label: t("nav.events"), tab: "events" },
             { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback" },
+            { icon: Megaphone, label: t("nav.marketing", "Marketing"), tab: "marketing" },
             { icon: Settings, label: t("nav.dataSettings"), tab: "settings" },
           ].map(({ icon: Icon, label, tab }) => {
             const active = activeTab === tab;
@@ -174,6 +176,10 @@ function HQPage() {
 
             <TabsContent value="active-ops" className="mt-0">
               <ActiveOps />
+            </TabsContent>
+
+            <TabsContent value="marketing" className="mt-0">
+              <Marketing />
             </TabsContent>
 
             <TabsContent value="overview" className="space-y-6 mt-0">
