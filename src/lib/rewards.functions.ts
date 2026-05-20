@@ -1,7 +1,10 @@
 // Mock backend stubs für Belohnungs-Workflow.
 // TODO: später als createServerFn implementieren — Push via FCM/APNS,
 // WhatsApp via Twilio Connector (Konfiguration siehe Twilio-Doku im Projekt).
-// Google-Share benötigt kein Backend; der Link liegt am Pub.
+//
+// Google-Share läuft AUTOMATISCH und OHNE Anreiz (Google-Richtlinien
+// verbieten incentivierte Bewertungen). Wir senden lediglich eine
+// freundliche Push-Einladung mit dem Direktlink — keine Bonus-Credits.
 
 export type ApologyRewardInput = {
   feedbackId: string;
@@ -12,7 +15,6 @@ export type ApologyRewardInput = {
 
 export type GoogleInviteInput = {
   feedbackId: string;
-  bonusCredits: number;
   googleReviewUrl: string;
 };
 
