@@ -1,91 +1,108 @@
 ## Ziel
 
-Im Feedback-Workflow zwei neue Belohnungs- und Wiedergutmachungs-Mechaniken einbauen, die im HQ-Dashboard sichtbar/steuerbar sind:
+Ein neuer Tab **„Active Ops"** im HQ-Dashboard, in dem du auf einen Blick siehst:
+- wie viele eingeloggte App-Nutzer gerade **im** jedem Pub sind,
+- wie das gegen den **Ziel-Wert für die aktuelle Uhrzeit** abschneidet,
+- und in **Pubs mit zu wenig Gästen** sofort eine **Push-Kampagne** abfeuern kannst (Happy Hour, Freibier, 50% Rabatt, Credit-Geschenk, freier Text).
 
-1. **Positive Bewertungen (4–5 ⭐):** Auto-Credits laufen wie bisher. Zusätzlich CTA „Auch auf Google teilen" — pro Filiale hinterlegter Google-Review-Link, optional Bonus-Credits beim Teilen.
-2. **Negative Bewertungen (1–2 ⭐):** Nach Sichtung im HQ kann der Manager dem Kunden „Entschuldigungs-Credits" zuweisen (100 / 250 / 500 / 1.000 / 2.500 / 5.000 / 10.000) + persönliche Nachricht via **Push** (default) oder **WhatsApp** (Fallback).
+## Wo es lebt
 
-Beides bleibt zunächst Frontend-Mock (kein echter Push/WhatsApp-Versand), aber sauber strukturiert, damit später eine echte Server-Function angedockt werden kann.
+Neuer Tab in `src/routes/hq.index.tsx` zwischen „Overview" und „Sales & Operations":
 
----
-
-## 1. Datenmodell
-
-**`src/lib/pubs-mock.ts`** — `Pub`-Type erweitern:
-- `googleReviewUrl: string` (z. B. `https://g.page/r/.../review`)
-
-**`src/lib/feedback-mock.ts`** — `FeedbackItem` erweitern:
-- `customerId?: string` (Mock — nur App-Feedback)
-- `customerName?: string`
-- `reward?: { credits: number; channel: "push" | "whatsapp"; message: string; sentAt: number }` — gesetzt, sobald ein Apology-Reward ausgelöst wurde
-- `googleShareInvited?: boolean` (für positive Reviews — wurde der CTA bereits getriggert)
-
-**Neue Konstante:** `APOLOGY_CREDIT_STEPS = [100, 250, 500, 1000, 2500, 5000, 10000]`
-
----
-
-## 2. UI im HQ — `src/components/live-feedback.tsx`
-
-Im `ReviewCard` zwei kontextabhängige Aktionen ergänzen, basierend auf `item.stars`:
-
-### A) Positive Reviews (Stars ≥ 4, Quelle = App)
-- Neuer Button **„Google-Review anstoßen"** (Globe-Icon) neben WhatsApp/Phone.
-- Click → öffnet ein kleines Popover mit:
-  - vorformulierter Push-Text („Danke für deine Bewertung — teilst du sie auch auf Google? Dafür gibt's 250 Bonus-Credits 🎁")
-  - Auswahl Bonus-Credits (50 / 100 / 250)
-  - Button „Einladung senden" → markiert `googleShareInvited = true`, Toast „Einladung an {Kunde} gesendet".
-- Direktlink-Vorschau: `pub.googleReviewUrl` (read-only, kopierbar).
-
-### B) Negative Reviews (Stars ≤ 2)
-- Neuer prominenter Button **„Entschuldigen + Credits"** (Gift-Icon, amber/red Akzent) — erscheint statt/zusätzlich zu „Erledigen".
-- Click → Dialog (shadcn `Dialog`) mit:
-  1. **Schritt 1 – Prüfung bestätigen:** Checkbox „Ich habe die negative Bewertung geprüft und die Ursache verstanden."
-  2. **Schritt 2 – Credit-Stufe wählen:** RadioGroup mit den 7 Stufen, default `500`. Anzeige der Filial-Empfehlung („Empfohlen ab 1⭐: 1.000 Credits").
-  3. **Schritt 3 – Kanal:** RadioGroup `Push` (default) / `WhatsApp`. Hinweis: WhatsApp nur möglich, wenn Telefonnr. hinterlegt.
-  4. **Schritt 4 – Nachricht:** Textarea mit vorbefülltem Entschuldigungstext, inkl. Platzhalter `{credits}` und `{pub}`. Editierbar.
-  5. **Senden** → setzt `reward` auf dem `FeedbackItem`, schließt Dialog, Toast „Entschuldigung + {credits} Credits an {Kunde} gesendet (via {channel})". Card markiert mit grünem Badge „Wiedergutmachung +{credits} Cr.".
-
-Bereits vergebene Rewards werden in der Card als Info-Zeile angezeigt (statt erneutem Button).
-
----
-
-## 3. HQ-Sichtbarkeit / Reporting (klein, am Ende)
-
-In `src/routes/hq.index.tsx` im bestehenden Header-KPI-Bereich **eine** weitere Mini-KPI ergänzen, damit der Aufwand sichtbar wird:
-- „Wiedergutmachungs-Credits (7 Tage)" — Summe aller `reward.credits` der letzten 7 Tage über alle Filialen.
-
-Kein neuer Tab, kein neuer Routen-Eintrag.
-
----
-
-## 4. Backend-Vorbereitung (nur Stubs, kein echter Versand)
-
-Damit später Push/WhatsApp echt verschickt werden kann, eine **leere** Server-Function-Datei anlegen mit klarer Signatur — aber noch Mock-Return:
-
-`src/lib/rewards.functions.ts`:
-```ts
-sendApologyReward({ feedbackId, credits, channel, message }) → { ok: true, sentAt }
-inviteGoogleReview({ feedbackId, bonusCredits }) → { ok: true, link }
 ```
-Beide noch ohne `requireSupabaseAuth` und ohne echte DB / WhatsApp / Push — nur damit das Frontend bereits gegen die richtige API ruft. Hinweis im Code, dass für den echten Versand später:
-- Push → eigene Server-Function + FCM/APNS
-- WhatsApp → Twilio Connector (siehe vorhandene Twilio-Doku)
-- Google-Link → `pub.googleReviewUrl` reicht, kein Backend nötig
+Overview | Active Ops | Sales & Operations | Sortiment | Events | Feedback
+```
 
----
+Implementierung als neue Komponente `src/components/active-ops.tsx`, plus Mock-Daten in `src/lib/active-ops-mock.ts`.
 
-## Offene Frage (vor Umsetzung kurz klären)
+## Datenmodell (Mock)
 
-**Soll der echte Versand (Push / WhatsApp via Twilio) jetzt schon mit angebunden werden, oder reicht erstmal der UI-Flow mit Mock-Backend?**
+Erweiterung pro Pub um Live- & Ziel-Daten:
 
-Ich würde Stufe 1 (UI + Mock) jetzt bauen und den echten Versand als Folge-Schritt machen, sobald Push-Infrastruktur / Twilio-Connection bestätigt ist. So bekommst du das Konzept sofort klickbar im Dashboard.
+```text
+liveGuests        — aktuell eingecheckte App-Nutzer im Pub
+capacity          — max. Kapazität (für Auslastung in %)
+hourlyTarget[24]  — Ziel-Gästezahl je Stunde (Wochentag-aware, Mock-Kurve)
+pushReachable     — App-Nutzer im Einzugsgebiet, die jetzt erreichbar sind
+lastCampaignAt    — Cooldown-Anker (kein Spam)
+```
 
----
+Stunden-Ziel-Kurve: typisches Pub-Profil (Mittag flach, Peak 19–22 Uhr, Wochenende verschoben).
 
-## Dateien
+## UI / Layout
 
-- `src/lib/pubs-mock.ts` (Feld `googleReviewUrl`)
-- `src/lib/feedback-mock.ts` (Felder `customerName`, `reward`, `googleShareInvited`; Konstante `APOLOGY_CREDIT_STEPS`)
-- `src/components/live-feedback.tsx` (zwei neue Actions + Dialog + Popover)
-- `src/routes/hq.index.tsx` (eine Mini-KPI ergänzen)
-- `src/lib/rewards.functions.ts` (neu, Mock-Stubs)
+```text
+┌─ Active Ops ─────────────────────────────────────────────┐
+│  Live um 19:42 · Ø Auslastung 64% · 3 Pubs unter Ziel    │
+│  [ Stundenziel-Kurve aller Pubs · Sparkline ]            │
+├──────────────────────────────────────────────────────────┤
+│  Filiale          Live   Ziel   Δ     Auslastung  Status │
+│  Crown & Anchor    78     70   +8     87%        Über    │
+│  Red Lion          42     60  −18     53%        Unter ▾ │
+│    └ [Happy Hour] [Freibier] [50% Rabatt] [Credits] […]  │
+│  Foggy Dog         55     55    0     69%        Im Plan │
+│  …                                                       │
+└──────────────────────────────────────────────────────────┘
+```
+
+- Zeile **klickbar/aufklappbar**: zeigt 24-h-Mini-Kurve (Ist vs. Ziel) plus Push-Aktionsleiste.
+- **Status-Badges**: `Über Ziel` (grün), `Im Plan` (neutral), `Unter Ziel` (rot, mit Δ).
+- **Header-KPIs**: aktuelle Uhrzeit, Ø Auslastung, Anzahl Pubs unter Ziel, geplante Kampagnen heute.
+- Auto-Refresh-Indikator („Live · alle 30s") — im Mock per Interval simuliert.
+
+## Push-Kampagnen-Flow
+
+Aus der aufgeklappten Pub-Zeile öffnet sich ein Dialog mit Presets + freiem Feld:
+
+**Presets** (Buttons mit Icon, eine Spalte mit Vorschau):
+1. 🍻 **Happy Hour** — „Nächste 2 Std. alle Drinks −30%."
+2. 🎁 **Freibier** — „Heute Abend ein Freibier auf uns — bis 22 Uhr."
+3. 💸 **50% Rabatt** — „50% auf deine erste Runde, nur heute."
+4. 💎 **Credit-Boost** — „1.000 Credits geschenkt — nur für heute, auch für deine Freunde."
+5. 🎤 **Live-Event** — „Live-Musik startet gleich — letzte Plätze."
+6. ✍️ **Eigene Nachricht** — Freitext.
+
+**Dialog-Felder:**
+- Preset-Auswahl (oder Freitext)
+- **Reichweite** (Slider/Radio):
+  - „Stammgäste dieser Filiale" (Default — höchste Konversion)
+  - „Alle App-Nutzer im Einzugsgebiet (~5 km)"
+  - „Nur Gäste, die heute schon eingecheckt waren"
+- **Gültigkeitsdauer**: 1h / 2h / bis Ladenschluss
+- Bei „Credit-Boost": **Credit-Stufe** wiederverwenden (100…10.000) aus `APOLOGY_CREDIT_STEPS`
+- **Cooldown-Check**: Wenn dieser Pub in den letzten 90 Min schon eine Push abgefeuert hat → Warnhinweis („Kunden nicht ermüden — letzte Kampagne vor 38 Min").
+- **Vorschau** der Push-Nachricht inkl. Pub-Name und CTA.
+- Bestätigen sendet via neuer Mock-Funktion `sendPushCampaign(...)` in `src/lib/rewards.functions.ts`.
+
+## Backend-Stubs (Mock, Pattern wie bestehende `rewards.functions.ts`)
+
+```ts
+// src/lib/rewards.functions.ts (erweitern)
+export type PushCampaignInput = {
+  pubId: string;
+  preset: "happy_hour" | "free_drink" | "discount_50" | "credits" | "live_event" | "custom";
+  message: string;
+  audience: "regulars" | "catchment" | "checked_in_today";
+  validHours: number;
+  credits?: number; // nur bei preset=credits
+};
+export async function sendPushCampaign(input: PushCampaignInput) { /* mock */ }
+```
+
+Später als `createServerFn` mit FCM/APNS-Versand realisierbar — heute Mock + Toast-Bestätigung wie beim Apology-Flow.
+
+## Technische Details
+
+- Neue Datei: `src/lib/active-ops-mock.ts` — exportiert `LIVE_OPS` (pro Pub: liveGuests, capacity, hourlyTarget, pushReachable, lastCampaignAt) plus `getCurrentHourTarget(pub)` und `getStatus(pub)`.
+- Neue Datei: `src/components/active-ops.tsx` — Hauptkomponente mit Header-KPIs, Tabelle, expandable Rows, Dialog.
+- Optional Sub-Komponenten: `LiveStatusBadge`, `HourlyMiniChart` (24 SVG-Bars, Ist vs. Ziel), `PushCampaignDialog`.
+- `src/routes/hq.index.tsx`: neuen `TabsTrigger` + `TabsContent value="active-ops"` einfügen, Icon `Activity` oder `Zap` aus lucide-react.
+- Auto-Refresh: `useEffect` mit `setInterval(30_000)` → mockt kleine Live-Schwankungen (±5%).
+- State lokal in der Komponente — Kampagnen-Verlauf in einem `Map<pubId, lastCampaignAt>`.
+- Design-Tokens aus `src/styles.css` verwenden, keine Hex-Werte hardcoden.
+
+## Was bleibt unverändert
+
+- Bestehende Tabs, Komponenten und Routen.
+- Bestehender Apology- und Google-Review-Flow.
+- `src/lib/pubs-mock.ts` wird **nicht** geändert — Live-Daten kommen aus der neuen Mock-Datei und werden per `pubId` gejoint.
