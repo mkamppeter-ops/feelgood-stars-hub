@@ -80,6 +80,9 @@ function PubLocalView() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {isStaff && (
+              <Badge variant="secondary" className="hidden sm:inline-flex">Staff-View</Badge>
+            )}
             <Select value={pubId} onValueChange={setPubId}>
               <SelectTrigger className="h-9 w-[200px] text-sm">
                 <SelectValue />
@@ -91,9 +94,12 @@ function PubLocalView() {
               </SelectContent>
             </Select>
             <DateRangePicker value={range} onChange={setRange} />
-            <Link to="/hq" className="hidden sm:inline-flex">
-              <Button variant="outline" size="sm">HQ View</Button>
-            </Link>
+            {!isStaff && (
+              <Link to="/hq" className="hidden sm:inline-flex">
+                <Button variant="outline" size="sm">HQ View</Button>
+              </Link>
+            )}
+            <LogoutButton />
           </div>
         </div>
       </header>
