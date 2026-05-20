@@ -57,3 +57,30 @@ export async function confirmGoogleReview(input: GoogleConfirmInput) {
   await new Promise((r) => setTimeout(r, 150));
   return { ok: true as const, reviewedAt: Date.now(), ...input };
 }
+
+export type PushCampaignPreset =
+  | "happy_hour"
+  | "free_drink"
+  | "discount_50"
+  | "credits"
+  | "live_event"
+  | "custom";
+
+export type PushCampaignAudience = "regulars" | "catchment" | "checked_in_today";
+
+export type PushCampaignInput = {
+  pubId: string;
+  preset: PushCampaignPreset;
+  message: string;
+  audience: PushCampaignAudience;
+  validHours: number;
+  credits?: number;
+};
+
+export async function sendPushCampaign(input: PushCampaignInput) {
+  // Mock: simuliert Push-Versand an die gewählte Audience.
+  // TODO: später als createServerFn mit FCM/APNS realisieren.
+  await new Promise((r) => setTimeout(r, 280));
+  return { ok: true as const, sentAt: Date.now(), ...input };
+}
+
