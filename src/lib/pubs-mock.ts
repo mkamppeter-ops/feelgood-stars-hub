@@ -14,6 +14,7 @@ export type Pub = {
   revenueTarget: number;  // % Zielerreichung
   activeAppUsers: number;   // 7-Tage-aktive App-Nutzer im Einzugsgebiet
   appUsersTarget: number;   // Zielwert, der für 100% Umsatzziel nötig ist
+  googleReviewUrl: string;  // Direkt-Link zur Google-Bewertung
   scoreHistory: { day: string; score: number }[];
   reviews: { author: string; date: string; stars: number; text: string }[];
 };
