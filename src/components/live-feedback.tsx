@@ -416,6 +416,35 @@ function ReviewCard({
               </div>
             )}
 
+            {/* Google-Review Aktionsleiste — nur für 4–5⭐ App-Reviews,
+                solange noch nicht final als "reviewed" bestätigt. */}
+            {isApp && item.stars >= 4 && googleStatus !== "reviewed" && (googleStatus === "invited" || googleStatus === "clicked") && (
+              <div className="rounded-md border border-blue-200 bg-blue-50/50 px-3 py-2 text-xs text-blue-900 flex flex-wrap items-center gap-2">
+                <span className="flex-1 min-w-0">
+                  {googleStatus === "clicked"
+                    ? "Kunde hat den Link geöffnet — sobald die Bewertung bei Google sichtbar ist, hier bestätigen."
+                    : "Auto-Einladung verschickt. Status wird per Kunden-Rückfrage in der App aktualisiert."}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1 text-xs bg-white"
+                  onClick={() => onGoogleClick(item, pub.googleReviewUrl)}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Link öffnen (Simulation)
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-7 gap-1 text-xs bg-emerald-500 hover:bg-emerald-600 text-white"
+                  onClick={() => onConfirmReviewed(item)}
+                >
+                  <ShieldCheck className="h-3 w-3" />
+                  Als bewertet bestätigen
+                </Button>
+              </div>
+            )}
+
             {/* Footer */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
               <div className="flex flex-wrap items-center gap-1.5">
