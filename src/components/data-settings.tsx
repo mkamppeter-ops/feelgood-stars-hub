@@ -190,7 +190,7 @@ export function DataSettings() {
           <div className="space-y-1">
             {PUBS.map((p) => {
               const active = p.id === selectedPubId;
-              const hasData = !!allSettings[p.id];
+              const hasData = Object.keys(allSettings).some((k) => k.startsWith(`${p.id}__`));
               return (
                 <button
                   key={p.id}
