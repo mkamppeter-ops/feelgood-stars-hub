@@ -30,10 +30,6 @@ export const Route = createFileRoute("/hq/")({
   component: HQPage,
 });
 
-const chartData = PUBS.slice(0, 5).map((p) => ({
-  name: p.name.replace(/^The /, ""),
-  value: p.spendPerBooking,
-}));
 
 function HQPage() {
   const navigate = useNavigate();
