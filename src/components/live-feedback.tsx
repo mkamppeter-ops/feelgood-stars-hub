@@ -13,15 +13,18 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Check, Phone, Star, Globe, Smartphone, ChevronDown, Gift, BellRing, Sparkles, ShieldCheck, Clock,
+  Check, Phone, Star, Globe, Smartphone, ChevronDown, Gift, BellRing, Sparkles, ShieldCheck, Clock, ExternalLink, MousePointerClick,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  FEEDBACK, CATEGORY_META, CATEGORY_ORDER, APOLOGY_CREDIT_STEPS, GOOGLE_INVITE_COOLDOWN_DAYS,
+  FEEDBACK, CATEGORY_META, CATEGORY_ORDER, APOLOGY_CREDIT_STEPS,
+  GOOGLE_INVITE_COOLDOWN_DAYS, GOOGLE_CLICKED_COOLDOWN_DAYS,
   type FeedbackItem, type CategoryKey, type CategoryRating, type ApologyReward, type GoogleStatus,
 } from "@/lib/feedback-mock";
 import { PUBS, type Pub } from "@/lib/pubs-mock";
-import { sendApologyReward, inviteGoogleReview } from "@/lib/rewards.functions";
+import {
+  sendApologyReward, inviteGoogleReview, markGoogleReviewClicked, confirmGoogleReview,
+} from "@/lib/rewards.functions";
 
 
 function WhatsAppIcon({ className }: { className?: string }) {
