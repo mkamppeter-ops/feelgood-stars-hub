@@ -284,12 +284,22 @@ function CategoryRow({ k, rating }: { k: CategoryKey; rating: CategoryRating }) 
   );
 }
 
-function GoogleStatusBadge({ status, invitedAt }: { status: GoogleStatus; invitedAt?: number }) {
+function GoogleStatusBadge({
+  status, invitedAt, clickedAt,
+}: { status: GoogleStatus; invitedAt?: number; clickedAt?: number }) {
   if (status === "reviewed") {
     return (
       <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/10 border-0 font-normal gap-1">
         <ShieldCheck className="h-3 w-3" />
-        Google-Bewertung abgegeben
+        Google-Bewertung bestätigt
+      </Badge>
+    );
+  }
+  if (status === "clicked") {
+    return (
+      <Badge className="bg-indigo-500/10 text-indigo-700 hover:bg-indigo-500/10 border-0 font-normal gap-1">
+        <MousePointerClick className="h-3 w-3" />
+        Link geöffnet · noch nicht bestätigt
       </Badge>
     );
   }
@@ -297,12 +307,15 @@ function GoogleStatusBadge({ status, invitedAt }: { status: GoogleStatus; invite
     return (
       <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/10 border-0 font-normal gap-1">
         <Sparkles className="h-3 w-3" />
-        Google-Einladung gesendet (auto)
+        Einladung gesendet (auto)
       </Badge>
     );
   }
   if (status === "cooldown") {
-    const days = invitedAt ? Math.max(0, GOOGLE_INVITE_COOLDOWN_DAYS - Math.floor((Date.now() - invitedAt) / (1000 * 60 * 60 * 24))) : GOOGLE_INVITE_COOLDOWN_DAYS;
+    // Cooldown-Länge richtet sich danach, wie weit der Kunde schon war.
+    const cooldownDays = clickedAt ? GOOGLE_CLICKED_COOLDOWN_DAYS : GOOGLE_INVITE_COOLDOWN_DAYS;
+    const ref = clickedAt ?? invitedAt;
+    const days = ref ? Math.max(0, cooldownDays - Math.floor((Date.now() - ref) / (1000 * 60 * 60 * 24))) : cooldownDays;
     return (
       <Badge className="bg-muted text-muted-foreground hover:bg-muted border-0 font-normal gap-1">
         <Clock className="h-3 w-3" />
@@ -315,7 +328,7 @@ function GoogleStatusBadge({ status, invitedAt }: { status: GoogleStatus; invite
 
 function ReviewCard({
   item, done, expanded, reward, googleStatus,
-  onToggleDone, onToggleExpand, onApology,
+  onToggleDone, onToggleExpand, onApology, onGoogleClick, onConfirmReviewed,
 }: {
   item: FeedbackItem;
   done: boolean;
@@ -325,6 +338,8 @@ function ReviewCard({
   onToggleDone: () => void;
   onToggleExpand: () => void;
   onApology: (item: FeedbackItem, reward: ApologyReward) => void | Promise<void>;
+  onGoogleClick: (item: FeedbackItem, url: string) => void | Promise<void>;
+  onConfirmReviewed: (item: FeedbackItem) => void | Promise<void>;
 }) {
   const pub = PUBS.find((p) => p.id === item.pubId)!;
   const isLow = item.stars <= 2;
