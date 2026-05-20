@@ -211,7 +211,7 @@ function ReviewCard({
                   Kategorie-Check
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {(Object.keys(CATEGORY_META) as CategoryKey[]).map((k) => (
+                  {CATEGORY_ORDER.map((k) => (
                     <CategoryRow key={k} k={k} rating={item.categories![k]} />
                   ))}
                 </div>
