@@ -23,6 +23,7 @@ import { SortimentMatrix } from "@/components/sortiment-matrix";
 import { EventsResults } from "@/components/events-results";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { ActiveOps } from "@/components/active-ops";
+import { RequireRole, LogoutButton } from "@/components/auth-guard";
 
 export const Route = createFileRoute("/hq/")({
   head: () => ({
@@ -31,7 +32,11 @@ export const Route = createFileRoute("/hq/")({
       { name: "description", content: "Management-Dashboard für die Pub-Kette: KPIs, Leaderboard und Direct Contact." },
     ],
   }),
-  component: HQPage,
+  component: () => (
+    <RequireRole roles={["hq_admin"]}>
+      <HQPage />
+    </RequireRole>
+  ),
 });
 
 
@@ -118,6 +123,7 @@ function HQPage() {
             <Button variant="outline" size="icon" className="hidden sm:inline-flex"><Search className="h-4 w-4" /></Button>
             <Button variant="outline" size="icon" className="hidden sm:inline-flex"><Bell className="h-4 w-4" /></Button>
             <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground flex items-center justify-center text-sm font-semibold">HQ</div>
+            <LogoutButton />
           </div>
         </header>
 

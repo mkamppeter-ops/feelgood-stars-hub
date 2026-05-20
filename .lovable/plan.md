@@ -1,108 +1,86 @@
 ## Ziel
 
-Ein neuer Tab **„Active Ops"** im HQ-Dashboard, in dem du auf einen Blick siehst:
-- wie viele eingeloggte App-Nutzer gerade **im** jedem Pub sind,
-- wie das gegen den **Ziel-Wert für die aktuelle Uhrzeit** abschneidet,
-- und in **Pubs mit zu wenig Gästen** sofort eine **Push-Kampagne** abfeuern kannst (Happy Hour, Freibier, 50% Rabatt, Credit-Geschenk, freier Text).
+Login-Seite als zwingender Startpunkt unter `/`. Erst nach Auswahl einer Rolle (oder in der echten Welt: erfolgreichem Login) kommt man an `/hq` oder `/pub`. Für die Demo gibt es darunter drei Schnell-Buttons, die jeweils eine Rolle simulieren.
 
-## Wo es lebt
+## Routing-Umbau
 
-Neuer Tab in `src/routes/hq.index.tsx` zwischen „Overview" und „Sales & Operations":
+Aktuell ist `/` das **Kunden-Feedback-Formular** (QR-Code-Einstieg im Pub). Das verträgt sich nicht mit einer Pflicht-Login-Seite auf `/`.
 
-```
-Overview | Active Ops | Sales & Operations | Sortiment | Events | Feedback
-```
+Vorschlag:
 
-Implementierung als neue Komponente `src/components/active-ops.tsx`, plus Mock-Daten in `src/lib/active-ops-mock.ts`.
+| Pfad | Vorher | Nachher |
+|---|---|---|
+| `/` | Kunden-Feedback | **Login** |
+| `/login` | — | Alias auf `/` (gleiche Komponente) |
+| `/feedback` | — | Kunden-Feedback-Formular (öffentlich, kein Login — für QR-Codes) |
+| `/hq` | HQ Dashboard | nur HQ Admin |
+| `/pub?mode=manager` | Pub View | nur Pub Manager |
+| `/pub?mode=staff` | — | nur Bar Staff (gleiche Komponente, eingeschränkter Modus später) |
 
-## Datenmodell (Mock)
+Wenn du das Kunden-Feedback woanders willst (z. B. unter einer Pub-spezifischen URL `/f/$pubId`), sag Bescheid — sonst gehe ich mit `/feedback`.
 
-Erweiterung pro Pub um Live- & Ziel-Daten:
+## Login-Seite (`/`)
 
-```text
-liveGuests        — aktuell eingecheckte App-Nutzer im Pub
-capacity          — max. Kapazität (für Auslastung in %)
-hourlyTarget[24]  — Ziel-Gästezahl je Stunde (Wochentag-aware, Mock-Kurve)
-pushReachable     — App-Nutzer im Einzugsgebiet, die jetzt erreichbar sind
-lastCampaignAt    — Cooldown-Anker (kein Spam)
-```
+- **Card-Design**, zentriert, voller Viewport-Hintergrund mit dezentem Gradient.
+- Inhalt:
+  - Logo-Platzhalter (rundes Icon-Square mit Initialen „P&G" — passt zu „Pub&Go") + Wortmarke.
+  - Headline „Willkommen zurück" + Subtext „Melde dich an, um auf dein Dashboard zuzugreifen."
+  - Felder: E-Mail, Passwort (mit Show/Hide-Toggle), „Passwort vergessen?"-Link (Mock, ohne Ziel).
+  - Primary-Button „Login" (zeigt nur Toast „Demo: Bitte einen Rollen-Button nutzen" — keine echte Auth).
+  - Trenner „— oder Demo-Zugang —".
+  - **Drei Demo-Buttons** (Outline-Style, Icons):
+    - 🏢 **Login als HQ Admin** → setzt Rolle, navigiert nach `/hq`
+    - 🍺 **Login als Pub Manager** → setzt Rolle, navigiert nach `/pub?mode=manager`
+    - 👤 **Login als Bar Staff** → setzt Rolle, navigiert nach `/pub?mode=staff`
+  - Footer-Text klein: „Demo-Modus · keine echte Authentifizierung".
+- Design-Tokens aus `src/styles.css`, keine Hex-Werte hardcoden.
 
-Stunden-Ziel-Kurve: typisches Pub-Profil (Mittag flach, Peak 19–22 Uhr, Wochenende verschoben).
+## Mock-Auth-Layer
 
-## UI / Layout
+Da noch keine echte Auth gewünscht ist (reine Demo), nutzen wir **localStorage** als Mock-Session-Store. Eine spätere Migration auf Supabase Auth ist mit minimalem Diff möglich.
 
-```text
-┌─ Active Ops ─────────────────────────────────────────────┐
-│  Live um 19:42 · Ø Auslastung 64% · 3 Pubs unter Ziel    │
-│  [ Stundenziel-Kurve aller Pubs · Sparkline ]            │
-├──────────────────────────────────────────────────────────┤
-│  Filiale          Live   Ziel   Δ     Auslastung  Status │
-│  Crown & Anchor    78     70   +8     87%        Über    │
-│  Red Lion          42     60  −18     53%        Unter ▾ │
-│    └ [Happy Hour] [Freibier] [50% Rabatt] [Credits] […]  │
-│  Foggy Dog         55     55    0     69%        Im Plan │
-│  …                                                       │
-└──────────────────────────────────────────────────────────┘
-```
-
-- Zeile **klickbar/aufklappbar**: zeigt 24-h-Mini-Kurve (Ist vs. Ziel) plus Push-Aktionsleiste.
-- **Status-Badges**: `Über Ziel` (grün), `Im Plan` (neutral), `Unter Ziel` (rot, mit Δ).
-- **Header-KPIs**: aktuelle Uhrzeit, Ø Auslastung, Anzahl Pubs unter Ziel, geplante Kampagnen heute.
-- Auto-Refresh-Indikator („Live · alle 30s") — im Mock per Interval simuliert.
-
-## Push-Kampagnen-Flow
-
-Aus der aufgeklappten Pub-Zeile öffnet sich ein Dialog mit Presets + freiem Feld:
-
-**Presets** (Buttons mit Icon, eine Spalte mit Vorschau):
-1. 🍻 **Happy Hour** — „Nächste 2 Std. alle Drinks −30%."
-2. 🎁 **Freibier** — „Heute Abend ein Freibier auf uns — bis 22 Uhr."
-3. 💸 **50% Rabatt** — „50% auf deine erste Runde, nur heute."
-4. 💎 **Credit-Boost** — „1.000 Credits geschenkt — nur für heute, auch für deine Freunde."
-5. 🎤 **Live-Event** — „Live-Musik startet gleich — letzte Plätze."
-6. ✍️ **Eigene Nachricht** — Freitext.
-
-**Dialog-Felder:**
-- Preset-Auswahl (oder Freitext)
-- **Reichweite** (Slider/Radio):
-  - „Stammgäste dieser Filiale" (Default — höchste Konversion)
-  - „Alle App-Nutzer im Einzugsgebiet (~5 km)"
-  - „Nur Gäste, die heute schon eingecheckt waren"
-- **Gültigkeitsdauer**: 1h / 2h / bis Ladenschluss
-- Bei „Credit-Boost": **Credit-Stufe** wiederverwenden (100…10.000) aus `APOLOGY_CREDIT_STEPS`
-- **Cooldown-Check**: Wenn dieser Pub in den letzten 90 Min schon eine Push abgefeuert hat → Warnhinweis („Kunden nicht ermüden — letzte Kampagne vor 38 Min").
-- **Vorschau** der Push-Nachricht inkl. Pub-Name und CTA.
-- Bestätigen sendet via neuer Mock-Funktion `sendPushCampaign(...)` in `src/lib/rewards.functions.ts`.
-
-## Backend-Stubs (Mock, Pattern wie bestehende `rewards.functions.ts`)
+Neue Datei: `src/lib/auth-mock.ts`
 
 ```ts
-// src/lib/rewards.functions.ts (erweitern)
-export type PushCampaignInput = {
-  pubId: string;
-  preset: "happy_hour" | "free_drink" | "discount_50" | "credits" | "live_event" | "custom";
-  message: string;
-  audience: "regulars" | "catchment" | "checked_in_today";
-  validHours: number;
-  credits?: number; // nur bei preset=credits
-};
-export async function sendPushCampaign(input: PushCampaignInput) { /* mock */ }
+export type Role = "hq_admin" | "pub_manager" | "bar_staff";
+export type Session = { role: Role; loggedInAt: number };
+
+export function getSession(): Session | null { /* read localStorage */ }
+export function setSession(role: Role): void { /* write localStorage */ }
+export function clearSession(): void { /* remove */ }
+export function useSession(): Session | null { /* hook mit storage-event */ }
 ```
 
-Später als `createServerFn` mit FCM/APNS-Versand realisierbar — heute Mock + Toast-Bestätigung wie beim Apology-Flow.
+`useSession` abonniert `window.storage` damit Logout in einem Tab auch andere Tabs aktualisiert.
 
-## Technische Details
+## Route-Schutz
 
-- Neue Datei: `src/lib/active-ops-mock.ts` — exportiert `LIVE_OPS` (pro Pub: liveGuests, capacity, hourlyTarget, pushReachable, lastCampaignAt) plus `getCurrentHourTarget(pub)` und `getStatus(pub)`.
-- Neue Datei: `src/components/active-ops.tsx` — Hauptkomponente mit Header-KPIs, Tabelle, expandable Rows, Dialog.
-- Optional Sub-Komponenten: `LiveStatusBadge`, `HourlyMiniChart` (24 SVG-Bars, Ist vs. Ziel), `PushCampaignDialog`.
-- `src/routes/hq.index.tsx`: neuen `TabsTrigger` + `TabsContent value="active-ops"` einfügen, Icon `Activity` oder `Zap` aus lucide-react.
-- Auto-Refresh: `useEffect` mit `setInterval(30_000)` → mockt kleine Live-Schwankungen (±5%).
-- State lokal in der Komponente — Kampagnen-Verlauf in einem `Map<pubId, lastCampaignAt>`.
-- Design-Tokens aus `src/styles.css` verwenden, keine Hex-Werte hardcoden.
+TanStack-Pattern: kein `beforeLoad`-Context-Refactor (Overkill für Mock), stattdessen ein kleiner **Guard-Wrapper** pro geschützter Route:
+
+- In `hq.index.tsx` und `hq.$pubId.tsx`: prüfe `getSession()?.role === "hq_admin"`. Falls nein → `<Navigate to="/" />`.
+- In `pub.tsx`: prüfe Rolle ∈ `["pub_manager", "bar_staff"]`. Falls nein → `<Navigate to="/" />`. Mode aus URL-Search-Param `mode` lesen (Default: aus Rolle ableiten).
+- Auf `/` (Login): falls bereits eingeloggt → direkter Redirect ins passende Dashboard.
+
+Begründung: Wir behalten die Files an Ort und Stelle (kein Verschieben unter `_authenticated/`), das hält den Diff klein und die bestehenden Routen ((`hq.index.tsx`, `hq.$pubId.tsx`, `pub.tsx`, `admin.tsx`) unverändert in ihrer Struktur. Bei späterer Migration auf Supabase Auth wandern die Checks ins `beforeLoad`.
+
+`admin.tsx` bekommt denselben Schutz wie HQ.
+
+## Header-Integration
+
+In `hq.index.tsx` und `pub.tsx` Sidebar/Topbar kleine **„Abmelden"**-Aktion ergänzen (Avatar-Menü oder einfacher Button), die `clearSession()` aufruft und auf `/` navigiert. So kann man zwischen den Rollen demo-mäßig schnell wechseln.
+
+## Bar-Staff-Modus (Stub)
+
+`pub.tsx` bekommt einen `mode`-Search-Param. Für jetzt zeigt der Staff-Modus dieselbe View mit einem dezenten Badge „Staff-View" im Header. Welche Tabs/Aktionen Staff vs. Manager tatsächlich sehen darf, klären wir separat — bitte kurz Bescheid geben, was Staff *nicht* sehen soll (z. B. Sales, Sortiment-Margen?), dann baue ich das in einem Folge-Turn.
+
+## Geänderte / neue Dateien
+
+- **Neu**: `src/routes/login.tsx` (oder `src/routes/index.tsx` ersetzen — Login wird neue Index-Route).
+- **Neu**: `src/lib/auth-mock.ts`.
+- **Verschoben**: aktueller Inhalt von `src/routes/index.tsx` → `src/routes/feedback.tsx` (1:1, nur Route-Pfad ändert sich).
+- **Edit**: `src/routes/hq.index.tsx`, `src/routes/hq.$pubId.tsx`, `src/routes/pub.tsx`, `src/routes/admin.tsx` — Guard + Logout-Button.
 
 ## Was bleibt unverändert
 
-- Bestehende Tabs, Komponenten und Routen.
-- Bestehender Apology- und Google-Review-Flow.
-- `src/lib/pubs-mock.ts` wird **nicht** geändert — Live-Daten kommen aus der neuen Mock-Datei und werden per `pubId` gejoint.
+- Bestehende Komponenten (`ActiveOps`, `LiveFeedback`, `SalesOps`, …), Mock-Daten, Tabs-Struktur.
+- Lovable Cloud / Supabase wird **nicht** angefasst — reine Frontend-Demo-Auth.

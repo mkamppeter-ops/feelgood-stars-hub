@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { RequireRole, LogoutButton } from "@/components/auth-guard";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,11 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
-  component: AdminPage,
+  component: () => (
+    <RequireRole roles={["hq_admin"]}>
+      <AdminPage />
+    </RequireRole>
+  ),
 });
 
 type Feedback = {
@@ -156,9 +161,12 @@ function AdminPage() {
             <h1 className="text-3xl font-bold">Feedback Admin</h1>
             <p className="text-muted-foreground text-sm">Interne Übersicht für das Qualitäts-Team</p>
           </div>
-          <Button variant="outline" onClick={load} disabled={loading}>
-            {loading ? "Lädt…" : "Aktualisieren"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={load} disabled={loading}>
+              {loading ? "Lädt…" : "Aktualisieren"}
+            </Button>
+            <LogoutButton />
+          </div>
         </header>
 
         <ConnectionDetails />

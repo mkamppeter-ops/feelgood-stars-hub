@@ -17,18 +17,31 @@ import { FEEDBACK, CATEGORY_META, CATEGORY_ORDER, type FeedbackItem } from "@/li
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 import { SalesOps } from "@/components/sales-ops";
 
+import { RequireRole, LogoutButton } from "@/components/auth-guard";
+import { useSession } from "@/lib/auth-mock";
+
 export const Route = createFileRoute("/pub")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    mode: (s.mode === "staff" ? "staff" : "manager") as "manager" | "staff",
+  }),
   head: () => ({
     meta: [
       { title: "Pub Ops Navigator — Local View" },
       { name: "description", content: "Lokales Dashboard für den Bar-Manager: Performance, Umsätze und Gast-Feedback der eigenen Filiale." },
     ],
   }),
-  component: PubLocalView,
+  component: () => (
+    <RequireRole roles={["pub_manager", "bar_staff"]}>
+      <PubLocalView />
+    </RequireRole>
+  ),
 });
 
 function PubLocalView() {
-  const [pubId, setPubId] = useState(PUBS[2].id); // default: rank 3 ("The Foggy Dog") for motivational copy
+  const { mode } = Route.useSearch();
+  const session = useSession();
+  const isStaff = session?.role === "bar_staff" || mode === "staff";
+  const [pubId, setPubId] = useState(PUBS[2].id);
   const [range, setRange] = useState<DateRange>("last7");
   const factor = RANGE_FACTOR[range];
 
@@ -67,6 +80,9 @@ function PubLocalView() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {isStaff && (
+              <Badge variant="secondary" className="hidden sm:inline-flex">Staff-View</Badge>
+            )}
             <Select value={pubId} onValueChange={setPubId}>
               <SelectTrigger className="h-9 w-[200px] text-sm">
                 <SelectValue />
@@ -78,9 +94,12 @@ function PubLocalView() {
               </SelectContent>
             </Select>
             <DateRangePicker value={range} onChange={setRange} />
-            <Link to="/hq" className="hidden sm:inline-flex">
-              <Button variant="outline" size="sm">HQ View</Button>
-            </Link>
+            {!isStaff && (
+              <Link to="/hq" className="hidden sm:inline-flex">
+                <Button variant="outline" size="sm">HQ View</Button>
+              </Link>
+            )}
+            <LogoutButton />
           </div>
         </div>
       </header>
