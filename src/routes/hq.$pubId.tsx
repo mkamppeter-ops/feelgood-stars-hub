@@ -71,9 +71,10 @@ function PubDetailPage() {
   const factor = RANGE_FACTOR[range];
 
   const kpis = useMemo(() => ({
-    score: Math.max(0, Math.min(100, Math.round(pub.score * factor))),
-    booking: Math.max(0, Math.min(100, Math.round(pub.bookingRatio * factor))),
-    revenue: Math.round(pub.revenueTarget * factor),
+    score:    Math.max(0, Math.min(100, Math.round(computeScore(pub) * factor))),
+    walkIn:   Math.max(0, Math.min(100, Math.round(pub.walkInRatio * factor))),
+    booking:  Math.max(0, Math.min(100, Math.round(pub.bookingRatio * factor))),
+    revenue:  Math.round(pub.revenueTarget * factor),
     feedback: Math.min(5, +(pub.feedback * (0.96 + factor * 0.04)).toFixed(1)),
   }), [factor, pub]);
 
