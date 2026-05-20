@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,22 +8,21 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import {
-  Check, Phone, Star, Globe, Smartphone, ChevronDown, Gift, BellRing, Copy, Sparkles,
+  Check, Phone, Star, Globe, Smartphone, ChevronDown, Gift, BellRing, Sparkles, ShieldCheck, Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  FEEDBACK, CATEGORY_META, CATEGORY_ORDER, APOLOGY_CREDIT_STEPS, GOOGLE_SHARE_BONUS_STEPS,
-  type FeedbackItem, type CategoryKey, type CategoryRating, type ApologyReward,
+  FEEDBACK, CATEGORY_META, CATEGORY_ORDER, APOLOGY_CREDIT_STEPS, GOOGLE_INVITE_COOLDOWN_DAYS,
+  type FeedbackItem, type CategoryKey, type CategoryRating, type ApologyReward, type GoogleStatus,
 } from "@/lib/feedback-mock";
 import { PUBS, type Pub } from "@/lib/pubs-mock";
 import { sendApologyReward, inviteGoogleReview } from "@/lib/rewards.functions";
+
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
