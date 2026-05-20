@@ -20,6 +20,7 @@ import { LiveFeedback } from "@/components/live-feedback";
 import { SalesOps } from "@/components/sales-ops";
 import { Sortiment } from "@/components/sortiment";
 import { SortimentMatrix } from "@/components/sortiment-matrix";
+import { EventsResults } from "@/components/events-results";
 
 export const Route = createFileRoute("/hq/")({
   head: () => ({
@@ -124,6 +125,7 @@ function HQPage() {
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="sales">Sales &amp; Operations</TabsTrigger>
               <TabsTrigger value="sortiment">Sortiment</TabsTrigger>
+              <TabsTrigger value="events">Events</TabsTrigger>
               <TabsTrigger value="feedback" className="gap-2">
                 Live Feedback
                 <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
@@ -408,6 +410,12 @@ function HQPage() {
               <Sortiment data={SALES_GLOBAL} factor={factor} title="Sortiment & Konsum — Alle Filialen" />
               <SortimentMatrix />
             </TabsContent>
+
+            <TabsContent value="events" className="mt-0">
+              <EventsResults />
+            </TabsContent>
+
+
 
 
             <TabsContent value="feedback" className="mt-0">
