@@ -12,9 +12,9 @@ import {
 } from "recharts";
 import {
   Trophy, TrendingUp, Users, Star, Gauge, Phone, LayoutDashboard,
-  Building2, MessageSquare, Settings, Bell, Search,
+  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck,
 } from "lucide-react";
-import { PUBS } from "@/lib/pubs-mock";
+import { PUBS, computeScore } from "@/lib/pubs-mock";
 import { SALES_GLOBAL, SALES_BY_PUB, formatEUR } from "@/lib/sales-mock";
 import { ArrowUpRight } from "lucide-react";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
@@ -43,12 +43,20 @@ function HQPage() {
   const [pulseKey, setPulseKey] = useState(0);
   const factor = RANGE_FACTOR[range];
 
-  const kpis = useMemo(() => ({
-    score: Math.round(82 * factor),
-    booking: Math.round(76 * factor),
-    walkIn: Math.max(5, Math.round(22 * (2 - factor))),
-    feedback: Math.min(5, +(4.6 * (0.96 + factor * 0.04)).toFixed(1)),
-  }), [factor]);
+  const kpis = useMemo(() => {
+    const avgRevenueTarget = PUBS.reduce((s, p) => s + p.revenueTarget, 0) / PUBS.length;
+    const avgWalkIn        = PUBS.reduce((s, p) => s + p.walkInRatio, 0) / PUBS.length;
+    const avgFeedback      = PUBS.reduce((s, p) => s + p.feedback, 0) / PUBS.length;
+    const avgBooking       = PUBS.reduce((s, p) => s + p.bookingRatio, 0) / PUBS.length;
+    const avgScore         = PUBS.reduce((s, p) => s + computeScore(p), 0) / PUBS.length;
+    return {
+      score:        Math.round(avgScore * factor),
+      revenueGoal:  Math.round(avgRevenueTarget * factor),
+      walkIn:       Math.round(avgWalkIn * factor),
+      feedback:     Math.min(5, +(avgFeedback * (0.96 + factor * 0.04)).toFixed(1)),
+      booking:      Math.round(avgBooking * factor),
+    };
+  }, [factor]);
 
   const handleRangeChange = (v: DateRange) => {
     setRange(v);
@@ -125,9 +133,9 @@ function HQPage() {
               {/* KPIs */}
               <section key={pulseKey} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 animate-in fade-in duration-500">
                 <KpiCard icon={Gauge} label="Ø Pub Performance Score" value={`${kpis.score}`} suffix="/100" delta="+3.2%" tone="primary" />
-                <KpiCard icon={TrendingUp} label="Gesamt Booking Ratio" value={`${kpis.booking}`} suffix="%" delta="+1.8%" tone="emerald" />
-                <KpiCard icon={Users} label="Walk-In Quote" value={`${kpis.walkIn}`} suffix="%" delta="-0.6%" tone="amber" negative />
-                <KpiCard icon={Star} label="Interner Feedback-Schnitt" value={`${kpis.feedback}`} suffix=" ⭐" delta="+0.1" tone="violet" />
+                <KpiCard icon={Target} label="Ø Umsatz-Ziel" value={`${kpis.revenueGoal}`} suffix="%" delta="+2.4%" tone={kpis.revenueGoal >= 100 ? "emerald" : "amber"} />
+                <KpiCard icon={Users} label="Ø Walk-In Ratio" value={`${kpis.walkIn}`} suffix="%" delta="+0.8%" tone="amber" />
+                <KpiCard icon={Star} label="Ø Gäste-Feedback" value={`${kpis.feedback}`} suffix=" ⭐" delta="+0.1" tone="violet" />
               </section>
 
               {/* Middle row: Leaderboard + Direct Contact */}
@@ -136,7 +144,9 @@ function HQPage() {
                   <CardHeader className="flex flex-row items-center justify-between space-y-0">
                     <div>
                       <CardTitle className="text-base">Leaderboard</CardTitle>
-                      <p className="text-xs text-muted-foreground mt-1">Ranking nach Pub Performance Score</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Score = Mittel aus Umsatz-Ziel, Walk-In Ratio &amp; Gäste-Feedback
+                      </p>
                     </div>
                     <Badge variant="secondary" className="font-normal">{PUBS.length} Pubs</Badge>
                   </CardHeader>
@@ -147,23 +157,27 @@ function HQPage() {
                           <TableHead className="w-16">#</TableHead>
                           <TableHead>Pub</TableHead>
                           <TableHead className="text-right">Score</TableHead>
-                          <TableHead className="text-right">Booking</TableHead>
+                          <TableHead className="text-right hidden sm:table-cell">Umsatz-Ziel</TableHead>
+                          <TableHead className="text-right hidden md:table-cell">Walk-In</TableHead>
                           <TableHead className="text-right">Feedback</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {PUBS.map((p) => (
+                        {[...PUBS]
+                          .map((p) => ({ p, score: computeScore(p) }))
+                          .sort((a, b) => b.score - a.score)
+                          .map(({ p, score }, idx) => (
                           <TableRow
                             key={p.id}
                             onClick={() => navigate({ to: "/hq/$pubId", params: { pubId: p.id } })}
-                            className={`cursor-pointer group ${p.rank === 1 ? "bg-amber-50/60 dark:bg-amber-500/5" : ""}`}
+                            className={`cursor-pointer group ${idx === 0 ? "bg-amber-50/60 dark:bg-amber-500/5" : ""}`}
                           >
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                {p.rank === 1 ? (
+                                {idx === 0 ? (
                                   <Trophy className="h-4 w-4 text-amber-500" />
                                 ) : (
-                                  <span className="text-muted-foreground font-mono text-xs">{p.rank}</span>
+                                  <span className="text-muted-foreground font-mono text-xs">{idx + 1}</span>
                                 )}
                               </div>
                             </TableCell>
@@ -173,10 +187,13 @@ function HQPage() {
                             </TableCell>
                             <TableCell className="text-right">
                               <span className={`inline-flex items-center justify-end font-semibold ${
-                                p.score >= 85 ? "text-emerald-600" : p.score >= 75 ? "text-foreground" : "text-amber-600"
-                              }`}>{p.score}</span>
+                                score >= 85 ? "text-emerald-600" : score >= 75 ? "text-foreground" : "text-amber-600"
+                              }`}>{score}</span>
                             </TableCell>
-                            <TableCell className="text-right tabular-nums">{p.bookingRatio}%</TableCell>
+                            <TableCell className="text-right tabular-nums hidden sm:table-cell">
+                              <span className={p.revenueTarget >= 100 ? "text-emerald-600 font-medium" : "text-amber-600"}>{p.revenueTarget}%</span>
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums hidden md:table-cell">{p.walkInRatio}%</TableCell>
                             <TableCell className="text-right tabular-nums">{p.feedback.toFixed(1)} ⭐</TableCell>
                           </TableRow>
                         ))}
@@ -184,6 +201,7 @@ function HQPage() {
                     </Table>
                   </CardContent>
                 </Card>
+
 
                 <Card className="shadow-sm">
                   <CardHeader>
@@ -214,6 +232,47 @@ function HQPage() {
                   </CardContent>
                 </Card>
               </section>
+
+              {/* Booking Ratio overview */}
+              <Card className="shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                  <div>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <CalendarCheck className="h-4 w-4 text-emerald-600" />
+                      Booking Ratio nach Filiale
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Anteil reservierter Tische — Ø {kpis.booking}% über alle {PUBS.length} Pubs
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="font-normal tabular-nums">Ø {kpis.booking}%</Badge>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[...PUBS].sort((a, b) => b.bookingRatio - a.bookingRatio).map((p) => (
+                    <div
+                      key={p.id}
+                      onClick={() => navigate({ to: "/hq/$pubId", params: { pubId: p.id } })}
+                      className="cursor-pointer rounded-lg border p-3 hover:border-primary/40 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium truncate">{p.name}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">{p.city}</div>
+                        </div>
+                        <span className={`text-base font-semibold tabular-nums ${
+                          p.bookingRatio >= 80 ? "text-emerald-600" : p.bookingRatio >= 70 ? "text-foreground" : "text-amber-600"
+                        }`}>{p.bookingRatio}%</span>
+                      </div>
+                      <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${p.bookingRatio >= 80 ? "bg-emerald-500" : p.bookingRatio >= 70 ? "bg-primary" : "bg-amber-500"}`}
+                          style={{ width: `${p.bookingRatio}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
 
               {/* Chart */}
               <Card className="shadow-sm">

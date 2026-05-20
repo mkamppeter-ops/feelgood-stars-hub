@@ -7,9 +7,9 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import {
-  ArrowLeft, Phone, Gauge, TrendingUp, Target, Star, MapPin, Trophy,
+  ArrowLeft, Phone, Gauge, Target, Star, MapPin, Trophy, Users, CalendarCheck,
 } from "lucide-react";
-import { getPub, type Pub } from "@/lib/pubs-mock";
+import { getPub, computeScore, type Pub } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 import { SalesOps } from "@/components/sales-ops";
@@ -71,9 +71,10 @@ function PubDetailPage() {
   const factor = RANGE_FACTOR[range];
 
   const kpis = useMemo(() => ({
-    score: Math.max(0, Math.min(100, Math.round(pub.score * factor))),
-    booking: Math.max(0, Math.min(100, Math.round(pub.bookingRatio * factor))),
-    revenue: Math.round(pub.revenueTarget * factor),
+    score:    Math.max(0, Math.min(100, Math.round(computeScore(pub) * factor))),
+    walkIn:   Math.max(0, Math.min(100, Math.round(pub.walkInRatio * factor))),
+    booking:  Math.max(0, Math.min(100, Math.round(pub.bookingRatio * factor))),
+    revenue:  Math.round(pub.revenueTarget * factor),
     feedback: Math.min(5, +(pub.feedback * (0.96 + factor * 0.04)).toFixed(1)),
   }), [factor, pub]);
 
@@ -152,10 +153,38 @@ function PubDetailPage() {
         {/* KPIs */}
         <section key={pulseKey} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in duration-500">
           <PubKpi icon={Gauge} label="Performance Score" value={`${kpis.score}`} suffix="/100" tone="primary" />
-          <PubKpi icon={TrendingUp} label="Booking Ratio" value={`${kpis.booking}`} suffix="%" tone="emerald" />
           <PubKpi icon={Target} label="Umsatz-Ziel" value={`${kpis.revenue}`} suffix="%" tone={kpis.revenue >= 100 ? "emerald" : "amber"} />
+          <PubKpi icon={Users} label="Walk-In Ratio" value={`${kpis.walkIn}`} suffix="%" tone="amber" />
           <PubKpi icon={Star} label="Gäste-Feedback" value={kpis.feedback.toFixed(1)} suffix=" ⭐" tone="violet" />
         </section>
+
+        {/* Booking Ratio — separate Kennzahl */}
+        <Card className="shadow-sm">
+          <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-3 sm:min-w-[200px]">
+              <div className="h-10 w-10 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                <CalendarCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Booking Ratio</div>
+                <div className="text-2xl font-semibold tabular-nums">
+                  {kpis.booking}<span className="text-base text-muted-foreground font-normal">%</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 w-full">
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${kpis.booking >= 80 ? "bg-emerald-500" : kpis.booking >= 70 ? "bg-primary" : "bg-amber-500"}`}
+                  style={{ width: `${kpis.booking}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Anteil reservierter Tische dieser Filiale · separat ausgewiesen, nicht im Performance Score enthalten.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
 
         {/* Sales & Operations — auf Filial-Ebene */}
