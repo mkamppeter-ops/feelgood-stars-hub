@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PubRouteImport } from './routes/pub'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as FeedbackRouteImport } from './routes/feedback'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -19,6 +20,11 @@ import { Route as HqPubIdRouteImport } from './routes/hq.$pubId'
 const PubRoute = PubRouteImport.update({
   id: '/pub',
   path: '/pub',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FeedbackRoute = FeedbackRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/feedback': typeof FeedbackRoute
+  '/login': typeof LoginRoute
   '/pub': typeof PubRoute
   '/hq/$pubId': typeof HqPubIdRoute
   '/hq/': typeof HqIndexRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/feedback': typeof FeedbackRoute
+  '/login': typeof LoginRoute
   '/pub': typeof PubRoute
   '/hq/$pubId': typeof HqPubIdRoute
   '/hq': typeof HqIndexRoute
@@ -68,22 +76,39 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/feedback': typeof FeedbackRoute
+  '/login': typeof LoginRoute
   '/pub': typeof PubRoute
   '/hq/$pubId': typeof HqPubIdRoute
   '/hq/': typeof HqIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/feedback' | '/pub' | '/hq/$pubId' | '/hq/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/feedback'
+    | '/login'
+    | '/pub'
+    | '/hq/$pubId'
+    | '/hq/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/feedback' | '/pub' | '/hq/$pubId' | '/hq'
-  id: '__root__' | '/' | '/admin' | '/feedback' | '/pub' | '/hq/$pubId' | '/hq/'
+  to: '/' | '/admin' | '/feedback' | '/login' | '/pub' | '/hq/$pubId' | '/hq'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/feedback'
+    | '/login'
+    | '/pub'
+    | '/hq/$pubId'
+    | '/hq/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   FeedbackRoute: typeof FeedbackRoute
+  LoginRoute: typeof LoginRoute
   PubRoute: typeof PubRoute
   HqPubIdRoute: typeof HqPubIdRoute
   HqIndexRoute: typeof HqIndexRoute
@@ -96,6 +121,13 @@ declare module '@tanstack/react-router' {
       path: '/pub'
       fullPath: '/pub'
       preLoaderRoute: typeof PubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/feedback': {
@@ -140,6 +172,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   FeedbackRoute: FeedbackRoute,
+  LoginRoute: LoginRoute,
   PubRoute: PubRoute,
   HqPubIdRoute: HqPubIdRoute,
   HqIndexRoute: HqIndexRoute,
