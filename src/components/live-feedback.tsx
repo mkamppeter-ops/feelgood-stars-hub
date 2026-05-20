@@ -25,6 +25,7 @@ import { PUBS, type Pub } from "@/lib/pubs-mock";
 import {
   sendApologyReward, inviteGoogleReview, markGoogleReviewClicked, confirmGoogleReview,
 } from "@/lib/rewards.functions";
+import { useT } from "@/lib/use-t";
 
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -57,6 +58,7 @@ function resolveGoogleStatus(item: FeedbackItem, customerLatest: Map<string, Goo
 }
 
 export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
+  const tt = useT();
   const [source, setSource] = useState<"all" | "app" | "google">("all");
   const [rating, setRating] = useState<"all" | "low" | "high">("all");
   const [pubId, setPubId] = useState<string>(lockedPubId ?? "all");
@@ -102,8 +104,8 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
         setGoogleStatus((prev) => ({ ...prev, [item.id]: "invited" }));
         item.googleInvitedAt = now;
       }
-      toast.success(`${candidates.length} Google-Einladungen automatisch verschickt`, {
-        description: "Push mit Direktlink an alle Gäste mit 4–5⭐ ohne Cooldown",
+      toast.success(tt(`${candidates.length} Google-Einladungen automatisch verschickt`, `${candidates.length} Google invites sent automatically`), {
+        description: tt("Push mit Direktlink an alle Gäste mit 4–5⭐ ohne Cooldown", "Push with direct link to all 4–5⭐ guests without cooldown"),
       });
     })();
     // Wir wollen das genau einmal pro Komponenten-Lifetime laufen lassen.
@@ -145,20 +147,27 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
     });
     setRewards((prev) => ({ ...prev, [item.id]: reward }));
     toast.success(
-      `Entschuldigung + ${reward.credits.toLocaleString("de-DE")} Credits gesendet`,
-      { description: `Kanal: ${reward.channel === "push" ? "Push-Notification" : "WhatsApp"} · ${item.author}` },
+      tt(
+        `Entschuldigung + ${reward.credits.toLocaleString()} Credits gesendet`,
+        `Apology + ${reward.credits.toLocaleString()} credits sent`,
+      ),
+      { description: tt(
+        `Kanal: ${reward.channel === "push" ? "Push-Notification" : "WhatsApp"} · ${item.author}`,
+        `Channel: ${reward.channel === "push" ? "Push notification" : "WhatsApp"} · ${item.author}`,
+      ) },
     );
   };
 
   const handleGoogleClick = async (item: FeedbackItem, url: string) => {
-    // Link öffnen UND als "clicked" markieren — NICHT als "reviewed".
-    // Es heißt nur: er hat die Einladung gesehen.
     window.open(url, "_blank", "noopener,noreferrer");
     await markGoogleReviewClicked({ feedbackId: item.id });
     setGoogleStatus((prev) => ({ ...prev, [item.id]: "clicked" }));
     item.googleClickedAt = Date.now();
-    toast.info("Als 'Link geöffnet' markiert", {
-      description: "Bestätigung folgt entweder per Kunden-Rückfrage oder manuell hier im HQ.",
+    toast.info(tt("Als 'Link geöffnet' markiert", "Marked as 'link opened'"), {
+      description: tt(
+        "Bestätigung folgt entweder per Kunden-Rückfrage oder manuell hier im HQ.",
+        "Confirmation will follow either via customer follow-up or manually here in HQ.",
+      ),
     });
   };
 
@@ -167,8 +176,11 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
     setGoogleStatus((prev) => ({ ...prev, [item.id]: "reviewed" }));
     item.googleReviewedAt = Date.now();
     item.googleReviewedSource = "manual";
-    toast.success(`${item.author} als bewertet markiert`, {
-      description: "Einmal-Sperre aktiv — Kunde erhält nie wieder eine Google-Einladung.",
+    toast.success(tt(`${item.author} als bewertet markiert`, `${item.author} marked as reviewed`), {
+      description: tt(
+        "Einmal-Sperre aktiv — Kunde erhält nie wieder eine Google-Einladung.",
+        "One-time lock active — customer will never receive a Google invite again.",
+      ),
     });
   };
 
@@ -178,34 +190,34 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
       <Card className="shadow-sm">
         <CardContent className="p-4 flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Quelle</span>
+            <span className="text-xs text-muted-foreground">{tt("Quelle", "Source")}</span>
             <Select value={source} onValueChange={(v) => setSource(v as typeof source)}>
               <SelectTrigger className="h-8 w-[130px] text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle</SelectItem>
+                <SelectItem value="all">{tt("Alle", "All")}</SelectItem>
                 <SelectItem value="app">App</SelectItem>
                 <SelectItem value="google">Google</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Bewertung</span>
+            <span className="text-xs text-muted-foreground">{tt("Bewertung", "Rating")}</span>
             <Select value={rating} onValueChange={(v) => setRating(v as typeof rating)}>
               <SelectTrigger className="h-8 w-[140px] text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle</SelectItem>
-                <SelectItem value="low">1–2 Sterne</SelectItem>
-                <SelectItem value="high">4–5 Sterne</SelectItem>
+                <SelectItem value="all">{tt("Alle", "All")}</SelectItem>
+                <SelectItem value="low">1–2 {tt("Sterne", "stars")}</SelectItem>
+                <SelectItem value="high">4–5 {tt("Sterne", "stars")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           {!lockedPubId && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Filiale</span>
+              <span className="text-xs text-muted-foreground">{tt("Filiale", "Branch")}</span>
               <Select value={pubId} onValueChange={setPubId}>
                 <SelectTrigger className="h-8 w-[200px] text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Alle Pubs</SelectItem>
+                  <SelectItem value="all">{tt("Alle Pubs", "All pubs")}</SelectItem>
                   {PUBS.map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
@@ -214,7 +226,7 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
             </div>
           )}
           <div className="ml-auto text-xs text-muted-foreground">
-            {filtered.length} Bewertungen · {done.size} erledigt
+            {filtered.length} {tt("Bewertungen", "reviews")} · {done.size} {tt("erledigt", "done")}
           </div>
         </CardContent>
       </Card>
@@ -238,7 +250,7 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
         ))}
         {filtered.length === 0 && (
           <Card className="shadow-sm"><CardContent className="p-10 text-center text-sm text-muted-foreground">
-            Keine Bewertungen für diese Filter.
+            {tt("Keine Bewertungen für diese Filter.", "No reviews for these filters.")}
           </CardContent></Card>
         )}
       </div>
@@ -287,11 +299,12 @@ function CategoryRow({ k, rating }: { k: CategoryKey; rating: CategoryRating }) 
 function GoogleStatusBadge({
   status, invitedAt, clickedAt,
 }: { status: GoogleStatus; invitedAt?: number; clickedAt?: number }) {
+  const tt = useT();
   if (status === "reviewed") {
     return (
       <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/10 border-0 font-normal gap-1">
         <ShieldCheck className="h-3 w-3" />
-        Google-Bewertung bestätigt
+        {tt("Google-Bewertung bestätigt", "Google review confirmed")}
       </Badge>
     );
   }
@@ -299,7 +312,7 @@ function GoogleStatusBadge({
     return (
       <Badge className="bg-indigo-500/10 text-indigo-700 hover:bg-indigo-500/10 border-0 font-normal gap-1">
         <MousePointerClick className="h-3 w-3" />
-        Link geöffnet · noch nicht bestätigt
+        {tt("Link geöffnet · noch nicht bestätigt", "Link opened · not yet confirmed")}
       </Badge>
     );
   }
@@ -307,19 +320,18 @@ function GoogleStatusBadge({
     return (
       <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/10 border-0 font-normal gap-1">
         <Sparkles className="h-3 w-3" />
-        Einladung gesendet (auto)
+        {tt("Einladung gesendet (auto)", "Invite sent (auto)")}
       </Badge>
     );
   }
   if (status === "cooldown") {
-    // Cooldown-Länge richtet sich danach, wie weit der Kunde schon war.
     const cooldownDays = clickedAt ? GOOGLE_CLICKED_COOLDOWN_DAYS : GOOGLE_INVITE_COOLDOWN_DAYS;
     const ref = clickedAt ?? invitedAt;
     const days = ref ? Math.max(0, cooldownDays - Math.floor((Date.now() - ref) / (1000 * 60 * 60 * 24))) : cooldownDays;
     return (
       <Badge className="bg-muted text-muted-foreground hover:bg-muted border-0 font-normal gap-1">
         <Clock className="h-3 w-3" />
-        Cooldown · {days} Tage
+        Cooldown · {days} {tt("Tage", "days")}
       </Badge>
     );
   }
@@ -341,6 +353,7 @@ function ReviewCard({
   onGoogleClick: (item: FeedbackItem, url: string) => void | Promise<void>;
   onConfirmReviewed: (item: FeedbackItem) => void | Promise<void>;
 }) {
+  const tt = useT();
   const pub = PUBS.find((p) => p.id === item.pubId)!;
   const isLow = item.stars <= 2;
   const isApp = item.source === "app";
@@ -362,11 +375,11 @@ function ReviewCard({
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="text-sm font-semibold">{pub.name}</span>
               <Badge variant="secondary" className="font-normal text-[10px] uppercase tracking-wide">
-                {isApp ? "Internes Feedback" : "Google"}
+                {isApp ? tt("Internes Feedback", "Internal feedback") : "Google"}
               </Badge>
               <Stars value={item.stars} />
               {isLow && (
-                <Badge className="bg-red-500/10 text-red-600 hover:bg-red-500/10 border-0 font-normal">Kritisch</Badge>
+                <Badge className="bg-red-500/10 text-red-600 hover:bg-red-500/10 border-0 font-normal">{tt("Kritisch", "Critical")}</Badge>
               )}
               {reward && (
                 <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 border-0 font-normal gap-1">
@@ -388,7 +401,7 @@ function ReviewCard({
             {canExpand && expanded && (
               <div className="pt-1">
                 <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2 font-medium">
-                  Kategorie-Check
+                  {tt("Kategorie-Check", "Category check")}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {CATEGORY_ORDER.map((k) => (
@@ -402,7 +415,7 @@ function ReviewCard({
             <div className={canExpand && expanded ? "pt-2 border-t" : ""}>
               {canExpand && expanded && (
                 <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5 font-medium">
-                  Kommentar des Gastes
+                  {tt("Kommentar des Gastes", "Guest comment")}
                 </div>
               )}
               <p className="text-sm text-foreground/90 leading-relaxed">„{item.text}"</p>
@@ -411,19 +424,23 @@ function ReviewCard({
             {/* Reward info bar */}
             {reward && (
               <div className="rounded-md border border-emerald-200 bg-emerald-50/60 px-3 py-2 text-xs text-emerald-800">
-                <span className="font-medium">Wiedergutmachung verschickt</span> · {reward.credits.toLocaleString("de-DE")} Credits via {reward.channel === "push" ? "Push" : "WhatsApp"}
+                <span className="font-medium">{tt("Wiedergutmachung verschickt", "Apology sent")}</span> · {reward.credits.toLocaleString()} {tt("Credits via", "credits via")} {reward.channel === "push" ? "Push" : "WhatsApp"}
                 <div className="text-emerald-700/80 mt-0.5 italic line-clamp-1">„{reward.message}"</div>
               </div>
             )}
 
-            {/* Google-Review Aktionsleiste — nur für 4–5⭐ App-Reviews,
-                solange noch nicht final als "reviewed" bestätigt. */}
             {isApp && item.stars >= 4 && googleStatus !== "reviewed" && (googleStatus === "invited" || googleStatus === "clicked") && (
               <div className="rounded-md border border-blue-200 bg-blue-50/50 px-3 py-2 text-xs text-blue-900 flex flex-wrap items-center gap-2">
                 <span className="flex-1 min-w-0">
                   {googleStatus === "clicked"
-                    ? "Kunde hat den Link geöffnet — sobald die Bewertung bei Google sichtbar ist, hier bestätigen."
-                    : "Auto-Einladung verschickt. Status wird per Kunden-Rückfrage in der App aktualisiert."}
+                    ? tt(
+                        "Kunde hat den Link geöffnet — sobald die Bewertung bei Google sichtbar ist, hier bestätigen.",
+                        "Customer opened the link — confirm here once the review is visible on Google.",
+                      )
+                    : tt(
+                        "Auto-Einladung verschickt. Status wird per Kunden-Rückfrage in der App aktualisiert.",
+                        "Auto invite sent. Status will be updated via customer follow-up in the app.",
+                      )}
                 </span>
                 <Button
                   size="sm"
@@ -432,7 +449,7 @@ function ReviewCard({
                   onClick={() => onGoogleClick(item, pub.googleReviewUrl)}
                 >
                   <ExternalLink className="h-3 w-3" />
-                  Link öffnen (Simulation)
+                  {tt("Link öffnen (Simulation)", "Open link (simulation)")}
                 </Button>
                 <Button
                   size="sm"
@@ -440,7 +457,7 @@ function ReviewCard({
                   onClick={() => onConfirmReviewed(item)}
                 >
                   <ShieldCheck className="h-3 w-3" />
-                  Als bewertet bestätigen
+                  {tt("Als bewertet bestätigen", "Confirm as reviewed")}
                 </Button>
               </div>
             )}
@@ -461,7 +478,7 @@ function ReviewCard({
                     className="h-8 gap-1 text-xs"
                     onClick={onToggleExpand}
                   >
-                    {expanded ? "Weniger" : "Details"}
+                    {expanded ? tt("Weniger", "Less") : tt("Details", "Details")}
                     <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-180" : ""}`} />
                   </Button>
                 )}
@@ -488,7 +505,7 @@ function ReviewCard({
                   onClick={onToggleDone}
                 >
                   <Check className="h-3.5 w-3.5" />
-                  {done ? "Erledigt" : "Erledigen"}
+                  {done ? tt("Erledigt", "Done") : tt("Erledigen", "Mark done")}
                 </Button>
               </div>
             </div>
@@ -510,17 +527,21 @@ function ApologyDialog({
   pub: Pub;
   onConfirm: (item: FeedbackItem, reward: ApologyReward) => void | Promise<void>;
 }) {
+  const tt = useT();
   const [open, setOpen] = useState(false);
   const recommended = item.stars <= 1 ? 1000 : 500;
   const [acknowledged, setAcknowledged] = useState(false);
   const [credits, setCredits] = useState<number>(recommended);
   const [channel, setChannel] = useState<"push" | "whatsapp">("push");
   const [message, setMessage] = useState<string>(
-    `Hallo ${item.author.split(" ")[0]}, dein Feedback aus dem ${pub.name} hat uns sehr leid getan. Als kleine Entschuldigung schreiben wir dir {credits} Credits gut — wir freuen uns, dich beim nächsten Besuch zu überzeugen.`,
+    tt(
+      `Hallo ${item.author.split(" ")[0]}, dein Feedback aus dem ${pub.name} hat uns sehr leid getan. Als kleine Entschuldigung schreiben wir dir {credits} Credits gut — wir freuen uns, dich beim nächsten Besuch zu überzeugen.`,
+      `Hi ${item.author.split(" ")[0]}, we're truly sorry about your experience at ${pub.name}. As a small apology we're crediting you {credits} credits — we'd love to win you over on your next visit.`,
+    ),
   );
   const [submitting, setSubmitting] = useState(false);
 
-  const finalMessage = message.replace("{credits}", credits.toLocaleString("de-DE")).replace("{pub}", pub.name);
+  const finalMessage = message.replace("{credits}", credits.toLocaleString()).replace("{pub}", pub.name);
 
   const reset = () => {
     setAcknowledged(false);
@@ -534,30 +555,31 @@ function ApologyDialog({
       <DialogTrigger asChild>
         <Button size="sm" className="h-8 gap-1.5 bg-amber-500 hover:bg-amber-600 text-white">
           <Gift className="h-3.5 w-3.5" />
-          Entschuldigen + Credits
+          {tt("Entschuldigen + Credits", "Apologize + credits")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Wiedergutmachung an {item.author}</DialogTitle>
+          <DialogTitle>{tt(`Wiedergutmachung an ${item.author}`, `Apology to ${item.author}`)}</DialogTitle>
           <DialogDescription>
-            {pub.name} · {item.stars}⭐ — sende Entschuldigung + Credits direkt an den Gast.
+            {pub.name} · {item.stars}⭐ — {tt("sende Entschuldigung + Credits direkt an den Gast.", "send apology + credits directly to the guest.")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Schritt 1 */}
           <div className="flex items-start gap-2 rounded-md border p-3 bg-muted/30">
             <Checkbox id="ack" checked={acknowledged} onCheckedChange={(v) => setAcknowledged(!!v)} className="mt-0.5" />
             <Label htmlFor="ack" className="text-sm font-normal leading-snug cursor-pointer">
-              Ich habe die negative Bewertung geprüft und die Ursache mit dem Filialteam besprochen.
+              {tt(
+                "Ich habe die negative Bewertung geprüft und die Ursache mit dem Filialteam besprochen.",
+                "I've reviewed the negative rating and discussed the root cause with the branch team.",
+              )}
             </Label>
           </div>
 
-          {/* Schritt 2 — credits */}
           <div className="space-y-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Credit-Stufe · Empfehlung {recommended.toLocaleString("de-DE")}
+              {tt("Credit-Stufe · Empfehlung", "Credit tier · recommended")} {recommended.toLocaleString()}
             </Label>
             <div className="grid grid-cols-4 gap-1.5">
               {APOLOGY_CREDIT_STEPS.map((c) => (
@@ -569,20 +591,19 @@ function ApologyDialog({
                   className="h-8 text-xs"
                   onClick={() => setCredits(c)}
                 >
-                  {c.toLocaleString("de-DE")}
+                  {c.toLocaleString()}
                 </Button>
               ))}
             </div>
           </div>
 
-          {/* Schritt 3 — channel */}
           <div className="space-y-2">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Versand-Kanal</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">{tt("Versand-Kanal", "Delivery channel")}</Label>
             <RadioGroup value={channel} onValueChange={(v) => setChannel(v as "push" | "whatsapp")} className="grid grid-cols-2 gap-2">
               <Label className={`flex items-center gap-2 rounded-md border p-2.5 cursor-pointer text-sm ${channel === "push" ? "border-primary bg-primary/5" : ""}`}>
                 <RadioGroupItem value="push" />
                 <BellRing className="h-4 w-4" />
-                Push-Notification
+                {tt("Push-Notification", "Push notification")}
               </Label>
               <Label className={`flex items-center gap-2 rounded-md border p-2.5 cursor-pointer text-sm ${channel === "whatsapp" ? "border-primary bg-primary/5" : ""}`}>
                 <RadioGroupItem value="whatsapp" />
@@ -592,20 +613,19 @@ function ApologyDialog({
             </RadioGroup>
           </div>
 
-          {/* Schritt 4 — message */}
           <div className="space-y-2">
             <Label htmlFor="msg" className="text-xs uppercase tracking-wide text-muted-foreground">
-              Nachricht · Platzhalter {"{credits}"} / {"{pub}"}
+              {tt("Nachricht · Platzhalter", "Message · placeholders")} {"{credits}"} / {"{pub}"}
             </Label>
             <Textarea id="msg" value={message} onChange={(e) => setMessage(e.target.value)} rows={4} className="text-sm" />
             <div className="rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">Vorschau:</span> {finalMessage}
+              <span className="font-medium text-foreground">{tt("Vorschau:", "Preview:")}</span> {finalMessage}
             </div>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>{tt("Abbrechen", "Cancel")}</Button>
           <Button
             disabled={!acknowledged || submitting}
             className="gap-1.5"
@@ -622,7 +642,7 @@ function ApologyDialog({
             }}
           >
             <Gift className="h-4 w-4" />
-            {credits.toLocaleString("de-DE")} Credits senden
+            {credits.toLocaleString()} {tt("Credits senden", "Send credits")}
           </Button>
         </DialogFooter>
       </DialogContent>
