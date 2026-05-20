@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import {
   ArrowLeft, Phone, Gauge, TrendingUp, Target, Star, MapPin, Trophy,
 } from "lucide-react";
 import { getPub, type Pub } from "@/lib/pubs-mock";
+import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 
 export const Route = createFileRoute("/hq/$pubId")({
   loader: ({ params }) => {

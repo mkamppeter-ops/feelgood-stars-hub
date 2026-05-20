@@ -1,7 +1,9 @@
+import { useState, useMemo } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -12,6 +14,9 @@ import {
   Trophy, TrendingUp, Users, Star, Gauge, Phone, LayoutDashboard,
   Building2, MessageSquare, Settings, Bell, Search,
 } from "lucide-react";
+import { PUBS } from "@/lib/pubs-mock";
+import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
+import { LiveFeedback } from "@/components/live-feedback";
 
 export const Route = createFileRoute("/hq")({
   head: () => ({
@@ -23,8 +28,6 @@ export const Route = createFileRoute("/hq")({
   component: HQPage,
 });
 
-import { PUBS } from "@/lib/pubs-mock";
-
 const chartData = PUBS.slice(0, 5).map((p) => ({
   name: p.name.replace(/^The /, ""),
   value: p.spendPerBooking,
@@ -32,6 +35,22 @@ const chartData = PUBS.slice(0, 5).map((p) => ({
 
 function HQPage() {
   const navigate = useNavigate();
+  const [range, setRange] = useState<DateRange>("last7");
+  const [pulseKey, setPulseKey] = useState(0);
+  const factor = RANGE_FACTOR[range];
+
+  const kpis = useMemo(() => ({
+    score: Math.round(82 * factor),
+    booking: Math.round(76 * factor),
+    walkIn: Math.max(5, Math.round(22 * (2 - factor))),
+    feedback: Math.min(5, +(4.6 * (0.96 + factor * 0.04)).toFixed(1)),
+  }), [factor]);
+
+  const handleRangeChange = (v: DateRange) => {
+    setRange(v);
+    setPulseKey((k) => k + 1);
+  };
+
   return (
     <div className="min-h-screen bg-muted/30 flex">
       {/* Sidebar */}
@@ -73,145 +92,160 @@ function HQPage() {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
-        <header className="h-16 border-b bg-card/60 backdrop-blur flex items-center justify-between px-6">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight">HQ Dashboard</h1>
-            <p className="text-xs text-muted-foreground">Echtzeit-Übersicht aller Filialen · KW {new Date().getDate()}</p>
+        <header className="h-16 border-b bg-card/60 backdrop-blur flex items-center justify-between px-6 gap-4">
+          <div className="min-w-0">
+            <h1 className="text-lg font-semibold tracking-tight truncate">HQ Dashboard</h1>
+            <p className="text-xs text-muted-foreground truncate">Zeitraum: {RANGE_LABELS[range]}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-2"><Search className="h-4 w-4" />Suchen</Button>
-            <Button variant="outline" size="icon"><Bell className="h-4 w-4" /></Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <DateRangePicker value={range} onChange={handleRangeChange} />
+            <Button variant="outline" size="icon" className="hidden sm:inline-flex"><Search className="h-4 w-4" /></Button>
+            <Button variant="outline" size="icon" className="hidden sm:inline-flex"><Bell className="h-4 w-4" /></Button>
             <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground flex items-center justify-center text-sm font-semibold">HQ</div>
           </div>
         </header>
 
-        <main className="flex-1 p-6 space-y-6 overflow-auto">
-          {/* KPIs */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            <KpiCard icon={Gauge} label="Ø Pub Performance Score" value="82" suffix="/100" delta="+3.2%" tone="primary" />
-            <KpiCard icon={TrendingUp} label="Gesamt Booking Ratio" value="76" suffix="%" delta="+1.8%" tone="emerald" />
-            <KpiCard icon={Users} label="Walk-In Quote" value="22" suffix="%" delta="-0.6%" tone="amber" negative />
-            <KpiCard icon={Star} label="Interner Feedback-Schnitt" value="4.6" suffix=" ⭐" delta="+0.1" tone="violet" />
-          </section>
+        <main className="flex-1 p-6 overflow-auto">
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="feedback" className="gap-2">
+                Live Feedback
+                <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Middle row: Leaderboard + Direct Contact */}
-          <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {/* Leaderboard */}
-            <Card className="xl:col-span-2 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <div>
-                  <CardTitle className="text-base">Leaderboard</CardTitle>
-                  <p className="text-xs text-muted-foreground mt-1">Ranking nach Pub Performance Score</p>
-                </div>
-                <Badge variant="secondary" className="font-normal">{PUBS.length} Pubs</Badge>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-16">#</TableHead>
-                      <TableHead>Pub</TableHead>
-                      <TableHead className="text-right">Score</TableHead>
-                      <TableHead className="text-right">Booking</TableHead>
-                      <TableHead className="text-right">Feedback</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {PUBS.map((p) => (
-                      <TableRow
-                        key={p.id}
-                        onClick={() => navigate({ to: "/hq/$pubId", params: { pubId: p.id } })}
-                        className={`cursor-pointer group ${p.rank === 1 ? "bg-amber-50/60 dark:bg-amber-500/5" : ""}`}
-                      >
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {p.rank === 1 ? (
-                              <Trophy className="h-4 w-4 text-amber-500" />
-                            ) : (
-                              <span className="text-muted-foreground font-mono text-xs">{p.rank}</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium group-hover:text-primary transition-colors">{p.name}</div>
-                          <div className="text-xs text-muted-foreground">{p.city}</div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span className={`inline-flex items-center justify-end font-semibold ${
-                            p.score >= 85 ? "text-emerald-600" : p.score >= 75 ? "text-foreground" : "text-amber-600"
-                          }`}>{p.score}</span>
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">{p.bookingRatio}%</TableCell>
-                        <TableCell className="text-right tabular-nums">{p.feedback.toFixed(1)} ⭐</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <TabsContent value="overview" className="space-y-6 mt-0">
+              {/* KPIs */}
+              <section key={pulseKey} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 animate-in fade-in duration-500">
+                <KpiCard icon={Gauge} label="Ø Pub Performance Score" value={`${kpis.score}`} suffix="/100" delta="+3.2%" tone="primary" />
+                <KpiCard icon={TrendingUp} label="Gesamt Booking Ratio" value={`${kpis.booking}`} suffix="%" delta="+1.8%" tone="emerald" />
+                <KpiCard icon={Users} label="Walk-In Quote" value={`${kpis.walkIn}`} suffix="%" delta="-0.6%" tone="amber" negative />
+                <KpiCard icon={Star} label="Interner Feedback-Schnitt" value={`${kpis.feedback}`} suffix=" ⭐" delta="+0.1" tone="violet" />
+              </section>
 
-            {/* Direct Contact */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base">Direct Contact</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Schnell-Eingreif-Liste · Filialleiter</p>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {PUBS.slice(0, 6).map((p) => (
-                  <div key={p.name} className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-card hover:bg-muted/40 transition-colors">
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium truncate">{p.manager}</div>
-                      <div className="text-xs text-muted-foreground truncate">{p.name}</div>
+              {/* Middle row: Leaderboard + Direct Contact */}
+              <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <Card className="xl:col-span-2 shadow-sm">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                    <div>
+                      <CardTitle className="text-base">Leaderboard</CardTitle>
+                      <p className="text-xs text-muted-foreground mt-1">Ranking nach Pub Performance Score</p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <a href={`https://wa.me/${p.whatsapp}`} target="_blank" rel="noreferrer">
-                        <Button size="icon" className="h-8 w-8 bg-emerald-500 hover:bg-emerald-600 text-white">
-                          <WhatsAppIcon className="h-4 w-4" />
-                        </Button>
-                      </a>
-                      <a href={`tel:${p.phone}`}>
-                        <Button size="icon" className="h-8 w-8 bg-blue-500 hover:bg-blue-600 text-white">
-                          <Phone className="h-4 w-4" />
-                        </Button>
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </section>
+                    <Badge variant="secondary" className="font-normal">{PUBS.length} Pubs</Badge>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-16">#</TableHead>
+                          <TableHead>Pub</TableHead>
+                          <TableHead className="text-right">Score</TableHead>
+                          <TableHead className="text-right">Booking</TableHead>
+                          <TableHead className="text-right">Feedback</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {PUBS.map((p) => (
+                          <TableRow
+                            key={p.id}
+                            onClick={() => navigate({ to: "/hq/$pubId", params: { pubId: p.id } })}
+                            className={`cursor-pointer group ${p.rank === 1 ? "bg-amber-50/60 dark:bg-amber-500/5" : ""}`}
+                          >
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {p.rank === 1 ? (
+                                  <Trophy className="h-4 w-4 text-amber-500" />
+                                ) : (
+                                  <span className="text-muted-foreground font-mono text-xs">{p.rank}</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-medium group-hover:text-primary transition-colors">{p.name}</div>
+                              <div className="text-xs text-muted-foreground">{p.city}</div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className={`inline-flex items-center justify-end font-semibold ${
+                                p.score >= 85 ? "text-emerald-600" : p.score >= 75 ? "text-foreground" : "text-amber-600"
+                              }`}>{p.score}</span>
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">{p.bookingRatio}%</TableCell>
+                            <TableCell className="text-right tabular-nums">{p.feedback.toFixed(1)} ⭐</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
 
-          {/* Chart */}
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-base">Spend per Booking — Top 5 Pubs</CardTitle>
-              <p className="text-xs text-muted-foreground mt-1">Durchschnittlicher Umsatz pro Buchung (€)</p>
-            </CardHeader>
-            <CardContent className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
-                  <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(v) => `€${v}`} />
-                  <Tooltip
-                    cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
-                    contentStyle={{
-                      borderRadius: 8,
-                      border: "1px solid hsl(var(--border))",
-                      background: "hsl(var(--card))",
-                      fontSize: 12,
-                    }}
-                    formatter={(v: number) => [`€${v}`, "Spend / Booking"]}
-                  />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                    {chartData.map((_, i) => (
-                      <Cell key={i} fill={i === 0 ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.45)"} />
+                <Card className="shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-base">Direct Contact</CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">Schnell-Eingreif-Liste · Filialleiter</p>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {PUBS.slice(0, 6).map((p) => (
+                      <div key={p.name} className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-card hover:bg-muted/40 transition-colors">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium truncate">{p.manager}</div>
+                          <div className="text-xs text-muted-foreground truncate">{p.name}</div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <a href={`https://wa.me/${p.whatsapp}`} target="_blank" rel="noreferrer">
+                            <Button size="icon" className="h-8 w-8 bg-emerald-500 hover:bg-emerald-600 text-white">
+                              <WhatsAppIcon className="h-4 w-4" />
+                            </Button>
+                          </a>
+                          <a href={`tel:${p.phone}`}>
+                            <Button size="icon" className="h-8 w-8 bg-blue-500 hover:bg-blue-600 text-white">
+                              <Phone className="h-4 w-4" />
+                            </Button>
+                          </a>
+                        </div>
+                      </div>
                     ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
+              </section>
+
+              {/* Chart */}
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-base">Spend per Booking — Top 5 Pubs</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">Durchschnittlicher Umsatz pro Buchung (€)</p>
+                </CardHeader>
+                <CardContent className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                      <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
+                      <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(v) => `€${v}`} />
+                      <Tooltip
+                        cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
+                        contentStyle={{
+                          borderRadius: 8,
+                          border: "1px solid hsl(var(--border))",
+                          background: "hsl(var(--card))",
+                          fontSize: 12,
+                        }}
+                        formatter={(v: number) => [`€${v}`, "Spend / Booking"]}
+                      />
+                      <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                        {chartData.map((_, i) => (
+                          <Cell key={i} fill={i === 0 ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.45)"} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="feedback" className="mt-0">
+              <LiveFeedback />
+            </TabsContent>
+          </Tabs>
         </main>
       </div>
     </div>
