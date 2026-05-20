@@ -108,12 +108,13 @@ export const SALES_GLOBAL: SalesSnapshot = (() => {
 
   const costs = all.reduce(
     (acc, x) => ({
+      cogs:      acc.cogs + x.costs.cogs,
       marketing: acc.marketing + x.costs.marketing,
       staff:     acc.staff + x.costs.staff,
       rent:      acc.rent + x.costs.rent,
       other:     acc.other + x.costs.other,
     }),
-    { marketing: 0, staff: 0, rent: 0, other: 0 },
+    { cogs: 0, marketing: 0, staff: 0, rent: 0, other: 0 },
   );
 
   return {
