@@ -511,7 +511,7 @@ function KpiCard({
 }
 
 function RewardsSummary({ factor }: { factor: number }) {
-  // Mock-Auswertung im gewählten Zeitraum.
+  const { t } = useTranslation();
   const apologyCredits = Math.round(8200 * factor);
   const apologyCount = Math.round(11 * factor);
   const autoInvites = Math.round(46 * factor);
@@ -525,11 +525,11 @@ function RewardsSummary({ factor }: { factor: number }) {
             <Gift className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs text-muted-foreground">Wiedergutmachungs-Credits</div>
+            <div className="text-xs text-muted-foreground">{t("hq.rewards.apologyTitle")}</div>
             <div className="text-xl font-semibold tabular-nums">
-              {apologyCredits.toLocaleString("de-DE")} <span className="text-xs text-muted-foreground font-normal">Cr.</span>
+              {apologyCredits.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">{t("hq.rewards.creditUnit")}</span>
             </div>
-            <div className="text-[11px] text-muted-foreground">{apologyCount} Fälle im gewählten Zeitraum</div>
+            <div className="text-[11px] text-muted-foreground">{t("hq.rewards.apologyCases", { count: apologyCount })}</div>
           </div>
         </CardContent>
       </Card>
@@ -539,12 +539,12 @@ function RewardsSummary({ factor }: { factor: number }) {
             <Star className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs text-muted-foreground">Google-Einladungen (auto)</div>
+            <div className="text-xs text-muted-foreground">{t("hq.rewards.googleTitle")}</div>
             <div className="text-xl font-semibold tabular-nums">
-              {autoInvites} <span className="text-xs text-muted-foreground font-normal">verschickt</span>
+              {autoInvites} <span className="text-xs text-muted-foreground font-normal">{t("hq.rewards.sent")}</span>
             </div>
             <div className="text-[11px] text-muted-foreground">
-              {invitesClicked} Link geöffnet · {invitesConfirmed} als bewertet bestätigt · richtlinienkonform, ohne Anreize
+              {t("hq.rewards.googleDetail", { clicked: invitesClicked, confirmed: invitesConfirmed })}
             </div>
           </div>
         </CardContent>
@@ -554,13 +554,14 @@ function RewardsSummary({ factor }: { factor: number }) {
 }
 
 function PubsGrid({ onOpen }: { onOpen: (id: string) => void }) {
+  const { t } = useTranslation();
   const [sort, setSort] = useState<"score" | "name">("score");
   const sorted = useMemo(() => {
     const arr = [...PUBS];
     if (sort === "score") {
       arr.sort((a, b) => computeScore(b) - computeScore(a));
     } else {
-      arr.sort((a, b) => a.name.localeCompare(b.name, "de"));
+      arr.sort((a, b) => a.name.localeCompare(b.name));
     }
     return arr;
   }, [sort]);
@@ -569,21 +570,21 @@ function PubsGrid({ onOpen }: { onOpen: (id: string) => void }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold">Alle Pubs</h2>
-          <p className="text-xs text-muted-foreground">{PUBS.length} Filialen · Klick öffnet Detailseite</p>
+          <h2 className="text-base font-semibold">{t("hq.pubsGrid.title")}</h2>
+          <p className="text-xs text-muted-foreground">{t("hq.pubsGrid.subtitle", { count: PUBS.length })}</p>
         </div>
         <div className="inline-flex rounded-md border p-0.5 text-xs">
           <button
             onClick={() => setSort("score")}
             className={`px-3 py-1.5 rounded ${sort === "score" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
           >
-            Score ↓
+            {t("hq.pubsGrid.sortScore")}
           </button>
           <button
             onClick={() => setSort("name")}
             className={`px-3 py-1.5 rounded ${sort === "name" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
           >
-            Name A–Z
+            {t("hq.pubsGrid.sortName")}
           </button>
         </div>
       </div>
@@ -613,21 +614,21 @@ function PubsGrid({ onOpen }: { onOpen: (id: string) => void }) {
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-md bg-muted/50 px-2 py-1.5">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Umsatz</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("hq.pubsGrid.revenue")}</div>
                   <div className={`font-semibold tabular-nums ${p.revenueTarget >= 100 ? "text-emerald-600" : "text-amber-600"}`}>
                     {p.revenueTarget}%
                   </div>
                 </div>
                 <div className="rounded-md bg-muted/50 px-2 py-1.5">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Walk-In</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("hq.pubsGrid.walkIn")}</div>
                   <div className="font-semibold tabular-nums">{p.walkInRatio}%</div>
                 </div>
                 <div className="rounded-md bg-muted/50 px-2 py-1.5">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Feedback</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("hq.pubsGrid.feedback")}</div>
                   <div className="font-semibold tabular-nums">{p.feedback.toFixed(1)} ⭐</div>
                 </div>
                 <div className="rounded-md bg-muted/50 px-2 py-1.5">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Booking</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("hq.pubsGrid.booking")}</div>
                   <div className={`font-semibold tabular-nums ${p.bookingRatio >= 80 ? "text-emerald-600" : p.bookingRatio >= 70 ? "" : "text-amber-600"}`}>
                     {p.bookingRatio}%
                   </div>
