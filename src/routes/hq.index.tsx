@@ -345,6 +345,7 @@ function HQPage() {
 
             <TabsContent value="sortiment" className="mt-0 space-y-6">
               <Sortiment data={SALES_GLOBAL} factor={factor} title="Sortiment & Konsum — Alle Filialen" />
+              <SortimentMatrix />
             </TabsContent>
 
 
