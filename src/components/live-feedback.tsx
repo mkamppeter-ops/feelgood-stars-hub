@@ -232,6 +232,8 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
             onToggleDone={() => toggleDone(f.id)}
             onToggleExpand={() => toggleExpanded(f.id)}
             onApology={handleApology}
+            onGoogleClick={handleGoogleClick}
+            onConfirmReviewed={handleConfirmReviewed}
           />
         ))}
         {filtered.length === 0 && (
