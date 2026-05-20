@@ -1,0 +1,289 @@
+import { useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  Trophy, Gauge, Star, TrendingUp, MapPin, ArrowUp, Sparkles,
+} from "lucide-react";
+import { PUBS } from "@/lib/pubs-mock";
+import { SALES_BY_PUB } from "@/lib/sales-mock";
+import { FEEDBACK, type FeedbackItem } from "@/lib/feedback-mock";
+import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
+import { SalesOps } from "@/components/sales-ops";
+import { LiveFeedback } from "@/components/live-feedback";
+
+export const Route = createFileRoute("/pub")({
+  head: () => ({
+    meta: [
+      { title: "Pub Ops Navigator — Local View" },
+      { name: "description", content: "Lokales Dashboard für den Bar-Manager: Performance, Umsätze und Gast-Feedback der eigenen Filiale." },
+    ],
+  }),
+  component: PubLocalView,
+});
+
+function PubLocalView() {
+  const [pubId, setPubId] = useState(PUBS[2].id); // default: rank 3 ("The Foggy Dog") for motivational copy
+  const [range, setRange] = useState<DateRange>("last7");
+  const factor = RANGE_FACTOR[range];
+
+  const pub = PUBS.find((p) => p.id === pubId)!;
+  const sales = SALES_BY_PUB[pub.id];
+
+  // Compute gap to next rank
+  const nextPub = PUBS.find((p) => p.rank === pub.rank - 1);
+  const pointsToNext = nextPub ? nextPub.score - pub.score : 0;
+
+  // Pub-specific feedback subset (fallback: subset by index if none match)
+  const pubFeedback: FeedbackItem[] = useMemo(() => {
+    const matches = FEEDBACK.filter((f) => f.pubId === pub.id);
+    return matches.length > 0 ? matches : FEEDBACK.slice(0, 4);
+  }, [pub.id]);
+
+  const scoreColor =
+    pub.score >= 85 ? "text-emerald-600"
+    : pub.score >= 75 ? "text-foreground"
+    : "text-amber-600";
+
+  return (
+    <div className="min-h-screen bg-muted/30">
+      {/* Topbar */}
+      <header className="sticky top-0 z-20 bg-card/80 backdrop-blur border-b">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center shrink-0">
+              <Sparkles className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold leading-tight truncate">Local View</div>
+              <div className="text-[11px] text-muted-foreground leading-tight truncate">
+                {pub.name} · {RANGE_LABELS[range]}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Select value={pubId} onValueChange={setPubId}>
+              <SelectTrigger className="h-9 w-[200px] text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PUBS.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <DateRangePicker value={range} onChange={setRange} />
+            <Link to="/hq" className="hidden sm:inline-flex">
+              <Button variant="outline" size="sm">HQ View</Button>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Welcome */}
+        <section>
+          <p className="text-sm text-muted-foreground">Willkommen zurück 👋</p>
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-1">
+            Willkommen im <span className="text-primary">{pub.name}</span> Dashboard
+          </h1>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+            <MapPin className="h-3.5 w-3.5" />
+            {pub.city} · Manager: {pub.manager}
+          </div>
+        </section>
+
+        {/* Gamification hero */}
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Performance score (big) */}
+          <Card className="lg:col-span-2 shadow-sm overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+            <CardContent className="p-6 relative">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
+                    <Gauge className="h-3.5 w-3.5" />
+                    Pub Performance Score
+                  </div>
+                  <div className="mt-3 flex items-baseline gap-2">
+                    <span className={`text-6xl font-bold tabular-nums tracking-tight ${scoreColor}`}>
+                      {pub.score}
+                    </span>
+                    <span className="text-2xl text-muted-foreground font-normal">/100</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 text-xs">
+                    <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 border-0 font-normal gap-1">
+                      <ArrowUp className="h-3 w-3" />
+                      +3 ggü. Vorwoche
+                    </Badge>
+                    <span className="text-muted-foreground">stärkster Anstieg seit 3 Wochen</span>
+                  </div>
+                </div>
+                <div className="hidden sm:flex h-16 w-16 rounded-2xl bg-primary/10 items-center justify-center shrink-0">
+                  <Trophy className="h-7 w-7 text-primary" />
+                </div>
+              </div>
+
+              {/* Score history sparkline */}
+              <div className="h-24 -mx-2 mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={pub.scoreHistory}>
+                    <Line
+                      type="monotone"
+                      dataKey="score"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2.5}
+                      dot={false}
+                      activeDot={{ r: 4 }}
+                    />
+                    <XAxis dataKey="day" tickLine={false} axisLine={false} fontSize={10} />
+                    <YAxis hide domain={["dataMin - 4", "dataMax + 4"]} />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 8, border: "1px solid hsl(var(--border))",
+                        background: "hsl(var(--card))", fontSize: 12,
+                      }}
+                      formatter={(v: number) => [`${v}`, "Score"]}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Leaderboard rank */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                Dein Platz im Leaderboard
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-baseline gap-2">
+                <span className="text-5xl font-bold tabular-nums">#{pub.rank}</span>
+                <span className="text-sm text-muted-foreground">von {PUBS.length}</span>
+              </div>
+
+              {pub.rank === 1 ? (
+                <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
+                  <div className="flex items-center gap-2 text-amber-700 font-semibold text-sm">
+                    <Trophy className="h-4 w-4" />
+                    🏆 Du bist Spitzenreiter!
+                  </div>
+                  <p className="text-xs text-amber-700/80 mt-1">
+                    Halte das Tempo — {PUBS[1].name} ist nur {pub.score - PUBS[1].score} Punkte hinter dir.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <div className="text-sm font-semibold">
+                    🔥 Du bist auf Platz {pub.rank}!
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Noch <span className="font-semibold text-primary">{pointsToNext} Punkte</span> bis Platz {pub.rank - 1}
+                    {nextPub && <> ({nextPub.name})</>}.
+                  </p>
+                  <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${Math.min(100, (pub.score / (nextPub?.score ?? pub.score + 1)) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
+                <div className="rounded-md border p-2">
+                  <div className="text-muted-foreground">Booking</div>
+                  <div className="font-semibold tabular-nums">{pub.bookingRatio}%</div>
+                </div>
+                <div className="rounded-md border p-2">
+                  <div className="text-muted-foreground flex items-center gap-1">
+                    <Star className="h-3 w-3" /> Feedback
+                  </div>
+                  <div className="font-semibold tabular-nums">{pub.feedback.toFixed(1)}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Mini KPI strip — only this pub's numbers */}
+        <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <MiniStat label="Spend / Booking" value={`€${pub.spendPerBooking}`} delta="+€1.20" />
+          <MiniStat label="Revenue Target" value={`${pub.revenueTarget}%`} delta={pub.revenueTarget >= 100 ? "über Ziel" : "knapp"} positive={pub.revenueTarget >= 100} />
+          <MiniStat label="Booking Ratio" value={`${pub.bookingRatio}%`} delta="+1.4%" />
+          <MiniStat label={<><Star className="h-3 w-3 inline -mt-0.5 mr-0.5" /> Rating</>} value={pub.feedback.toFixed(1)} delta="+0.1" />
+        </section>
+
+        {/* Tabs: Sales + Feedback (this pub only) */}
+        <Tabs defaultValue="sales" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="sales">
+              <TrendingUp className="h-4 w-4 mr-1.5" />
+              Sales &amp; Operations
+            </TabsTrigger>
+            <TabsTrigger value="feedback">
+              <Star className="h-4 w-4 mr-1.5" />
+              Gäste-Feedback
+              <span className="ml-2 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
+                {pubFeedback.length}
+              </span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="sales" className="mt-0">
+            <SalesOps data={sales} factor={factor} />
+          </TabsContent>
+
+          <TabsContent value="feedback" className="mt-0">
+            <LocalFeedback pubId={pub.id} hasMatches={pubFeedback.length > 0 && FEEDBACK.some((f) => f.pubId === pub.id)} />
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
+  );
+}
+
+function MiniStat({
+  label, value, delta, positive = true,
+}: {
+  label: React.ReactNode; value: string; delta: string; positive?: boolean;
+}) {
+  return (
+    <Card className="shadow-sm">
+      <CardContent className="p-4">
+        <div className="text-[11px] text-muted-foreground">{label}</div>
+        <div className="flex items-baseline justify-between mt-1">
+          <div className="text-xl font-semibold tabular-nums">{value}</div>
+          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+            positive ? "text-emerald-600 bg-emerald-500/10" : "text-amber-600 bg-amber-500/10"
+          }`}>{delta}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Reuses the LiveFeedback component but pre-scoped via a remount key. */
+function LocalFeedback({ pubId, hasMatches }: { pubId: string; hasMatches: boolean }) {
+  // If there are no exact matches for this pub in the mock, we still render the
+  // standard component (manager can use filters). For pubs with matches, we
+  // give a hint that filters can be set to "this pub".
+  return (
+    <div className="space-y-3">
+      {!hasMatches && (
+        <div className="text-xs text-muted-foreground italic">
+          Hinweis: Mock-Feed zeigt alle Pubs — wähle „{pubId}" im Filiale-Filter.
+        </div>
+      )}
+      <LiveFeedback />
+    </div>
+  );
+}

@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PubRouteImport } from './routes/pub'
 import { Route as HqRouteImport } from './routes/hq'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HqPubIdRouteImport } from './routes/hq.$pubId'
 
+const PubRoute = PubRouteImport.update({
+  id: '/pub',
+  path: '/pub',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HqRoute = HqRouteImport.update({
   id: '/hq',
   path: '/hq',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/hq': typeof HqRouteWithChildren
+  '/pub': typeof PubRoute
   '/hq/$pubId': typeof HqPubIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/hq': typeof HqRouteWithChildren
+  '/pub': typeof PubRoute
   '/hq/$pubId': typeof HqPubIdRoute
 }
 export interface FileRoutesById {
@@ -52,24 +60,33 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/hq': typeof HqRouteWithChildren
+  '/pub': typeof PubRoute
   '/hq/$pubId': typeof HqPubIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/hq' | '/hq/$pubId'
+  fullPaths: '/' | '/admin' | '/hq' | '/pub' | '/hq/$pubId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/hq' | '/hq/$pubId'
-  id: '__root__' | '/' | '/admin' | '/hq' | '/hq/$pubId'
+  to: '/' | '/admin' | '/hq' | '/pub' | '/hq/$pubId'
+  id: '__root__' | '/' | '/admin' | '/hq' | '/pub' | '/hq/$pubId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   HqRoute: typeof HqRouteWithChildren
+  PubRoute: typeof PubRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pub': {
+      id: '/pub'
+      path: '/pub'
+      fullPath: '/pub'
+      preLoaderRoute: typeof PubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/hq': {
       id: '/hq'
       path: '/hq'
@@ -115,7 +132,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   HqRoute: HqRouteWithChildren,
+  PubRoute: PubRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
