@@ -16,6 +16,7 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
     reservationsRevenue: Math.round(data.reservationsRevenue * factor),
     walkInsRevenue: Math.round(data.walkInsRevenue * factor),
     costs: {
+      cogs:      Math.round(data.costs.cogs * factor),
       marketing: Math.round(data.costs.marketing * factor),
       staff:     Math.round(data.costs.staff * factor),
       rent:      Math.round(data.costs.rent * factor),
