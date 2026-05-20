@@ -257,7 +257,7 @@ function HQPage() {
                   <div>
                     <CardTitle className="text-base">Sales nach Filiale</CardTitle>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Umsatz, Bons und Ø Bon für jede Bar — Klick öffnet die Detailansicht
+                      Umsatz, Ø Bon und EBITDA für jede Bar — Klick öffnet die Detailansicht
                     </p>
                   </div>
                   <Badge variant="secondary" className="font-normal">{PUBS.length} Pubs</Badge>
@@ -268,11 +268,10 @@ function HQPage() {
                       <TableRow>
                         <TableHead>Pub</TableHead>
                         <TableHead className="text-right">Umsatz</TableHead>
-                        <TableHead className="text-right hidden sm:table-cell">Bons</TableHead>
                         <TableHead className="text-right hidden md:table-cell">Ø Bon</TableHead>
                         <TableHead className="text-right hidden lg:table-cell">Reservierungen</TableHead>
                         <TableHead className="text-right hidden lg:table-cell">Walk-ins</TableHead>
-                        <TableHead className="text-right">Top Seller</TableHead>
+                        <TableHead className="text-right">EBITDA</TableHead>
                         <TableHead className="w-10"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -286,7 +285,9 @@ function HQPage() {
                           const avg = +(revenue / orders).toFixed(2);
                           const resv = Math.round(s.reservationsRevenue * factor);
                           const walk = Math.round(s.walkInsRevenue * factor);
-                          const top = s.topSellers[0];
+                          const totalCosts = Math.round((s.costs.cogs + s.costs.marketing + s.costs.staff + s.costs.rent + s.costs.other) * factor);
+                          const ebitda = revenue - totalCosts;
+                          const ebitdaPct = revenue > 0 ? (ebitda / revenue) * 100 : 0;
                           return (
                             <TableRow
                               key={pub.id}
@@ -298,13 +299,14 @@ function HQPage() {
                                 <div className="text-xs text-muted-foreground">{pub.city}</div>
                               </TableCell>
                               <TableCell className="text-right font-semibold tabular-nums">{formatEUR(revenue)}</TableCell>
-                              <TableCell className="text-right tabular-nums hidden sm:table-cell">{orders.toLocaleString("de-DE")}</TableCell>
                               <TableCell className="text-right tabular-nums hidden md:table-cell">{formatEUR(avg)}</TableCell>
                               <TableCell className="text-right tabular-nums hidden lg:table-cell text-muted-foreground">{formatEUR(resv)}</TableCell>
                               <TableCell className="text-right tabular-nums hidden lg:table-cell text-muted-foreground">{formatEUR(walk)}</TableCell>
                               <TableCell className="text-right">
-                                <div className="text-xs font-medium truncate max-w-[160px] ml-auto">{top.name}</div>
-                                <div className="text-[10px] text-muted-foreground">{top.qty}× · {formatEUR(top.revenue)}</div>
+                                <div className={`text-sm font-semibold tabular-nums ${ebitda >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                                  {formatEUR(ebitda)}
+                                </div>
+                                <div className="text-[10px] text-muted-foreground tabular-nums">{ebitdaPct.toFixed(1)}% Marge</div>
                               </TableCell>
                               <TableCell>
                                 <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -317,6 +319,11 @@ function HQPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent value="sortiment" className="mt-0 space-y-6">
+              <Sortiment data={SALES_GLOBAL} factor={factor} title="Sortiment & Konsum — Alle Filialen" />
+            </TabsContent>
+
 
             <TabsContent value="feedback" className="mt-0">
               <LiveFeedback />
