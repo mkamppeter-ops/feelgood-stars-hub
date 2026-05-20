@@ -22,6 +22,7 @@ import { Sortiment } from "@/components/sortiment";
 import { SortimentMatrix } from "@/components/sortiment-matrix";
 import { EventsResults } from "@/components/events-results";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
+import { ActiveOps } from "@/components/active-ops";
 
 export const Route = createFileRoute("/hq/")({
   head: () => ({
@@ -124,6 +125,10 @@ function HQPage() {
           <Tabs defaultValue="overview" className="space-y-6">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="active-ops" className="gap-1.5">
+                <Activity className="h-3.5 w-3.5" />
+                Active Ops
+              </TabsTrigger>
               <TabsTrigger value="sales">Sales &amp; Operations</TabsTrigger>
               <TabsTrigger value="sortiment">Sortiment</TabsTrigger>
               <TabsTrigger value="events">Events</TabsTrigger>
