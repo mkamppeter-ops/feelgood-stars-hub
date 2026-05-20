@@ -1,29 +1,57 @@
 ## Ziel
 
-Direkter Zugriff auf einzelne Pub-Detailseiten (`/hq/$pubId`) aus dem HQ-Dashboard heraus — über einen neuen Tab „Pubs“ mit einer Karten-Übersicht aller Filialen.
+Neuer HQ-Bereich **„Data Settings“**, in dem pro Pub geschäftsrelevante Stammdaten gepflegt werden (Personalkosten, Mietkosten, Sitzplätze, gewünschte Auslastung je Öffnungsstunde). Persistiert in Lovable Cloud, damit später echte Berechnungen darauf aufbauen können.
 
-## Änderungen
+## Datenmodell (Lovable Cloud)
 
-### 1. Sidebar (`src/routes/hq.index.tsx`)
-- Neuen Eintrag **„Pubs“** zwischen „Overview“ und „Active Ops“ einfügen (Icon: `Building2`), gekoppelt an `tab: "pubs"`.
+Neue Tabelle `pub_settings`:
+- `pub_id` (text, PK) — referenziert die IDs aus `PUBS` (`crown-anchor`, `red-lion`, …)
+- `staff_costs_monthly` (numeric) — Personalkosten in EUR / Monat
+- `rent_monthly` (numeric) — Mietkosten in EUR / Monat
+- `seats` (integer) — Sitzplätze gesamt
+- `opening_hour` (integer 0–23) — Start Öffnungszeit
+- `closing_hour` (integer 1–24) — Ende Öffnungszeit
+- `occupancy_targets` (jsonb) — `{ "17": 40, "18": 60, "19": 80, ... }` — Ziel-Auslastung in % je Stunde
+- `created_at`, `updated_at`
 
-### 2. Tabs-Leiste
-- Neuen `TabsTrigger value="pubs"` mit Label „Pubs“ + Building2-Icon, direkt nach „Overview“.
+RLS:
+- Demo-Modus, kein Auth → öffentliche `SELECT`/`INSERT`/`UPDATE` Policies (konsistent zur bestehenden `feedbacks`-Tabelle).
+- Kein `DELETE`.
 
-### 3. Neuer `TabsContent value="pubs"`
-- Responsives Grid (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`) mit einer Card pro Pub aus `PUBS`.
-- Jede Card zeigt:
-  - Pub-Name + Stadt
-  - Score-Badge (farbig nach Schwellwert wie im Leaderboard)
-  - Mini-KPIs: Umsatz-Ziel %, Walk-In %, Feedback ⭐, Booking %
-  - Manager-Name klein unten
-- Komplette Card ist klickbar → `navigate({ to: "/hq/$pubId", params: { pubId: p.id } })`.
-- Hover-States konsistent mit den bestehenden Booking/App-Reach-Cards (`hover:border-primary/40 hover:bg-muted/30`).
+## Server Functions (`src/lib/pub-settings.functions.ts`)
 
-### 4. Optional Sort/Filter (leichtgewichtig)
-- Kleine Toolbar oben im Tab: Sort-Toggle (Score ↓ / Name A–Z) — kein Suchfeld, da bei aktuell überschaubarer Pub-Anzahl unnötig.
+- `getPubSettings(pubId)` — liest die Settings eines Pubs; gibt `null` zurück wenn noch nicht angelegt.
+- `getAllPubSettings()` — alle Settings auf einmal (für Übersicht / Default-Werte).
+- `upsertPubSettings({ pubId, ... })` — Upsert mit Zod-Validierung (Beträge ≥ 0, Stunden 0–24, Auslastungs-% 0–100).
+
+Verwendet `supabaseAdmin` (Demo, keine Auth) — gleicher Pattern wie woanders im Projekt.
+
+## UI
+
+### Sidebar (`src/routes/hq.index.tsx`)
+- Neuer Eintrag **„Data Settings“** ganz unten (Icon `Settings`, vor dem Admin-Link), gekoppelt an `tab: "settings"`.
+
+### Tab-Leiste
+- Neuer `TabsTrigger value="settings"` mit Settings-Icon.
+
+### Neue Komponente `src/components/data-settings.tsx`
+Layout:
+- Links: schlanke Pub-Auswahl-Liste (alle Pubs aus `PUBS`, aktiver Pub hervorgehoben).
+- Rechts: Formular mit drei Sektionen:
+  1. **Kosten** — Personalkosten / Monat, Miete / Monat (Number-Inputs mit EUR-Suffix).
+  2. **Kapazität** — Sitzplätze, Öffnungs- und Schließstunde (Selects 0–24).
+  3. **Ziel-Auslastung pro Stunde** — dynamisch aus Öffnung→Schließung generiert, je Stunde ein Slider 0–100 % mit aktuellem Wert daneben.
+- Footer: „Speichern“-Button (deaktiviert wenn nichts geändert), „Zurücksetzen“-Button, Toast bei Erfolg.
+
+Datenfluss:
+- `useQuery` lädt `getAllPubSettings()` einmal.
+- Beim Pub-Wechsel: Formular-State aus Cache befüllen, fehlende Werte mit sinnvollen Defaults (z. B. 50 Sitzplätze, 17–24 Uhr, 60 % Ziel pro Stunde).
+- Beim Speichern: `upsertPubSettings` + Query invalidieren.
+
+### Auth-Wiring
+- `attachSupabaseAuth` in `src/start.ts` prüfen/ergänzen (für später, schadet jetzt nicht).
 
 ## Nicht im Scope
-- Keine Änderung an `/hq/$pubId` selbst.
-- Keine neuen Routen.
-- Keine Backend-Änderungen — alles auf Basis von `PUBS` aus `pubs-mock`.
+- Keine Anbindung an bestehende KPI-Karten (Score etc. bleiben Mock-basiert) — das passiert in einem späteren Schritt, wenn echte Verbrauchsdaten verdrahtet werden.
+- Keine globalen Defaults / Override-Mechanik (User-Wahl: nur pro Pub).
+- Keine Historie/Versionierung der Settings.
