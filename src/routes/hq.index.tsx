@@ -418,7 +418,8 @@ function HQPage() {
 
 
 
-            <TabsContent value="feedback" className="mt-0">
+            <TabsContent value="feedback" className="mt-0 space-y-4">
+              <RewardsSummary factor={factor} />
               <LiveFeedback />
             </TabsContent>
           </Tabs>
