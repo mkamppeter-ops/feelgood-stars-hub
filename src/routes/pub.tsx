@@ -38,7 +38,10 @@ export const Route = createFileRoute("/pub")({
 });
 
 function PubLocalView() {
-  const [pubId, setPubId] = useState(PUBS[2].id); // default: rank 3 ("The Foggy Dog") for motivational copy
+  const { mode } = Route.useSearch();
+  const session = useSession();
+  const isStaff = session?.role === "bar_staff" || mode === "staff";
+  const [pubId, setPubId] = useState(PUBS[2].id);
   const [range, setRange] = useState<DateRange>("last7");
   const factor = RANGE_FACTOR[range];
 
