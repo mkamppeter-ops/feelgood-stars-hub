@@ -411,6 +411,12 @@ function HQPage() {
               <SortimentMatrix />
             </TabsContent>
 
+            <TabsContent value="events" className="mt-0">
+              <EventsResults />
+            </TabsContent>
+
+
+
 
             <TabsContent value="feedback" className="mt-0">
               <LiveFeedback />
