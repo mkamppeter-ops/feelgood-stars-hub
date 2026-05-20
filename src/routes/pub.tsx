@@ -242,7 +242,7 @@ function PubLocalView() {
           </TabsContent>
 
           <TabsContent value="feedback" className="mt-0">
-            <LocalFeedback pubId={pub.id} hasMatches={pubFeedback.length > 0 && FEEDBACK.some((f) => f.pubId === pub.id)} />
+            <LocalFeedback items={pubFeedback} pubName={pub.name} />
           </TabsContent>
         </Tabs>
       </main>
