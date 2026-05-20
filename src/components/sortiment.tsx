@@ -4,22 +4,26 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Wine, UtensilsCrossed, Martini, Package } from "lucide-react";
 import { type SalesSnapshot, type TopSeller, formatEUR } from "@/lib/sales-mock";
+import { useT } from "@/lib/use-t";
 
 type Cat = TopSeller["category"];
 
-const CAT_META: Record<Cat | "all", { label: string; icon: typeof Wine; tone: string }> = {
-  all:       { label: "Alle",       icon: Package,           tone: "bg-muted text-foreground" },
-  Drinks:    { label: "Getränke",   icon: Wine,              tone: "bg-amber-500/10 text-amber-600" },
-  Food:      { label: "Speisen",    icon: UtensilsCrossed,   tone: "bg-emerald-500/10 text-emerald-600" },
-  Cocktails: { label: "Cocktails",  icon: Martini,           tone: "bg-violet-500/10 text-violet-600" },
-};
-
-export function Sortiment({ data, factor = 1, title = "Sortiment & Konsum" }: {
+export function Sortiment({ data, factor = 1, title }: {
   data: SalesSnapshot;
   factor?: number;
   title?: string;
 }) {
+  const tt = useT();
   const [filter, setFilter] = useState<Cat | "all">("all");
+
+  const CAT_META: Record<Cat | "all", { label: string; icon: typeof Wine; tone: string }> = {
+    all:       { label: tt("Alle", "All"),         icon: Package,         tone: "bg-muted text-foreground" },
+    Drinks:    { label: tt("Getränke", "Drinks"),  icon: Wine,            tone: "bg-amber-500/10 text-amber-600" },
+    Food:      { label: tt("Speisen", "Food"),     icon: UtensilsCrossed, tone: "bg-emerald-500/10 text-emerald-600" },
+    Cocktails: { label: "Cocktails",               icon: Martini,         tone: "bg-violet-500/10 text-violet-600" },
+  };
+
+  const resolvedTitle = title ?? tt("Sortiment & Konsum", "Assortment & consumption");
 
   const scaledSellers = useMemo(
     () => data.topSellers.map((s) => ({
@@ -69,7 +73,7 @@ export function Sortiment({ data, factor = 1, title = "Sortiment & Konsum" }: {
                     {formatEUR(totals[c].revenue)}
                   </div>
                   <div className="text-[11px] text-muted-foreground tabular-nums mt-0.5">
-                    {totals[c].qty.toLocaleString("de-DE")} verkauft
+                    {totals[c].qty.toLocaleString()} {tt("verkauft", "sold")}
                   </div>
                 </div>
               </CardContent>
@@ -82,9 +86,9 @@ export function Sortiment({ data, factor = 1, title = "Sortiment & Konsum" }: {
       <Card className="shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <div>
-            <CardTitle className="text-base">{title}</CardTitle>
+            <CardTitle className="text-base">{resolvedTitle}</CardTitle>
             <p className="text-xs text-muted-foreground mt-1">
-              Meistverkaufte Produkte nach Umsatzanteil
+              {tt("Meistverkaufte Produkte nach Umsatzanteil", "Best-selling products by revenue share")}
             </p>
           </div>
           <div className="flex flex-wrap gap-1">

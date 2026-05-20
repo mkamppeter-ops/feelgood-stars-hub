@@ -8,6 +8,7 @@ import {
 import { PartyPopper, TrendingUp, Trophy, Users, RefreshCw, Repeat, AlertTriangle } from "lucide-react";
 import { EVENT_RESULTS, EVENT_TOTALS, formatEventDate, type EventResult } from "@/lib/events-mock";
 import { formatEUR } from "@/lib/sales-mock";
+import { useT } from "@/lib/use-t";
 
 type SortKey = "score" | "booking" | "revenue" | "date";
 
@@ -20,28 +21,30 @@ const tagStyles: Record<EventResult["tag"], string> = {
 };
 
 function RecommendationBadge({ rec }: { rec: EventResult["recommendation"] }) {
+  const tt = useT();
   if (rec === "wiederholen") {
     return (
       <Badge className="bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/15 border-0 gap-1 font-normal">
-        <Repeat className="h-3 w-3" /> Wiederholen
+        <Repeat className="h-3 w-3" /> {tt("Wiederholen", "Repeat")}
       </Badge>
     );
   }
   if (rec === "optimieren") {
     return (
       <Badge className="bg-amber-500/15 text-amber-700 hover:bg-amber-500/15 border-0 gap-1 font-normal">
-        <RefreshCw className="h-3 w-3" /> Optimieren
+        <RefreshCw className="h-3 w-3" /> {tt("Optimieren", "Optimize")}
       </Badge>
     );
   }
   return (
     <Badge className="bg-red-500/15 text-red-700 hover:bg-red-500/15 border-0 gap-1 font-normal">
-      <AlertTriangle className="h-3 w-3" /> Austauschen
+      <AlertTriangle className="h-3 w-3" /> {tt("Austauschen", "Replace")}
     </Badge>
   );
 }
 
 export function EventsResults() {
+  const tt = useT();
   const [sortKey, setSortKey] = useState<SortKey>("score");
   const [tagFilter, setTagFilter] = useState<EventResult["tag"] | "all">("all");
 
@@ -63,49 +66,60 @@ export function EventsResults() {
   const top = EVENT_RESULTS[0];
   const worst = EVENT_RESULTS[EVENT_RESULTS.length - 1];
   const tags: (EventResult["tag"] | "all")[] = ["all", "Party", "Sport", "Themenabend", "Chill", "LiveAct"];
+  const tagLabel = (t: EventResult["tag"] | "all") => {
+    if (t === "all") return tt("Alle", "All");
+    if (t === "Themenabend") return tt("Themenabend", "Theme night");
+    return t;
+  };
+  const sortLabel = (k: SortKey) =>
+    k === "score" ? "Score"
+    : k === "booking" ? "Booking"
+    : k === "revenue" ? tt("Umsatz", "Revenue")
+    : tt("Datum", "Date");
 
   return (
     <div className="space-y-6">
-      {/* KPI-Reihe */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <SummaryCard
           icon={PartyPopper}
           tone="primary"
-          label="Events ausgewertet"
+          label={tt("Events ausgewertet", "Events evaluated")}
           value={`${EVENT_TOTALS.events}`}
-          sub="letzte 14 Tage · alle Filialen"
+          sub={tt("letzte 14 Tage · alle Filialen", "last 14 days · all branches")}
         />
         <SummaryCard
           icon={Users}
           tone={EVENT_TOTALS.avgBookingRatio >= 75 ? "emerald" : "amber"}
-          label="Ø Booking Ratio"
+          label={tt("Ø Booking Ratio", "Avg booking ratio")}
           value={`${EVENT_TOTALS.avgBookingRatio}%`}
-          sub={`${EVENT_TOTALS.seatsBooked.toLocaleString("de-DE")} / ${EVENT_TOTALS.seatsAvailable.toLocaleString("de-DE")} Plätze`}
+          sub={`${EVENT_TOTALS.seatsBooked.toLocaleString()} / ${EVENT_TOTALS.seatsAvailable.toLocaleString()} ${tt("Plätze", "seats")}`}
         />
         <SummaryCard
           icon={TrendingUp}
           tone="violet"
-          label="Event-Umsatz gesamt"
+          label={tt("Event-Umsatz gesamt", "Total event revenue")}
           value={formatEUR(EVENT_TOTALS.revenue)}
-          sub={`Ø ${formatEUR(Math.round(EVENT_TOTALS.revenue / EVENT_TOTALS.events))} pro Event`}
+          sub={`Ø ${formatEUR(Math.round(EVENT_TOTALS.revenue / EVENT_TOTALS.events))} ${tt("pro Event", "per event")}`}
         />
         <SummaryCard
           icon={Trophy}
           tone="amber"
-          label="Top-Event"
+          label={tt("Top-Event", "Top event")}
           value={`${top.score}`}
           suffix="/100"
           sub={`${top.emoji} ${top.title}`}
         />
       </section>
 
-      {/* Bewertungs-Tabelle */}
       <Card className="shadow-sm">
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between space-y-0">
           <div>
-            <CardTitle className="text-base">Event-Scoring</CardTitle>
+            <CardTitle className="text-base">{tt("Event-Scoring", "Event scoring")}</CardTitle>
             <p className="text-xs text-muted-foreground mt-1">
-              Score = 50 % Booking-Ratio + 50 % Umsatz-Index. Empfehlung zum Wiederholen oder Austauschen.
+              {tt(
+                "Score = 50 % Booking-Ratio + 50 % Umsatz-Index. Empfehlung zum Wiederholen oder Austauschen.",
+                "Score = 50% booking ratio + 50% revenue index. Recommendation to repeat or replace.",
+              )}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -118,7 +132,7 @@ export function EventsResults() {
                   className="h-7 px-2.5 text-xs"
                   onClick={() => setTagFilter(t)}
                 >
-                  {t === "all" ? "Alle" : t}
+                  {tagLabel(t)}
                 </Button>
               ))}
             </div>
@@ -131,7 +145,7 @@ export function EventsResults() {
                   className="h-7 px-2.5 text-xs"
                   onClick={() => setSortKey(k)}
                 >
-                  {k === "score" ? "Score" : k === "booking" ? "Booking" : k === "revenue" ? "Umsatz" : "Datum"}
+                  {sortLabel(k)}
                 </Button>
               ))}
             </div>
@@ -143,12 +157,12 @@ export function EventsResults() {
               <TableRow>
                 <TableHead className="w-10">#</TableHead>
                 <TableHead>Event</TableHead>
-                <TableHead className="hidden md:table-cell">Datum</TableHead>
-                <TableHead className="text-right">Booking Ratio</TableHead>
-                <TableHead className="text-right hidden sm:table-cell">Umsatz</TableHead>
-                <TableHead className="text-right hidden lg:table-cell">Ø Gast</TableHead>
+                <TableHead className="hidden md:table-cell">{tt("Datum", "Date")}</TableHead>
+                <TableHead className="text-right">{tt("Booking Ratio", "Booking ratio")}</TableHead>
+                <TableHead className="text-right hidden sm:table-cell">{tt("Umsatz", "Revenue")}</TableHead>
+                <TableHead className="text-right hidden lg:table-cell">{tt("Ø Gast", "Avg guest")}</TableHead>
                 <TableHead className="text-right">Score</TableHead>
-                <TableHead className="text-right">Empfehlung</TableHead>
+                <TableHead className="text-right">{tt("Empfehlung", "Recommendation")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -167,7 +181,7 @@ export function EventsResults() {
                       <div className="min-w-0">
                         <div className="font-medium truncate">{e.title}</div>
                         <Badge variant="outline" className={`mt-1 font-normal text-[10px] ${tagStyles[e.tag]}`}>
-                          {e.tag}
+                          {tagLabel(e.tag)}
                         </Badge>
                       </div>
                     </div>
@@ -186,7 +200,7 @@ export function EventsResults() {
                       />
                     </div>
                     <div className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
-                      {e.seatsBooked.toLocaleString("de-DE")} / {e.seatsAvailable.toLocaleString("de-DE")}
+                      {e.seatsBooked.toLocaleString()} / {e.seatsAvailable.toLocaleString()}
                     </div>
                   </TableCell>
                   <TableCell className="text-right tabular-nums hidden sm:table-cell">{formatEUR(e.revenue)}</TableCell>
@@ -206,29 +220,32 @@ export function EventsResults() {
         </CardContent>
       </Card>
 
-      {/* Insights */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="shadow-sm border-emerald-500/30">
           <CardContent className="p-5">
             <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 uppercase tracking-wide">
-              <Repeat className="h-3.5 w-3.5" /> Wiederholen
+              <Repeat className="h-3.5 w-3.5" /> {tt("Wiederholen", "Repeat")}
             </div>
             <div className="mt-2 text-lg font-semibold">{top.emoji} {top.title}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {top.bookingRatio} % Auslastung · {formatEUR(top.revenue)} Umsatz · Score {top.score}/100. Höchste
-              Conversion im Programm — wöchentlich einplanen.
+              {tt(
+                `${top.bookingRatio} % Auslastung · ${formatEUR(top.revenue)} Umsatz · Score ${top.score}/100. Höchste Conversion im Programm — wöchentlich einplanen.`,
+                `${top.bookingRatio}% occupancy · ${formatEUR(top.revenue)} revenue · score ${top.score}/100. Highest conversion in the program — schedule weekly.`,
+              )}
             </p>
           </CardContent>
         </Card>
         <Card className="shadow-sm border-red-500/30">
           <CardContent className="p-5">
             <div className="flex items-center gap-2 text-xs font-medium text-red-700 uppercase tracking-wide">
-              <AlertTriangle className="h-3.5 w-3.5" /> Austauschen
+              <AlertTriangle className="h-3.5 w-3.5" /> {tt("Austauschen", "Replace")}
             </div>
             <div className="mt-2 text-lg font-semibold">{worst.emoji} {worst.title}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Nur {worst.bookingRatio} % Auslastung bei {formatEUR(worst.spendPerSeat)} Ø-Gast — Score {worst.score}/100.
-              Konzept ersetzen oder Marketing-Push testen.
+              {tt(
+                `Nur ${worst.bookingRatio} % Auslastung bei ${formatEUR(worst.spendPerSeat)} Ø-Gast — Score ${worst.score}/100. Konzept ersetzen oder Marketing-Push testen.`,
+                `Only ${worst.bookingRatio}% occupancy at ${formatEUR(worst.spendPerSeat)} avg guest — score ${worst.score}/100. Replace concept or test a marketing push.`,
+              )}
             </p>
           </CardContent>
         </Card>
