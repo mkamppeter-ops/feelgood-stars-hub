@@ -375,7 +375,11 @@ function ReviewCard({
                 </Badge>
               )}
               {isApp && item.stars >= 4 && (
-                <GoogleStatusBadge status={googleStatus} invitedAt={item.googleInvitedAt} />
+                <GoogleStatusBadge
+                  status={googleStatus}
+                  invitedAt={item.googleInvitedAt}
+                  clickedAt={item.googleClickedAt}
+                />
               )}
               <span className="text-xs text-muted-foreground ml-auto">{item.date}</span>
             </div>
