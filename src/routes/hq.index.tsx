@@ -472,7 +472,8 @@ function RewardsSummary({ factor }: { factor: number }) {
   const apologyCredits = Math.round(8200 * factor);
   const apologyCount = Math.round(11 * factor);
   const autoInvites = Math.round(46 * factor);
-  const invitesConverted = Math.round(autoInvites * 0.32);
+  const invitesClicked = Math.round(autoInvites * 0.41);
+  const invitesConfirmed = Math.round(autoInvites * 0.18);
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <Card className="shadow-sm">
@@ -499,7 +500,9 @@ function RewardsSummary({ factor }: { factor: number }) {
             <div className="text-xl font-semibold tabular-nums">
               {autoInvites} <span className="text-xs text-muted-foreground font-normal">verschickt</span>
             </div>
-            <div className="text-[11px] text-muted-foreground">{invitesConverted} Bewertungen daraus eingegangen · richtlinienkonform, ohne Anreize</div>
+            <div className="text-[11px] text-muted-foreground">
+              {invitesClicked} Link geöffnet · {invitesConfirmed} als bewertet bestätigt · richtlinienkonform, ohne Anreize
+            </div>
           </div>
         </CardContent>
       </Card>

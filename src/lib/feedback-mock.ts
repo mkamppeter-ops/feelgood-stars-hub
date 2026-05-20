@@ -20,8 +20,9 @@ export type ApologyReward = {
 export type GoogleStatus =
   | "none"        // noch nichts geschehen
   | "invited"     // Einladung wurde automatisch gesendet, noch kein Klick
-  | "reviewed"    // Kunde hat bereits auf Google bewertet (einmal pro Kunde)
-  | "cooldown";   // Einladung schon mal gesendet, Wartefrist läuft
+  | "clicked"     // Kunde hat den Link geöffnet — bewertet evtl. noch nicht
+  | "reviewed"    // Kunde hat bestätigt / Betreiber hat im HQ abgehakt
+  | "cooldown";   // Wartefrist läuft (nach invited/clicked ohne Bestätigung)
 
 export type FeedbackItem = {
   id: string;
@@ -38,12 +39,17 @@ export type FeedbackItem = {
   reward?: ApologyReward;        // gesetzt, sobald Wiedergutmachung verschickt wurde
   googleStatus?: GoogleStatus;   // Status der Google-Auto-Einladung
   googleInvitedAt?: number;      // ms-Timestamp der letzten Auto-Einladung
+  googleClickedAt?: number;      // ms-Timestamp, falls Kunde den Link geöffnet hat
+  googleReviewedAt?: number;     // ms-Timestamp der bestätigten Google-Bewertung
+  googleReviewedSource?: "customer" | "manual"; // wie wurde "reviewed" gesetzt
 };
 
 export const APOLOGY_CREDIT_STEPS = [100, 250, 500, 1000, 2500, 5000, 10000] as const;
 
-// Cooldown bevor wir denselben Kunden noch einmal einladen (60 Tage)
+// Cooldown nach reiner Einladung (kein Klick) — danach erneut einladbar
 export const GOOGLE_INVITE_COOLDOWN_DAYS = 60;
+// Cooldown nach Link-Klick ohne Bestätigung — länger, er hat's ja gesehen
+export const GOOGLE_CLICKED_COOLDOWN_DAYS = 90;
 
 
 // Exakte Labels & Tags aus dem Kunden-Formular
@@ -213,13 +219,21 @@ export const FEEDBACK: FeedbackItem[] = SAMPLES.map((s, i) => {
   return base;
 }).sort((a, b) => b.timestamp - a.timestamp);
 
-// Seed: ein paar Kunden haben Google bereits bewertet (Einmal-Sperre greift)
-// und ein paar haben bereits eine Auto-Einladung erhalten (Cooldown läuft).
+// Seed: ein paar Kunden haben Google bereits bewertet (Einmal-Sperre greift),
+// einer hat den Link angeklickt (clicked), einer hat nur eine Einladung
+// bekommen ohne Reaktion (cooldown).
 const REVIEWED_CUSTOMERS = new Set(["c-mira-l-", "c-carla-d-"]);
+const CLICKED_CUSTOMERS = new Set(["c-sophia-k-"]);
 const RECENTLY_INVITED = new Set(["c-nina-h-"]);
 for (const f of FEEDBACK) {
   if (REVIEWED_CUSTOMERS.has(f.customerId)) {
     f.googleStatus = "reviewed";
+    f.googleReviewedAt = Date.now() - 1000 * 60 * 60 * 24 * 21;
+    f.googleReviewedSource = "customer";
+  } else if (CLICKED_CUSTOMERS.has(f.customerId)) {
+    f.googleStatus = "clicked";
+    f.googleInvitedAt = Date.now() - 1000 * 60 * 60 * 24 * 5;
+    f.googleClickedAt = Date.now() - 1000 * 60 * 60 * 24 * 4;
   } else if (RECENTLY_INVITED.has(f.customerId)) {
     f.googleStatus = "cooldown";
     f.googleInvitedAt = Date.now() - 1000 * 60 * 60 * 24 * 14; // vor 14 Tagen

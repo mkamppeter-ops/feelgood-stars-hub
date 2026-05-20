@@ -13,15 +13,18 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Check, Phone, Star, Globe, Smartphone, ChevronDown, Gift, BellRing, Sparkles, ShieldCheck, Clock,
+  Check, Phone, Star, Globe, Smartphone, ChevronDown, Gift, BellRing, Sparkles, ShieldCheck, Clock, ExternalLink, MousePointerClick,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  FEEDBACK, CATEGORY_META, CATEGORY_ORDER, APOLOGY_CREDIT_STEPS, GOOGLE_INVITE_COOLDOWN_DAYS,
+  FEEDBACK, CATEGORY_META, CATEGORY_ORDER, APOLOGY_CREDIT_STEPS,
+  GOOGLE_INVITE_COOLDOWN_DAYS, GOOGLE_CLICKED_COOLDOWN_DAYS,
   type FeedbackItem, type CategoryKey, type CategoryRating, type ApologyReward, type GoogleStatus,
 } from "@/lib/feedback-mock";
 import { PUBS, type Pub } from "@/lib/pubs-mock";
-import { sendApologyReward, inviteGoogleReview } from "@/lib/rewards.functions";
+import {
+  sendApologyReward, inviteGoogleReview, markGoogleReviewClicked, confirmGoogleReview,
+} from "@/lib/rewards.functions";
 
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -42,11 +45,15 @@ function Stars({ value, size = "sm" }: { value: number; size?: "sm" | "md" }) {
     </div>
   );
 }
-// Status, der Top-Priorität hat: "reviewed" sperrt einen Kunden überall.
+// Status, der Top-Priorität hat: "reviewed" sperrt einen Kunden überall;
+// "clicked" überschreibt nur "invited"/"cooldown"/"none" desselben Kunden.
+const STATUS_RANK: Record<GoogleStatus, number> = {
+  none: 0, cooldown: 1, invited: 2, clicked: 3, reviewed: 4,
+};
 function resolveGoogleStatus(item: FeedbackItem, customerLatest: Map<string, GoogleStatus>) {
-  const latest = customerLatest.get(item.customerId);
-  if (latest === "reviewed") return "reviewed" as GoogleStatus;
-  return item.googleStatus ?? "none";
+  const own = item.googleStatus ?? "none";
+  const latest = customerLatest.get(item.customerId) ?? "none";
+  return STATUS_RANK[latest] > STATUS_RANK[own] ? latest : own;
 }
 
 export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
@@ -63,16 +70,13 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
 
   const effectivePubId = lockedPubId ?? pubId;
 
-  // Globale Sicht pro Kunde — wer hat schon bewertet?
+  // Globale Sicht pro Kunde — höchster Status gewinnt (siehe STATUS_RANK).
   const customerLatest = useMemo(() => {
     const map = new Map<string, GoogleStatus>();
     for (const f of FEEDBACK) {
-      const current = googleStatus[f.id] ?? f.googleStatus ?? "none";
-      const prev = map.get(f.customerId);
-      // "reviewed" gewinnt immer; sonst "invited"/"cooldown" über "none"
-      if (current === "reviewed" || prev !== "reviewed") {
-        if (current === "reviewed" || !prev || prev === "none") map.set(f.customerId, current);
-      }
+      const current = (googleStatus[f.id] ?? f.googleStatus ?? "none") as GoogleStatus;
+      const prev = map.get(f.customerId) ?? "none";
+      if (STATUS_RANK[current] > STATUS_RANK[prev]) map.set(f.customerId, current);
     }
     return map;
   }, [googleStatus]);
@@ -146,6 +150,28 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
     );
   };
 
+  const handleGoogleClick = async (item: FeedbackItem, url: string) => {
+    // Link öffnen UND als "clicked" markieren — NICHT als "reviewed".
+    // Es heißt nur: er hat die Einladung gesehen.
+    window.open(url, "_blank", "noopener,noreferrer");
+    await markGoogleReviewClicked({ feedbackId: item.id });
+    setGoogleStatus((prev) => ({ ...prev, [item.id]: "clicked" }));
+    item.googleClickedAt = Date.now();
+    toast.info("Als 'Link geöffnet' markiert", {
+      description: "Bestätigung folgt entweder per Kunden-Rückfrage oder manuell hier im HQ.",
+    });
+  };
+
+  const handleConfirmReviewed = async (item: FeedbackItem) => {
+    await confirmGoogleReview({ feedbackId: item.id, source: "manual" });
+    setGoogleStatus((prev) => ({ ...prev, [item.id]: "reviewed" }));
+    item.googleReviewedAt = Date.now();
+    item.googleReviewedSource = "manual";
+    toast.success(`${item.author} als bewertet markiert`, {
+      description: "Einmal-Sperre aktiv — Kunde erhält nie wieder eine Google-Einladung.",
+    });
+  };
+
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -206,6 +232,8 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
             onToggleDone={() => toggleDone(f.id)}
             onToggleExpand={() => toggleExpanded(f.id)}
             onApology={handleApology}
+            onGoogleClick={handleGoogleClick}
+            onConfirmReviewed={handleConfirmReviewed}
           />
         ))}
         {filtered.length === 0 && (
@@ -256,12 +284,22 @@ function CategoryRow({ k, rating }: { k: CategoryKey; rating: CategoryRating }) 
   );
 }
 
-function GoogleStatusBadge({ status, invitedAt }: { status: GoogleStatus; invitedAt?: number }) {
+function GoogleStatusBadge({
+  status, invitedAt, clickedAt,
+}: { status: GoogleStatus; invitedAt?: number; clickedAt?: number }) {
   if (status === "reviewed") {
     return (
       <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/10 border-0 font-normal gap-1">
         <ShieldCheck className="h-3 w-3" />
-        Google-Bewertung abgegeben
+        Google-Bewertung bestätigt
+      </Badge>
+    );
+  }
+  if (status === "clicked") {
+    return (
+      <Badge className="bg-indigo-500/10 text-indigo-700 hover:bg-indigo-500/10 border-0 font-normal gap-1">
+        <MousePointerClick className="h-3 w-3" />
+        Link geöffnet · noch nicht bestätigt
       </Badge>
     );
   }
@@ -269,12 +307,15 @@ function GoogleStatusBadge({ status, invitedAt }: { status: GoogleStatus; invite
     return (
       <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/10 border-0 font-normal gap-1">
         <Sparkles className="h-3 w-3" />
-        Google-Einladung gesendet (auto)
+        Einladung gesendet (auto)
       </Badge>
     );
   }
   if (status === "cooldown") {
-    const days = invitedAt ? Math.max(0, GOOGLE_INVITE_COOLDOWN_DAYS - Math.floor((Date.now() - invitedAt) / (1000 * 60 * 60 * 24))) : GOOGLE_INVITE_COOLDOWN_DAYS;
+    // Cooldown-Länge richtet sich danach, wie weit der Kunde schon war.
+    const cooldownDays = clickedAt ? GOOGLE_CLICKED_COOLDOWN_DAYS : GOOGLE_INVITE_COOLDOWN_DAYS;
+    const ref = clickedAt ?? invitedAt;
+    const days = ref ? Math.max(0, cooldownDays - Math.floor((Date.now() - ref) / (1000 * 60 * 60 * 24))) : cooldownDays;
     return (
       <Badge className="bg-muted text-muted-foreground hover:bg-muted border-0 font-normal gap-1">
         <Clock className="h-3 w-3" />
@@ -287,7 +328,7 @@ function GoogleStatusBadge({ status, invitedAt }: { status: GoogleStatus; invite
 
 function ReviewCard({
   item, done, expanded, reward, googleStatus,
-  onToggleDone, onToggleExpand, onApology,
+  onToggleDone, onToggleExpand, onApology, onGoogleClick, onConfirmReviewed,
 }: {
   item: FeedbackItem;
   done: boolean;
@@ -297,6 +338,8 @@ function ReviewCard({
   onToggleDone: () => void;
   onToggleExpand: () => void;
   onApology: (item: FeedbackItem, reward: ApologyReward) => void | Promise<void>;
+  onGoogleClick: (item: FeedbackItem, url: string) => void | Promise<void>;
+  onConfirmReviewed: (item: FeedbackItem) => void | Promise<void>;
 }) {
   const pub = PUBS.find((p) => p.id === item.pubId)!;
   const isLow = item.stars <= 2;
@@ -332,7 +375,11 @@ function ReviewCard({
                 </Badge>
               )}
               {isApp && item.stars >= 4 && (
-                <GoogleStatusBadge status={googleStatus} invitedAt={item.googleInvitedAt} />
+                <GoogleStatusBadge
+                  status={googleStatus}
+                  invitedAt={item.googleInvitedAt}
+                  clickedAt={item.googleClickedAt}
+                />
               )}
               <span className="text-xs text-muted-foreground ml-auto">{item.date}</span>
             </div>
@@ -366,6 +413,35 @@ function ReviewCard({
               <div className="rounded-md border border-emerald-200 bg-emerald-50/60 px-3 py-2 text-xs text-emerald-800">
                 <span className="font-medium">Wiedergutmachung verschickt</span> · {reward.credits.toLocaleString("de-DE")} Credits via {reward.channel === "push" ? "Push" : "WhatsApp"}
                 <div className="text-emerald-700/80 mt-0.5 italic line-clamp-1">„{reward.message}"</div>
+              </div>
+            )}
+
+            {/* Google-Review Aktionsleiste — nur für 4–5⭐ App-Reviews,
+                solange noch nicht final als "reviewed" bestätigt. */}
+            {isApp && item.stars >= 4 && googleStatus !== "reviewed" && (googleStatus === "invited" || googleStatus === "clicked") && (
+              <div className="rounded-md border border-blue-200 bg-blue-50/50 px-3 py-2 text-xs text-blue-900 flex flex-wrap items-center gap-2">
+                <span className="flex-1 min-w-0">
+                  {googleStatus === "clicked"
+                    ? "Kunde hat den Link geöffnet — sobald die Bewertung bei Google sichtbar ist, hier bestätigen."
+                    : "Auto-Einladung verschickt. Status wird per Kunden-Rückfrage in der App aktualisiert."}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1 text-xs bg-white"
+                  onClick={() => onGoogleClick(item, pub.googleReviewUrl)}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Link öffnen (Simulation)
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-7 gap-1 text-xs bg-emerald-500 hover:bg-emerald-600 text-white"
+                  onClick={() => onConfirmReviewed(item)}
+                >
+                  <ShieldCheck className="h-3 w-3" />
+                  Als bewertet bestätigen
+                </Button>
               </div>
             )}
 
