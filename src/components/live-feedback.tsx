@@ -42,6 +42,12 @@ function Stars({ value, size = "sm" }: { value: number; size?: "sm" | "md" }) {
     </div>
   );
 }
+// Status, der Top-Priorität hat: "reviewed" sperrt einen Kunden überall.
+function resolveGoogleStatus(item: FeedbackItem, customerLatest: Map<string, GoogleStatus>) {
+  const latest = customerLatest.get(item.customerId);
+  if (latest === "reviewed") return "reviewed" as GoogleStatus;
+  return item.googleStatus ?? "none";
+}
 
 export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
   const [source, setSource] = useState<"all" | "app" | "google">("all");
@@ -50,11 +56,55 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
   const [done, setDone] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  // Local state for reward-flows (overlays the static mock data)
+  // Local state für Reward-Flows
   const [rewards, setRewards] = useState<Record<string, ApologyReward>>({});
-  const [invited, setInvited] = useState<Set<string>>(new Set());
+  // Pro Feedback: aktueller Google-Status (überschreibt mock-default)
+  const [googleStatus, setGoogleStatus] = useState<Record<string, GoogleStatus>>({});
 
   const effectivePubId = lockedPubId ?? pubId;
+
+  // Globale Sicht pro Kunde — wer hat schon bewertet?
+  const customerLatest = useMemo(() => {
+    const map = new Map<string, GoogleStatus>();
+    for (const f of FEEDBACK) {
+      const current = googleStatus[f.id] ?? f.googleStatus ?? "none";
+      const prev = map.get(f.customerId);
+      // "reviewed" gewinnt immer; sonst "invited"/"cooldown" über "none"
+      if (current === "reviewed" || prev !== "reviewed") {
+        if (current === "reviewed" || !prev || prev === "none") map.set(f.customerId, current);
+      }
+    }
+    return map;
+  }, [googleStatus]);
+
+  // Auto-Trigger: 4–5⭐ App-Reviews automatisch zur Google-Einladung anstoßen
+  useEffect(() => {
+    const candidates = FEEDBACK.filter((f) => {
+      if (f.source !== "app" || f.stars < 4) return false;
+      const status = resolveGoogleStatus(f, customerLatest);
+      return status === "none";
+    });
+    if (candidates.length === 0) return;
+
+    (async () => {
+      const now = Date.now();
+      for (const item of candidates) {
+        const pub = PUBS.find((p) => p.id === item.pubId);
+        if (!pub) continue;
+        await inviteGoogleReview({
+          feedbackId: item.id,
+          googleReviewUrl: pub.googleReviewUrl,
+        });
+        setGoogleStatus((prev) => ({ ...prev, [item.id]: "invited" }));
+        item.googleInvitedAt = now;
+      }
+      toast.success(`${candidates.length} Google-Einladungen automatisch verschickt`, {
+        description: "Push mit Direktlink an alle Gäste mit 4–5⭐ ohne Cooldown",
+      });
+    })();
+    // Wir wollen das genau einmal pro Komponenten-Lifetime laufen lassen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtered = useMemo(() => {
     return FEEDBACK.filter((f) => {
@@ -94,18 +144,6 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
       `Entschuldigung + ${reward.credits.toLocaleString("de-DE")} Credits gesendet`,
       { description: `Kanal: ${reward.channel === "push" ? "Push-Notification" : "WhatsApp"} · ${item.author}` },
     );
-  };
-
-  const handleGoogleInvite = async (item: FeedbackItem, pub: Pub, bonus: number) => {
-    await inviteGoogleReview({
-      feedbackId: item.id,
-      bonusCredits: bonus,
-      googleReviewUrl: pub.googleReviewUrl,
-    });
-    setInvited((prev) => new Set(prev).add(item.id));
-    toast.success(`Google-Einladung an ${item.author} gesendet`, {
-      description: `+${bonus} Bonus-Credits bei Veröffentlichung`,
-    });
   };
 
   return (
@@ -164,11 +202,10 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
             done={done.has(f.id)}
             expanded={expanded.has(f.id)}
             reward={rewards[f.id] ?? f.reward}
-            googleInvited={invited.has(f.id) || !!f.googleShareInvited}
+            googleStatus={resolveGoogleStatus({ ...f, googleStatus: googleStatus[f.id] ?? f.googleStatus }, customerLatest)}
             onToggleDone={() => toggleDone(f.id)}
             onToggleExpand={() => toggleExpanded(f.id)}
             onApology={handleApology}
-            onGoogleInvite={handleGoogleInvite}
           />
         ))}
         {filtered.length === 0 && (
@@ -180,6 +217,7 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
     </div>
   );
 }
+
 
 function CategoryRow({ k, rating }: { k: CategoryKey; rating: CategoryRating }) {
   const meta = CATEGORY_META[k];
