@@ -8,7 +8,7 @@ import {
 import {
   ArrowLeft, Phone, Gauge, TrendingUp, Target, Star, MapPin, Trophy,
 } from "lucide-react";
-import { getPub } from "@/lib/pubs-mock";
+import { getPub, type Pub } from "@/lib/pubs-mock";
 
 export const Route = createFileRoute("/hq/$pubId")({
   loader: ({ params }) => {
