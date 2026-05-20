@@ -1,83 +1,66 @@
+
 ## Ziel
 
-Im HQ → Tab **Sortiment** eine kompakte Vergleichsansicht ergänzen, die auf einen Blick zeigt, **welches Produkt in welcher Filiale über- oder unterdurchschnittlich läuft**. Klick führt in die Filial-Detailseite.
+Eine neue Kern-Kennzahl **„Aktive App-Nutzer"** einführen, die zeigt, wie viele über Marketing aktivierte Nutzer wir aktuell haben — gemessen gegen einen **Zielwert pro Pub**, der nötig ist, um den Zielumsatz zu erreichen. So wird sichtbar, ob die Marketing-Pipeline die Pubs ausreichend „füllt".
 
-## Neue Komponente: „Sortiment nach Filiale" (Heatmap)
+## Datenmodell (`src/lib/pubs-mock.ts`)
 
-Position: Unterhalb der bestehenden Sortiment-Ansicht im HQ-Tab, als eigene Card.
+Pro Pub zwei neue Felder:
+- `activeAppUsers: number` — aktuelle Nutzer (z. B. 7-Tage-aktive App-User im Einzugsgebiet)
+- `appUsersTarget: number` — Zielwert, der für 100 % Umsatzziel nötig ist
 
-### Layout
+Plus abgeleitete Kennzahl (Helper):
+- `appUsersReach = activeAppUsers / appUsersTarget × 100` (in %)
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│ Sortiment nach Filiale            [Alle ▾] [Drinks Food …]  │
-│ Index vs. Kettendurchschnitt (100 = Schnitt)                │
-├─────────────────────────────────────────────────────────────┤
-│                  Crown  Red    Foggy  Old    Iron   …       │
-│                  &Anch. Lion   Dog    Oak    Barrel         │
-│ Pils 0,3l         142    98     76    104     88    …       │
-│ Helles 0,4l        88   151    102     94    110    …       │
-│ Daddy Spritz      210    45     12*    98    130    …       │
-│ Classic Hotdog    105   118     92    101     87    …       │
-│ …                                                            │
-└─────────────────────────────────────────────────────────────┘
-* = signifikant unter Schnitt (Lücke prüfen)
-```
+Mock-Werte werden so gesetzt, dass die Top-Pubs ~100–115 % Reach haben, die schlechtesten ~60–75 % — passend zu ihrem Umsatzziel-Wert.
 
-### Zellenlogik
+## Score-Anbindung — bewusst NEIN
 
-- **Wert** = `(Filialen-Menge / Ø Kettenmenge) × 100`, gerundet.
-- **Farbe** (semantisch über vorhandene Tokens):
-  - ≥ 130 → kräftiges Grün (Top-Performer)
-  - 110–129 → leichtes Grün
-  - 91–109 → neutral (muted)
-  - 71–90 → leichtes Rot
-  - ≤ 70 → kräftiges Rot + kleines Warn-Icon (Sortiments­lücke)
-- **Tooltip** pro Zelle: absolute Menge, Umsatz, Abweichung in % und €.
-- **Klick auf Zelle / Spaltenkopf** → Navigation zur Filial-Detailseite.
+Der Performance-Score bleibt wie vereinbart: **Umsatz-Ziel + Walk-In + Feedback**. App-Reach ist die *Erklärungs*-Kennzahl ("warum wird das Umsatzziel verfehlt?"), kein zusätzlicher Score-Faktor. Sonst wäre er doppelt gewichtet (App-Reach → Umsatzziel → Score).
 
-### Filter
+## UI-Platzierung
 
-- Kategorie-Filter (Alle / Drinks / Food / Cocktails) — übernimmt die bestehenden Buttons-Stil aus `sortiment.tsx`.
-- Sortier-Dropdown: „Nach Umsatz", „Größte Streuung" (= max−min Index, hilft, Ausreißer-Produkte zu finden).
+### 1) HQ Overview (`src/routes/hq.index.tsx`)
 
-### Insights-Leiste (über der Tabelle)
+**a) Neue KPI-Kachel** in der oberen KPI-Reihe — Reihe wird von 4 auf **5 Kacheln** (auf xl-Grid `xl:grid-cols-5`):
+- Icon: `Smartphone` (lucide)
+- Label: „Ø App-User Reach"
+- Wert: z. B. „92 %" (Mittel über alle Pubs)
+- Sub: kleine Zahl „14.230 / 15.400 User"
+- Ton: grün ≥ 100 %, amber 80–99 %, rot < 80 %
 
-Drei kleine Stat-Chips, automatisch berechnet:
-- 🏆 **Top-Abweichler oben**: „Daddy Spritz @ Crown & Anchor +110 %"
-- ⚠️ **Größte Lücke**: „Daddy Spritz @ Foggy Dog −88 %"
-- 📊 **Streuung gesamt**: Ø Spreizung über alle Produkte (Indikator für Sortiments­konsistenz)
+**b) Neue Card „App-User Reach nach Filiale"** unterhalb der Booking-Ratio-Card. Selbes Grid-Layout wie Booking-Ratio (4er-Grid mit Mini-Progress-Bar), zeigt pro Pub:
+- aktuelle User vs. Ziel (z. B. „1.840 / 2.000")
+- Reach in %, farbcodiert
+- Progress-Bar
+- Klick → Pub-Detailseite
 
-## Daten
+### 2) Pub-Detailseite (`src/routes/hq.$pubId.tsx`)
 
-Datenquelle: `SALES_BY_PUB` (existiert bereits, enthält `topSellers` pro Pub mit Name/Kategorie/Qty/Revenue).
+Neue KPI-Kachel im Header-KPI-Block:
+- „Aktive App-Nutzer"
+- Anzeige: `1.840 / 2.000` + Reach-%-Badge
+- Kurzer Hinweistext: „Ziel sichert 100 % Umsatzziel"
 
-Neue Helper in `src/lib/sales-mock.ts`:
-- `getProductMatrix()` → liefert `{ products: TopSeller[], byPub: Record<pubId, Record<productName, {qty, revenue}>>, avgQty: Record<productName, number> }`.
-- Reine Aggregations-Funktion, keine Mock-Änderung nötig — die echte Pub-&-Go-Karte ist schon drin.
-
-## Dateien
-
-- **Neu**: `src/components/sortiment-matrix.tsx` — die Heatmap-Komponente.
-- **Bearbeiten**: `src/lib/sales-mock.ts` — Helper `getProductMatrix()` exportieren.
-- **Bearbeiten**: `src/routes/hq.index.tsx` — `<SortimentMatrix />` unter dem bestehenden `<Sortiment />` im Tab einbinden.
+Optional kleiner Insight-Hinweis, wenn Reach < 80 %: „⚠ Marketing aufstocken — App-Reach unter Zielmarke; Umsatzziel gefährdet."
 
 ## Bewusst NICHT enthalten
 
-- Keine Änderung an der Filial-Detailseite (`hq.$pubId.tsx`) — dort bleibt das einzelne Sortiment wie gehabt.
+- Keine Zeitreihe der App-User (kein Chart) — nur aktueller Stand vs. Ziel, das reicht für die Aussage.
+- Keine Score-Formel-Änderung.
 - Keine neuen Tabs/Routen.
-- Keine Zeitreihen pro Produkt × Filiale (zu viel Daten für den Mehrwert hier).
+- Keine Marketing-Detailseite (Quellen, Kampagnen) — kann später folgen.
 
-## Responsives Verhalten
+## Dateien
 
-- ≥ `md`: volle Heatmap, alle Filialen sichtbar.
-- `<md`: horizontal scrollbar im Container, erste Spalte (Produktname) sticky links — übliches Tabellen-Pattern, kein Card-Stacking.
+- **Bearbeiten** `src/lib/pubs-mock.ts` — Felder `activeAppUsers`, `appUsersTarget` ergänzen, Helper `getAppReach()` exportieren.
+- **Bearbeiten** `src/routes/hq.index.tsx` — 5. KPI-Kachel + neue „App-User Reach"-Card.
+- **Bearbeiten** `src/routes/hq.$pubId.tsx` — KPI-Kachel im Pub-Header.
 
 ## Akzeptanzkriterien
 
-1. Tab „Sortiment" zeigt unter der bestehenden Liste eine Heatmap mit allen 11 Produkten × allen Pubs.
-2. Farbcodierung folgt der oben definierten Schwelle, lesbar in Light & Dark Mode (semantische Tokens).
-3. Kategorie-Filter funktioniert und wirkt auf Heatmap + Insights-Chips.
-4. Klick auf einen Spaltenkopf öffnet die Filial-Detailseite.
-5. Insights-Leiste zeigt korrekt Top-Abweichler / größte Lücke automatisch berechnet.
-6. Mobile: horizontales Scrollen funktioniert, Produktspalte bleibt sichtbar.
+1. HQ Overview zeigt Ø App-User Reach in der KPI-Reihe.
+2. Neue Card listet alle 8 Pubs mit „aktuell / Ziel" und Reach-% farbcodiert.
+3. Pub-Detailseite zeigt die Kennzahl prominent.
+4. Mock-Werte sind plausibel: höhere Reach-Werte korrelieren grob mit höheren `revenueTarget`-Werten.
+5. Layout bleibt auf 815px-Viewport sauber (KPI-Reihe wickelt korrekt auf 2 Spalten).
