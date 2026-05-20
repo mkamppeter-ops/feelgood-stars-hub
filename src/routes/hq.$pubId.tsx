@@ -98,7 +98,7 @@ function PubDetailPage() {
                 <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight">{pub.name}</h1>
                 <div className="flex items-center gap-3 pt-1">
                   <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground flex items-center justify-center text-sm font-semibold">
-                    {pub.manager.split(" ").map((n) => n[0]).join("")}
+                    {pub.manager.split(" ").map((n: string) => n[0]).join("")}
                   </div>
                   <div>
                     <div className="text-xs text-muted-foreground">Filialleiter:in</div>
