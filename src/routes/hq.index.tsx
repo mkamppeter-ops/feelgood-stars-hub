@@ -140,6 +140,10 @@ function HQPage() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="pubs" className="gap-1.5">
+                <Building2 className="h-3.5 w-3.5" />
+                Pubs
+              </TabsTrigger>
               <TabsTrigger value="active-ops" className="gap-1.5">
                 <Activity className="h-3.5 w-3.5" />
                 Active Ops
@@ -152,6 +156,10 @@ function HQPage() {
                 <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="pubs" className="mt-0">
+              <PubsGrid onOpen={(id) => navigate({ to: "/hq/$pubId", params: { pubId: id } })} />
+            </TabsContent>
 
             <TabsContent value="active-ops" className="mt-0">
               <ActiveOps />
