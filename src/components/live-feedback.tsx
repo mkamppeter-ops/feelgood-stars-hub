@@ -150,6 +150,28 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
     );
   };
 
+  const handleGoogleClick = async (item: FeedbackItem, url: string) => {
+    // Link öffnen UND als "clicked" markieren — NICHT als "reviewed".
+    // Es heißt nur: er hat die Einladung gesehen.
+    window.open(url, "_blank", "noopener,noreferrer");
+    await markGoogleReviewClicked({ feedbackId: item.id });
+    setGoogleStatus((prev) => ({ ...prev, [item.id]: "clicked" }));
+    item.googleClickedAt = Date.now();
+    toast.info("Als 'Link geöffnet' markiert", {
+      description: "Bestätigung folgt entweder per Kunden-Rückfrage oder manuell hier im HQ.",
+    });
+  };
+
+  const handleConfirmReviewed = async (item: FeedbackItem) => {
+    await confirmGoogleReview({ feedbackId: item.id, source: "manual" });
+    setGoogleStatus((prev) => ({ ...prev, [item.id]: "reviewed" }));
+    item.googleReviewedAt = Date.now();
+    item.googleReviewedSource = "manual";
+    toast.success(`${item.author} als bewertet markiert`, {
+      description: "Einmal-Sperre aktiv — Kunde erhält nie wieder eine Google-Einladung.",
+    });
+  };
+
   return (
     <div className="space-y-4">
       {/* Filters */}
