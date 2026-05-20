@@ -10,9 +10,9 @@ import {
 
 import {
   Trophy, TrendingUp, Users, Star, Gauge, Phone, LayoutDashboard,
-  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck,
+  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone,
 } from "lucide-react";
-import { PUBS, computeScore } from "@/lib/pubs-mock";
+import { PUBS, computeScore, getAppReach } from "@/lib/pubs-mock";
 import { SALES_GLOBAL, SALES_BY_PUB, formatEUR } from "@/lib/sales-mock";
 import { ArrowUpRight } from "lucide-react";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
@@ -44,12 +44,18 @@ function HQPage() {
     const avgFeedback      = PUBS.reduce((s, p) => s + p.feedback, 0) / PUBS.length;
     const avgBooking       = PUBS.reduce((s, p) => s + p.bookingRatio, 0) / PUBS.length;
     const avgScore         = PUBS.reduce((s, p) => s + computeScore(p), 0) / PUBS.length;
+    const totalAppUsers    = PUBS.reduce((s, p) => s + p.activeAppUsers, 0);
+    const totalAppTarget   = PUBS.reduce((s, p) => s + p.appUsersTarget, 0);
+    const appReach         = Math.round((totalAppUsers / totalAppTarget) * 100);
     return {
       score:        Math.round(avgScore * factor),
       revenueGoal:  Math.round(avgRevenueTarget * factor),
       walkIn:       Math.round(avgWalkIn * factor),
       feedback:     Math.min(5, +(avgFeedback * (0.96 + factor * 0.04)).toFixed(1)),
       booking:      Math.round(avgBooking * factor),
+      appReach,
+      appUsers:     totalAppUsers,
+      appTarget:    totalAppTarget,
     };
   }, [factor]);
 
@@ -126,9 +132,18 @@ function HQPage() {
 
             <TabsContent value="overview" className="space-y-6 mt-0">
               {/* KPIs */}
-              <section key={pulseKey} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 animate-in fade-in duration-500">
+              <section key={pulseKey} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 animate-in fade-in duration-500">
                 <KpiCard icon={Gauge} label="Ø Pub Performance Score" value={`${kpis.score}`} suffix="/100" delta="+3.2%" tone="primary" />
                 <KpiCard icon={Target} label="Ø Umsatz-Ziel" value={`${kpis.revenueGoal}`} suffix="%" delta="+2.4%" tone={kpis.revenueGoal >= 100 ? "emerald" : "amber"} />
+                <KpiCard
+                  icon={Smartphone}
+                  label="Ø App-User Reach"
+                  value={`${kpis.appReach}`}
+                  suffix="%"
+                  delta="+5.1%"
+                  tone={kpis.appReach >= 100 ? "emerald" : kpis.appReach >= 80 ? "amber" : "primary"}
+                  sub={`${kpis.appUsers.toLocaleString("de-DE")} / ${kpis.appTarget.toLocaleString("de-DE")} User`}
+                />
                 <KpiCard icon={Users} label="Ø Walk-In Ratio" value={`${kpis.walkIn}`} suffix="%" delta="+0.8%" tone="amber" />
                 <KpiCard icon={Star} label="Ø Gäste-Feedback" value={`${kpis.feedback}`} suffix=" ⭐" delta="+0.1" tone="violet" />
               </section>
@@ -269,6 +284,52 @@ function HQPage() {
                 </CardContent>
               </Card>
 
+              {/* App-User Reach nach Filiale */}
+              <Card className="shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                  <div>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Smartphone className="h-4 w-4 text-primary" />
+                      App-User Reach nach Filiale
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Aktive App-Nutzer im Einzugsgebiet vs. Marketing-Zielwert — sichert das Umsatzziel von 100 %.
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="font-normal tabular-nums">Ø {kpis.appReach}%</Badge>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[...PUBS]
+                    .map((p) => ({ p, reach: getAppReach(p) }))
+                    .sort((a, b) => b.reach - a.reach)
+                    .map(({ p, reach }) => (
+                      <div
+                        key={p.id}
+                        onClick={() => navigate({ to: "/hq/$pubId", params: { pubId: p.id } })}
+                        className="cursor-pointer rounded-lg border p-3 hover:border-primary/40 hover:bg-muted/30 transition-colors"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium truncate">{p.name}</div>
+                            <div className="text-[11px] text-muted-foreground truncate tabular-nums">
+                              {p.activeAppUsers.toLocaleString("de-DE")} / {p.appUsersTarget.toLocaleString("de-DE")}
+                            </div>
+                          </div>
+                          <span className={`text-base font-semibold tabular-nums ${
+                            reach >= 100 ? "text-emerald-600" : reach >= 80 ? "text-foreground" : "text-amber-600"
+                          }`}>{reach}%</span>
+                        </div>
+                        <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${reach >= 100 ? "bg-emerald-500" : reach >= 80 ? "bg-primary" : "bg-amber-500"}`}
+                            style={{ width: `${Math.min(100, reach)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                </CardContent>
+              </Card>
+
             </TabsContent>
 
             <TabsContent value="sales" className="mt-0 space-y-6">
@@ -360,11 +421,12 @@ function HQPage() {
 }
 
 function KpiCard({
-  icon: Icon, label, value, suffix, delta, tone, negative,
+  icon: Icon, label, value, suffix, delta, tone, negative, sub,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string; value: string; suffix?: string; delta: string;
   tone: "primary" | "emerald" | "amber" | "violet"; negative?: boolean;
+  sub?: string;
 }) {
   const toneMap = {
     primary: "bg-primary/10 text-primary",
@@ -388,6 +450,7 @@ function KpiCard({
           <div className="mt-1 text-3xl font-semibold tracking-tight tabular-nums">
             {value}<span className="text-base text-muted-foreground font-normal">{suffix}</span>
           </div>
+          {sub && <div className="mt-1 text-[11px] text-muted-foreground tabular-nums">{sub}</div>}
         </div>
       </CardContent>
     </Card>
