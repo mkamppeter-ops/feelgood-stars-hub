@@ -256,23 +256,50 @@ function CategoryRow({ k, rating }: { k: CategoryKey; rating: CategoryRating }) 
   );
 }
 
+function GoogleStatusBadge({ status, invitedAt }: { status: GoogleStatus; invitedAt?: number }) {
+  if (status === "reviewed") {
+    return (
+      <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/10 border-0 font-normal gap-1">
+        <ShieldCheck className="h-3 w-3" />
+        Google-Bewertung abgegeben
+      </Badge>
+    );
+  }
+  if (status === "invited") {
+    return (
+      <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/10 border-0 font-normal gap-1">
+        <Sparkles className="h-3 w-3" />
+        Google-Einladung gesendet (auto)
+      </Badge>
+    );
+  }
+  if (status === "cooldown") {
+    const days = invitedAt ? Math.max(0, GOOGLE_INVITE_COOLDOWN_DAYS - Math.floor((Date.now() - invitedAt) / (1000 * 60 * 60 * 24))) : GOOGLE_INVITE_COOLDOWN_DAYS;
+    return (
+      <Badge className="bg-muted text-muted-foreground hover:bg-muted border-0 font-normal gap-1">
+        <Clock className="h-3 w-3" />
+        Cooldown · {days} Tage
+      </Badge>
+    );
+  }
+  return null;
+}
+
 function ReviewCard({
-  item, done, expanded, reward, googleInvited,
-  onToggleDone, onToggleExpand, onApology, onGoogleInvite,
+  item, done, expanded, reward, googleStatus,
+  onToggleDone, onToggleExpand, onApology,
 }: {
   item: FeedbackItem;
   done: boolean;
   expanded: boolean;
   reward?: ApologyReward;
-  googleInvited: boolean;
+  googleStatus: GoogleStatus;
   onToggleDone: () => void;
   onToggleExpand: () => void;
   onApology: (item: FeedbackItem, reward: ApologyReward) => void | Promise<void>;
-  onGoogleInvite: (item: FeedbackItem, pub: Pub, bonus: number) => void | Promise<void>;
 }) {
   const pub = PUBS.find((p) => p.id === item.pubId)!;
   const isLow = item.stars <= 2;
-  const isHigh = item.stars >= 4;
   const isApp = item.source === "app";
   const canExpand = isApp && !!item.categories;
 
@@ -304,11 +331,8 @@ function ReviewCard({
                   +{reward.credits.toLocaleString("de-DE")} Cr.
                 </Badge>
               )}
-              {googleInvited && (
-                <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/10 border-0 font-normal gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  Google-Einladung
-                </Badge>
+              {isApp && item.stars >= 4 && (
+                <GoogleStatusBadge status={googleStatus} invitedAt={item.googleInvitedAt} />
               )}
               <span className="text-xs text-muted-foreground ml-auto">{item.date}</span>
             </div>
@@ -366,11 +390,6 @@ function ReviewCard({
                   </Button>
                 )}
 
-                {/* Positive: Google share invite */}
-                {isHigh && isApp && !googleInvited && (
-                  <GoogleInvitePopover item={item} pub={pub} onConfirm={onGoogleInvite} />
-                )}
-
                 {/* Negative: Apology dialog */}
                 {isLow && isApp && !reward && (
                   <ApologyDialog item={item} pub={pub} onConfirm={onApology} />
@@ -404,84 +423,7 @@ function ReviewCard({
   );
 }
 
-// ---------- Google-Share Popover (positive Reviews) ----------
 
-function GoogleInvitePopover({
-  item, pub, onConfirm,
-}: {
-  item: FeedbackItem;
-  pub: Pub;
-  onConfirm: (item: FeedbackItem, pub: Pub, bonus: number) => void | Promise<void>;
-}) {
-  const [open, setOpen] = useState(false);
-  const [bonus, setBonus] = useState<number>(GOOGLE_SHARE_BONUS_STEPS[1]);
-  const message = `Hi ${item.author.split(" ")[0]}, danke für deine ${item.stars}⭐ Bewertung im ${pub.name}! Teilst du sie auch auf Google? Wir schenken dir dafür ${bonus} Bonus-Credits 🎁`;
-
-  const copyLink = async () => {
-    await navigator.clipboard.writeText(pub.googleReviewUrl);
-    toast("Google-Link kopiert");
-  };
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button size="sm" variant="outline" className="h-8 gap-1.5 border-blue-300 text-blue-700 hover:bg-blue-500 hover:text-white hover:border-blue-500">
-          <Globe className="h-3.5 w-3.5" />
-          Google-Share
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 space-y-3" align="end">
-        <div>
-          <div className="text-sm font-semibold">Google-Bewertung anstoßen</div>
-          <div className="text-xs text-muted-foreground">Push an {item.author} mit Direktlink + Bonus-Credits</div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-xs">Bonus-Credits</Label>
-          <div className="flex gap-1.5">
-            {GOOGLE_SHARE_BONUS_STEPS.map((c) => (
-              <Button
-                key={c}
-                type="button"
-                size="sm"
-                variant={bonus === c ? "default" : "outline"}
-                className="flex-1 h-8 text-xs"
-                onClick={() => setBonus(c)}
-              >
-                +{c}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-xs">Direktlink</Label>
-          <div className="flex gap-1.5">
-            <Input value={pub.googleReviewUrl} readOnly className="h-8 text-xs" />
-            <Button type="button" size="icon" variant="outline" className="h-8 w-8 shrink-0" onClick={copyLink}>
-              <Copy className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground italic">
-          „{message}"
-        </div>
-
-        <Button
-          className="w-full h-8 gap-1.5"
-          onClick={async () => {
-            await onConfirm(item, pub, bonus);
-            setOpen(false);
-          }}
-        >
-          <BellRing className="h-3.5 w-3.5" />
-          Einladung senden
-        </Button>
-      </PopoverContent>
-    </Popover>
-  );
-}
 
 // ---------- Apology Dialog (negative Reviews) ----------
 
