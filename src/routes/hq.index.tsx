@@ -43,12 +43,20 @@ function HQPage() {
   const [pulseKey, setPulseKey] = useState(0);
   const factor = RANGE_FACTOR[range];
 
-  const kpis = useMemo(() => ({
-    score: Math.round(82 * factor),
-    booking: Math.round(76 * factor),
-    walkIn: Math.max(5, Math.round(22 * (2 - factor))),
-    feedback: Math.min(5, +(4.6 * (0.96 + factor * 0.04)).toFixed(1)),
-  }), [factor]);
+  const kpis = useMemo(() => {
+    const avgRevenueTarget = PUBS.reduce((s, p) => s + p.revenueTarget, 0) / PUBS.length;
+    const avgWalkIn        = PUBS.reduce((s, p) => s + p.walkInRatio, 0) / PUBS.length;
+    const avgFeedback      = PUBS.reduce((s, p) => s + p.feedback, 0) / PUBS.length;
+    const avgBooking       = PUBS.reduce((s, p) => s + p.bookingRatio, 0) / PUBS.length;
+    const avgScore         = PUBS.reduce((s, p) => s + computeScore(p), 0) / PUBS.length;
+    return {
+      score:        Math.round(avgScore * factor),
+      revenueGoal:  Math.round(avgRevenueTarget * factor),
+      walkIn:       Math.round(avgWalkIn * factor),
+      feedback:     Math.min(5, +(avgFeedback * (0.96 + factor * 0.04)).toFixed(1)),
+      booking:      Math.round(avgBooking * factor),
+    };
+  }, [factor]);
 
   const handleRangeChange = (v: DateRange) => {
     setRange(v);
