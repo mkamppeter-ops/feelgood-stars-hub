@@ -31,8 +31,9 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
   ];
 
   const ratio = (n: number) => (scaled.revenue > 0 ? (n / scaled.revenue) * 100 : 0);
-  const totalCosts = scaled.costs.marketing + scaled.costs.staff + scaled.costs.rent + scaled.costs.other;
-  const margin = scaled.revenue - totalCosts;
+  const totalCosts = scaled.costs.cogs + scaled.costs.marketing + scaled.costs.staff + scaled.costs.rent + scaled.costs.other;
+  const ebitda = scaled.revenue - totalCosts;
+  const ebitdaMargin = scaled.revenue > 0 ? (ebitda / scaled.revenue) * 100 : 0;
 
   const maxSellerRev = Math.max(...data.topSellers.map((s) => s.revenue));
 
