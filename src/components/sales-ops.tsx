@@ -354,3 +354,17 @@ function LegendDot({ color, label }: { color: string; label: string }) {
     </span>
   );
 }
+
+function MiniStat({ label, value, tone }: { label: string; value: string; tone: "primary" | "slate" | "emerald" }) {
+  const toneMap = {
+    primary: "text-primary",
+    slate:   "text-foreground",
+    emerald: "text-emerald-600",
+  } as const;
+  return (
+    <div className="rounded-lg bg-card/70 backdrop-blur border p-3">
+      <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`text-base font-semibold tabular-nums mt-0.5 ${toneMap[tone]}`}>{value}</div>
+    </div>
+  );
+}
