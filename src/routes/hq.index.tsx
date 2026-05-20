@@ -24,6 +24,7 @@ import { EventsResults } from "@/components/events-results";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { ActiveOps } from "@/components/active-ops";
 import { RequireRole, LogoutButton } from "@/components/auth-guard";
+import { DataSettings } from "@/components/data-settings";
 
 export const Route = createFileRoute("/hq/")({
   head: () => ({
