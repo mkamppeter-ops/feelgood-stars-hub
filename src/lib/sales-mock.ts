@@ -8,6 +8,14 @@ export type SalesSnapshot = {
   walkInsRevenue: number;
   topSellers: TopSeller[];
   revenueTrend: { day: string; revenue: number }[];
+  costs: CostBreakdown;
+};
+
+export type CostBreakdown = {
+  marketing: number;   // €
+  staff: number;       // €
+  rent: number;        // €
+  other: number;       // € (HQ staff + rent + misc)
 };
 
 export type TopSeller = {
