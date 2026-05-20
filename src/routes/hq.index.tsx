@@ -89,6 +89,7 @@ function HQPage() {
         <nav className="flex-1 p-3 space-y-1 text-sm">
           {[
             { icon: LayoutDashboard, label: "Overview", tab: "overview" },
+            { icon: Building2, label: "Pubs", tab: "pubs" },
             { icon: Activity, label: "Active Ops", tab: "active-ops" },
             { icon: TrendingUp, label: "Sales & Ops", tab: "sales" },
             { icon: Building2, label: "Sortiment", tab: "sortiment" },
