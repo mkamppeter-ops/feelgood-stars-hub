@@ -16,6 +16,7 @@ type PubSettings = {
   pub_id: string;
   staff_costs_monthly: number;
   rent_monthly: number;
+  revenue_target_monthly: number;
   seats: number;
   opening_hour: number;
   closing_hour: number;
@@ -25,6 +26,7 @@ type PubSettings = {
 const DEFAULTS: Omit<PubSettings, "pub_id"> = {
   staff_costs_monthly: 18000,
   rent_monthly: 4500,
+  revenue_target_monthly: 45000,
   seats: 60,
   opening_hour: 17,
   closing_hour: 24,
