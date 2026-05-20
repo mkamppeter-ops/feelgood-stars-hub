@@ -270,19 +270,92 @@ function MiniStat({
   );
 }
 
-/** Reuses the LiveFeedback component but pre-scoped via a remount key. */
-function LocalFeedback({ pubId, hasMatches }: { pubId: string; hasMatches: boolean }) {
-  // If there are no exact matches for this pub in the mock, we still render the
-  // standard component (manager can use filters). For pubs with matches, we
-  // give a hint that filters can be set to "this pub".
+function Stars({ value }: { value: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star key={i} className={`h-3.5 w-3.5 ${i <= value ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
+      ))}
+    </div>
+  );
+}
+
+function LocalFeedback({ items, pubName }: { items: FeedbackItem[]; pubName: string }) {
+  if (items.length === 0) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent className="p-10 text-center text-sm text-muted-foreground">
+          Noch keine Bewertungen für {pubName} im gewählten Zeitraum.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-3">
-      {!hasMatches && (
-        <div className="text-xs text-muted-foreground italic">
-          Hinweis: Mock-Feed zeigt alle Pubs — wähle „{pubId}" im Filiale-Filter.
-        </div>
-      )}
-      <LiveFeedback />
+      <div className="text-xs text-muted-foreground">
+        {items.length} Bewertungen für <span className="font-medium text-foreground">{pubName}</span>
+      </div>
+      {items.map((f) => (
+        <Card key={f.id} className="shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${
+                f.source === "google" ? "bg-blue-500/10 text-blue-600" : "bg-violet-500/10 text-violet-600"
+              }`}>
+                {f.source === "google" ? <Globe className="h-4 w-4" /> : <Smartphone className="h-4 w-4" />}
+              </div>
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <Badge variant="secondary" className="font-normal text-[10px] uppercase">
+                    {f.source === "google" ? "Google" : "Internes Feedback"}
+                  </Badge>
+                  <Stars value={f.stars} />
+                  {f.stars <= 2 && (
+                    <Badge className="bg-red-500/10 text-red-600 hover:bg-red-500/10 border-0 font-normal">Kritisch</Badge>
+                  )}
+                  <span className="text-xs text-muted-foreground ml-auto">{f.date}</span>
+                </div>
+
+                {f.categories && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {CATEGORY_ORDER.map((k) => {
+                      const r = f.categories![k];
+                      const meta = CATEGORY_META[k];
+                      const low = r.score <= 2;
+                      return (
+                        <div key={k} className={`rounded-md border p-2 ${low ? "border-red-200 bg-red-50/50" : "bg-muted/30"}`}>
+                          <div className="flex items-center justify-between gap-1 text-[11px]">
+                            <span className="flex items-center gap-1 truncate">
+                              <span aria-hidden>{meta.icon}</span>
+                              <span className="truncate">{meta.label}</span>
+                            </span>
+                            <span className={`tabular-nums font-semibold ${low ? "text-red-600" : "text-muted-foreground"}`}>
+                              {r.score}/5
+                            </span>
+                          </div>
+                          {r.tags && r.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {r.tags.slice(0, 2).map((t) => (
+                                <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-600">
+                                  {t}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <p className="text-sm text-foreground/90 leading-relaxed">„{f.text}"</p>
+                <div className="text-xs text-muted-foreground">— {f.author}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
