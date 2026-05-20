@@ -13,6 +13,7 @@ import { getPub, type Pub } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 import { SalesOps } from "@/components/sales-ops";
+import { Sortiment } from "@/components/sortiment";
 import { LiveFeedback } from "@/components/live-feedback";
 
 export const Route = createFileRoute("/hq/$pubId")({
@@ -161,10 +162,20 @@ function PubDetailPage() {
         <section className="space-y-3">
           <div>
             <h2 className="text-lg font-semibold tracking-tight">Sales &amp; Operations</h2>
-            <p className="text-xs text-muted-foreground">Umsatz, Bons und Top-Seller dieser Filiale</p>
+            <p className="text-xs text-muted-foreground">Umsatz, Kosten und EBITDA dieser Filiale</p>
           </div>
           <SalesOps data={SALES_BY_PUB[pub.id]} factor={factor} />
         </section>
+
+        {/* Sortiment — Getränke & Speisen */}
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">Sortiment</h2>
+            <p className="text-xs text-muted-foreground">Welche Getränke und Speisen wie verkauft wurden</p>
+          </div>
+          <Sortiment data={SALES_BY_PUB[pub.id]} factor={factor} title={`Sortiment — ${pub.name}`} />
+        </section>
+
 
         {/* Score history chart */}
         <Card className="shadow-sm">

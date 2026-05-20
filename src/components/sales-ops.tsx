@@ -35,7 +35,7 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
   const ebitda = scaled.revenue - totalCosts;
   const ebitdaMargin = scaled.revenue > 0 ? (ebitda / scaled.revenue) * 100 : 0;
 
-  const maxSellerRev = Math.max(...data.topSellers.map((s) => s.revenue));
+  
 
   return (
     <div className="space-y-6">
@@ -129,51 +129,14 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
 
 
 
-      {/* Top sellers + revenue split */}
-      <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <Card className="xl:col-span-2 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base">Top Seller — Konsum</CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">Meistverkaufte Produkte nach Umsatzanteil</p>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {data.topSellers.map((s, i) => {
-              const share = (s.revenue / data.revenue) * 100;
-              const barW = (s.revenue / maxSellerRev) * 100;
-              return (
-                <div key={s.name} className="space-y-1.5">
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="h-6 w-6 rounded-full bg-muted text-muted-foreground text-xs font-semibold flex items-center justify-center shrink-0">
-                        {i + 1}
-                      </span>
-                      <span className="font-medium truncate">{s.name}</span>
-                      <Badge variant="secondary" className="font-normal text-[10px]">{s.category}</Badge>
-                    </div>
-                    <div className="flex items-center gap-4 shrink-0 text-xs tabular-nums">
-                      <span className="text-muted-foreground">{s.qty}×</span>
-                      <span className="font-semibold w-20 text-right">{formatEUR(s.revenue)}</span>
-                      <span className="text-muted-foreground w-12 text-right">{share.toFixed(1)}%</span>
-                    </div>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${i === 0 ? "bg-primary" : "bg-primary/40"}`}
-                      style={{ width: `${barW}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base">Umsatz-Split</CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">Reservierungen vs. Walk-ins</p>
-          </CardHeader>
-          <CardContent>
+      {/* Revenue split */}
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base">Umsatz-Split</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">Reservierungen vs. Walk-ins</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -200,7 +163,7 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="grid grid-cols-2 gap-3 mt-2">
+            <div className="grid grid-cols-1 gap-3">
               <SplitStat
                 icon={CalendarCheck}
                 label="Reservierungen"
@@ -216,9 +179,10 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
                 tone="muted"
               />
             </div>
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </CardContent>
+      </Card>
+
 
       {/* Revenue trend */}
       <Card className="shadow-sm">
