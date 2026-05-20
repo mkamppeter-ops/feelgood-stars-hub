@@ -94,6 +94,9 @@ function PubLocalView() {
               </SelectContent>
             </Select>
             <DateRangePicker value={range} onChange={setRange} />
+            <a href="/feedback" target="_blank" rel="noopener" className="hidden md:inline-flex">
+              <Button variant="outline" size="sm">Gast-View</Button>
+            </a>
             {!isStaff && (
               <Link to="/hq" className="hidden sm:inline-flex">
                 <Button variant="outline" size="sm">HQ View</Button>
