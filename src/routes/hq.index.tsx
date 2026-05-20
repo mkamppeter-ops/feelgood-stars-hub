@@ -88,23 +88,27 @@ function HQPage() {
         </div>
         <nav className="flex-1 p-3 space-y-1 text-sm">
           {[
-            { icon: LayoutDashboard, label: "Overview", active: true },
-            { icon: Building2, label: "Pubs" },
-            { icon: TrendingUp, label: "Performance" },
-            { icon: MessageSquare, label: "Feedback" },
-            { icon: Users, label: "Teams" },
-            { icon: Settings, label: "Settings" },
-          ].map(({ icon: Icon, label, active }) => (
-            <button
-              key={label}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-                active ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </button>
-          ))}
+            { icon: LayoutDashboard, label: "Overview", tab: "overview" },
+            { icon: Activity, label: "Active Ops", tab: "active-ops" },
+            { icon: TrendingUp, label: "Sales & Ops", tab: "sales" },
+            { icon: Building2, label: "Sortiment", tab: "sortiment" },
+            { icon: CalendarCheck, label: "Events", tab: "events" },
+            { icon: MessageSquare, label: "Feedback", tab: "feedback" },
+          ].map(({ icon: Icon, label, tab }) => {
+            const active = activeTab === tab;
+            return (
+              <button
+                key={label}
+                onClick={() => setActiveTab(tab)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                  active ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            );
+          })}
         </nav>
         <div className="p-3 border-t">
           <Link to="/admin" className="text-xs text-muted-foreground hover:text-foreground">← Admin</Link>
