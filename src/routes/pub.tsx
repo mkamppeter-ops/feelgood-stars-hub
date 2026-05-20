@@ -41,11 +41,16 @@ function PubLocalView() {
   const { mode } = Route.useSearch();
   const session = useSession();
   const isStaff = session?.role === "bar_staff" || mode === "staff";
-  const [pubId, setPubId] = useState(PUBS[2].id);
+  const isManager = session?.role === "pub_manager";
+  // Locked pub from session for non-HQ roles; fallback to default demo pub
+  const lockedPubId = session?.pubId ?? PUBS[2].id;
+  const [pubId, setPubId] = useState(lockedPubId);
   const [range, setRange] = useState<DateRange>("last7");
   const factor = RANGE_FACTOR[range];
 
-  const pub = PUBS.find((p) => p.id === pubId)!;
+  // Enforce locked pub for manager/staff
+  const effectivePubId = (isManager || isStaff) ? lockedPubId : pubId;
+  const pub = PUBS.find((p) => p.id === effectivePubId)!;
   const sales = SALES_BY_PUB[pub.id];
 
   // Compute gap to next rank
@@ -63,6 +68,8 @@ function PubLocalView() {
     : pub.score >= 75 ? "text-foreground"
     : "text-amber-600";
 
+  const lockSelector = isManager || isStaff;
+
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Topbar */}
@@ -73,7 +80,9 @@ function PubLocalView() {
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-semibold leading-tight truncate">Local View</div>
+              <div className="text-sm font-semibold leading-tight truncate">
+                {isStaff ? "Staff View" : "Local View"}
+              </div>
               <div className="text-[11px] text-muted-foreground leading-tight truncate">
                 {pub.name} · {RANGE_LABELS[range]}
               </div>
@@ -83,29 +92,34 @@ function PubLocalView() {
             {isStaff && (
               <Badge variant="secondary" className="hidden sm:inline-flex">Staff-View</Badge>
             )}
-            <Select value={pubId} onValueChange={setPubId}>
-              <SelectTrigger className="h-9 w-[200px] text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PUBS.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <DateRangePicker value={range} onChange={setRange} />
-            <a href="/feedback" target="_blank" rel="noopener" className="hidden md:inline-flex">
-              <Button variant="outline" size="sm">Gast-View</Button>
-            </a>
+            {lockSelector ? (
+              <div className="hidden sm:flex items-center gap-2 h-9 px-3 rounded-md border bg-muted/30 text-sm">
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="font-medium truncate max-w-[180px]">{pub.name}</span>
+              </div>
+            ) : (
+              <Select value={pubId} onValueChange={setPubId}>
+                <SelectTrigger className="h-9 w-[200px] text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PUBS.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {!isStaff && <DateRangePicker value={range} onChange={setRange} />}
             {!isStaff && (
-              <Link to="/hq" className="hidden sm:inline-flex">
-                <Button variant="outline" size="sm">HQ View</Button>
-              </Link>
+              <a href="/feedback" target="_blank" rel="noopener" className="hidden md:inline-flex">
+                <Button variant="outline" size="sm">Gast-View</Button>
+              </a>
             )}
             <LogoutButton />
           </div>
         </div>
       </header>
+
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Welcome */}
