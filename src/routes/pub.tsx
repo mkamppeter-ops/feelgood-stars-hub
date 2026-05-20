@@ -9,14 +9,13 @@ import {
 } from "@/components/ui/select";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import {
-  Trophy, Gauge, Star, TrendingUp, MapPin, ArrowUp, Sparkles,
+  Trophy, Gauge, Star, TrendingUp, MapPin, ArrowUp, Sparkles, Globe, Smartphone,
 } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
-import { FEEDBACK, type FeedbackItem } from "@/lib/feedback-mock";
+import { FEEDBACK, CATEGORY_META, CATEGORY_ORDER, type FeedbackItem } from "@/lib/feedback-mock";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 import { SalesOps } from "@/components/sales-ops";
-import { LiveFeedback } from "@/components/live-feedback";
 
 export const Route = createFileRoute("/pub")({
   head: () => ({
