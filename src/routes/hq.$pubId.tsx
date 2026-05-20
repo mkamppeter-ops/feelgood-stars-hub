@@ -13,6 +13,7 @@ import { getPub, type Pub } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 import { SalesOps } from "@/components/sales-ops";
+import { LiveFeedback } from "@/components/live-feedback";
 
 export const Route = createFileRoute("/hq/$pubId")({
   loader: ({ params }) => {
