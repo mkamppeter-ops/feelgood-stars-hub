@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie, Legend, LineChart, Line,
 } from "recharts";
-import { Euro, Receipt, TrendingUp, CalendarCheck, Footprints } from "lucide-react";
+import { Euro, Receipt, TrendingUp, CalendarCheck, Footprints, Megaphone, Users, Building, Package } from "lucide-react";
 import { type SalesSnapshot, formatEUR } from "@/lib/sales-mock";
 
 export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: number }) {
@@ -15,6 +15,12 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
     avgTicket: +(data.avgTicket * (0.97 + factor * 0.03)).toFixed(2),
     reservationsRevenue: Math.round(data.reservationsRevenue * factor),
     walkInsRevenue: Math.round(data.walkInsRevenue * factor),
+    costs: {
+      marketing: Math.round(data.costs.marketing * factor),
+      staff:     Math.round(data.costs.staff * factor),
+      rent:      Math.round(data.costs.rent * factor),
+      other:     Math.round(data.costs.other * factor),
+    },
   }), [data, factor]);
 
   const totalSplit = scaled.reservationsRevenue + scaled.walkInsRevenue;
@@ -22,6 +28,10 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
     { name: "Reservierungen", value: scaled.reservationsRevenue, color: "hsl(var(--primary))" },
     { name: "Walk-ins",       value: scaled.walkInsRevenue,      color: "hsl(var(--primary) / 0.35)" },
   ];
+
+  const ratio = (n: number) => (scaled.revenue > 0 ? (n / scaled.revenue) * 100 : 0);
+  const totalCosts = scaled.costs.marketing + scaled.costs.staff + scaled.costs.rent + scaled.costs.other;
+  const margin = scaled.revenue - totalCosts;
 
   const maxSellerRev = Math.max(...data.topSellers.map((s) => s.revenue));
 
@@ -33,6 +43,49 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
         <SalesKpi icon={Receipt} label="Bestellungen (Bons)"     value={scaled.orders.toLocaleString("de-DE")} delta="+5.1%" tone="emerald" />
         <SalesKpi icon={TrendingUp} label="Ø Bon (Spend / Head)" value={formatEUR(scaled.avgTicket)} delta="+2.3%" tone="violet" />
       </section>
+
+      {/* Cost structure */}
+      <Card className="shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle className="text-base">Kostenstruktur</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Ausgaben in % vom Umsatz · niedriger = besser
+            </p>
+          </div>
+          <Badge variant="secondary" className="font-normal tabular-nums">
+            Marge {((margin / scaled.revenue) * 100).toFixed(1)}%
+          </Badge>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <CostRatio icon={Megaphone} label="Marketing"    amount={scaled.costs.marketing} ratio={ratio(scaled.costs.marketing)} target={5}  tone="violet" />
+            <CostRatio icon={Users}     label="Personal"     amount={scaled.costs.staff}     ratio={ratio(scaled.costs.staff)}     target={30} tone="primary" />
+            <CostRatio icon={Building}  label="Miete"        amount={scaled.costs.rent}      ratio={ratio(scaled.costs.rent)}      target={10} tone="amber" />
+            <CostRatio icon={Package}   label="Sonstige (HQ)" amount={scaled.costs.other}    ratio={ratio(scaled.costs.other)}     target={7}  tone="slate" />
+          </div>
+
+          {/* Stacked cost bar */}
+          <div>
+            <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
+              <div className="bg-violet-500"     style={{ width: `${ratio(scaled.costs.marketing)}%` }} />
+              <div className="bg-primary"        style={{ width: `${ratio(scaled.costs.staff)}%` }} />
+              <div className="bg-amber-500"      style={{ width: `${ratio(scaled.costs.rent)}%` }} />
+              <div className="bg-slate-400"      style={{ width: `${ratio(scaled.costs.other)}%` }} />
+              <div className="bg-emerald-500/70" style={{ width: `${Math.max(0, ratio(margin))}%` }} />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+              <LegendDot color="bg-violet-500"     label={`Marketing ${ratio(scaled.costs.marketing).toFixed(1)}%`} />
+              <LegendDot color="bg-primary"        label={`Personal ${ratio(scaled.costs.staff).toFixed(1)}%`} />
+              <LegendDot color="bg-amber-500"      label={`Miete ${ratio(scaled.costs.rent).toFixed(1)}%`} />
+              <LegendDot color="bg-slate-400"      label={`Sonstige ${ratio(scaled.costs.other).toFixed(1)}%`} />
+              <LegendDot color="bg-emerald-500/70" label={`Marge ${((margin / scaled.revenue) * 100).toFixed(1)}%`} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+
 
       {/* Top sellers + revenue split */}
       <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -207,5 +260,54 @@ function SplitStat({
       <div className="text-base font-semibold tabular-nums mt-1">{value}</div>
       <div className="text-[11px] text-muted-foreground">{share.toFixed(1)}% des Umsatzes</div>
     </div>
+  );
+}
+
+function CostRatio({
+  icon: Icon, label, amount, ratio, target, tone,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string; amount: number; ratio: number; target: number;
+  tone: "primary" | "violet" | "amber" | "slate";
+}) {
+  const toneMap = {
+    primary: { chip: "bg-primary/10 text-primary", bar: "bg-primary" },
+    violet:  { chip: "bg-violet-500/10 text-violet-600", bar: "bg-violet-500" },
+    amber:   { chip: "bg-amber-500/10 text-amber-600", bar: "bg-amber-500" },
+    slate:   { chip: "bg-slate-500/10 text-slate-600", bar: "bg-slate-400" },
+  } as const;
+  const overBudget = ratio > target;
+  return (
+    <div className="rounded-lg border p-4 bg-card">
+      <div className="flex items-center justify-between gap-2">
+        <div className={`h-8 w-8 rounded-md flex items-center justify-center ${toneMap[tone].chip}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+          overBudget ? "text-red-600 bg-red-500/10" : "text-emerald-600 bg-emerald-500/10"
+        }`}>
+          Ziel ≤{target}%
+        </span>
+      </div>
+      <div className="mt-3">
+        <div className="text-xs text-muted-foreground">{label} Ratio</div>
+        <div className="text-2xl font-semibold tracking-tight tabular-nums">
+          {ratio.toFixed(1)}<span className="text-base text-muted-foreground font-normal">%</span>
+        </div>
+        <div className="text-[11px] text-muted-foreground tabular-nums">{formatEUR(amount)}</div>
+      </div>
+      <div className="mt-3 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+        <div className={`h-full rounded-full ${toneMap[tone].bar}`} style={{ width: `${Math.min(100, ratio * (50 / target))}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`h-2 w-2 rounded-full ${color}`} />
+      <span className="tabular-nums">{label}</span>
+    </span>
   );
 }
