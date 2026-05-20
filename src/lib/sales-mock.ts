@@ -40,6 +40,11 @@ function snapshot(seed: number): SalesSnapshot {
   const orders = 220 + seed * 35;
   const reservationsRevenue = Math.round(revenue * (0.58 + (seed % 3) * 0.04));
   const walkInsRevenue = revenue - reservationsRevenue;
+  // realistic German pub cost structure with slight per-pub variance
+  const marketingPct = 0.04 + (seed % 3) * 0.005;   // ~4–5%
+  const staffPct     = 0.28 + (seed % 4) * 0.008;   // ~28–31%
+  const rentPct      = 0.09 + (seed % 3) * 0.005;   // ~9–10%
+  const otherPct     = 0.06 + (seed % 2) * 0.005;   // ~6–6.5% (HQ allocation)
   return {
     revenue,
     orders,
@@ -55,6 +60,12 @@ function snapshot(seed: number): SalesSnapshot {
       { name: "House Lager 0,5l", category: "Drinks",    qty: 305 + seed * 12, revenue: Math.round(revenue * 0.09) },
       { name: "Aperol Spritz",    category: "Cocktails", qty: 96 + seed * 5,   revenue: Math.round(revenue * 0.07) },
     ],
+    costs: {
+      marketing: Math.round(revenue * marketingPct),
+      staff:     Math.round(revenue * staffPct),
+      rent:      Math.round(revenue * rentPct),
+      other:     Math.round(revenue * otherPct),
+    },
   };
 }
 
