@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,22 +8,21 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import {
-  Check, Phone, Star, Globe, Smartphone, ChevronDown, Gift, BellRing, Copy, Sparkles,
+  Check, Phone, Star, Globe, Smartphone, ChevronDown, Gift, BellRing, Sparkles, ShieldCheck, Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  FEEDBACK, CATEGORY_META, CATEGORY_ORDER, APOLOGY_CREDIT_STEPS, GOOGLE_SHARE_BONUS_STEPS,
-  type FeedbackItem, type CategoryKey, type CategoryRating, type ApologyReward,
+  FEEDBACK, CATEGORY_META, CATEGORY_ORDER, APOLOGY_CREDIT_STEPS, GOOGLE_INVITE_COOLDOWN_DAYS,
+  type FeedbackItem, type CategoryKey, type CategoryRating, type ApologyReward, type GoogleStatus,
 } from "@/lib/feedback-mock";
 import { PUBS, type Pub } from "@/lib/pubs-mock";
 import { sendApologyReward, inviteGoogleReview } from "@/lib/rewards.functions";
+
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -43,6 +42,12 @@ function Stars({ value, size = "sm" }: { value: number; size?: "sm" | "md" }) {
     </div>
   );
 }
+// Status, der Top-Priorität hat: "reviewed" sperrt einen Kunden überall.
+function resolveGoogleStatus(item: FeedbackItem, customerLatest: Map<string, GoogleStatus>) {
+  const latest = customerLatest.get(item.customerId);
+  if (latest === "reviewed") return "reviewed" as GoogleStatus;
+  return item.googleStatus ?? "none";
+}
 
 export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
   const [source, setSource] = useState<"all" | "app" | "google">("all");
@@ -51,11 +56,55 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
   const [done, setDone] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  // Local state for reward-flows (overlays the static mock data)
+  // Local state für Reward-Flows
   const [rewards, setRewards] = useState<Record<string, ApologyReward>>({});
-  const [invited, setInvited] = useState<Set<string>>(new Set());
+  // Pro Feedback: aktueller Google-Status (überschreibt mock-default)
+  const [googleStatus, setGoogleStatus] = useState<Record<string, GoogleStatus>>({});
 
   const effectivePubId = lockedPubId ?? pubId;
+
+  // Globale Sicht pro Kunde — wer hat schon bewertet?
+  const customerLatest = useMemo(() => {
+    const map = new Map<string, GoogleStatus>();
+    for (const f of FEEDBACK) {
+      const current = googleStatus[f.id] ?? f.googleStatus ?? "none";
+      const prev = map.get(f.customerId);
+      // "reviewed" gewinnt immer; sonst "invited"/"cooldown" über "none"
+      if (current === "reviewed" || prev !== "reviewed") {
+        if (current === "reviewed" || !prev || prev === "none") map.set(f.customerId, current);
+      }
+    }
+    return map;
+  }, [googleStatus]);
+
+  // Auto-Trigger: 4–5⭐ App-Reviews automatisch zur Google-Einladung anstoßen
+  useEffect(() => {
+    const candidates = FEEDBACK.filter((f) => {
+      if (f.source !== "app" || f.stars < 4) return false;
+      const status = resolveGoogleStatus(f, customerLatest);
+      return status === "none";
+    });
+    if (candidates.length === 0) return;
+
+    (async () => {
+      const now = Date.now();
+      for (const item of candidates) {
+        const pub = PUBS.find((p) => p.id === item.pubId);
+        if (!pub) continue;
+        await inviteGoogleReview({
+          feedbackId: item.id,
+          googleReviewUrl: pub.googleReviewUrl,
+        });
+        setGoogleStatus((prev) => ({ ...prev, [item.id]: "invited" }));
+        item.googleInvitedAt = now;
+      }
+      toast.success(`${candidates.length} Google-Einladungen automatisch verschickt`, {
+        description: "Push mit Direktlink an alle Gäste mit 4–5⭐ ohne Cooldown",
+      });
+    })();
+    // Wir wollen das genau einmal pro Komponenten-Lifetime laufen lassen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtered = useMemo(() => {
     return FEEDBACK.filter((f) => {
@@ -95,18 +144,6 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
       `Entschuldigung + ${reward.credits.toLocaleString("de-DE")} Credits gesendet`,
       { description: `Kanal: ${reward.channel === "push" ? "Push-Notification" : "WhatsApp"} · ${item.author}` },
     );
-  };
-
-  const handleGoogleInvite = async (item: FeedbackItem, pub: Pub, bonus: number) => {
-    await inviteGoogleReview({
-      feedbackId: item.id,
-      bonusCredits: bonus,
-      googleReviewUrl: pub.googleReviewUrl,
-    });
-    setInvited((prev) => new Set(prev).add(item.id));
-    toast.success(`Google-Einladung an ${item.author} gesendet`, {
-      description: `+${bonus} Bonus-Credits bei Veröffentlichung`,
-    });
   };
 
   return (
@@ -165,11 +202,10 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
             done={done.has(f.id)}
             expanded={expanded.has(f.id)}
             reward={rewards[f.id] ?? f.reward}
-            googleInvited={invited.has(f.id) || !!f.googleShareInvited}
+            googleStatus={resolveGoogleStatus({ ...f, googleStatus: googleStatus[f.id] ?? f.googleStatus }, customerLatest)}
             onToggleDone={() => toggleDone(f.id)}
             onToggleExpand={() => toggleExpanded(f.id)}
             onApology={handleApology}
-            onGoogleInvite={handleGoogleInvite}
           />
         ))}
         {filtered.length === 0 && (
@@ -181,6 +217,7 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
     </div>
   );
 }
+
 
 function CategoryRow({ k, rating }: { k: CategoryKey; rating: CategoryRating }) {
   const meta = CATEGORY_META[k];
@@ -219,23 +256,50 @@ function CategoryRow({ k, rating }: { k: CategoryKey; rating: CategoryRating }) 
   );
 }
 
+function GoogleStatusBadge({ status, invitedAt }: { status: GoogleStatus; invitedAt?: number }) {
+  if (status === "reviewed") {
+    return (
+      <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/10 border-0 font-normal gap-1">
+        <ShieldCheck className="h-3 w-3" />
+        Google-Bewertung abgegeben
+      </Badge>
+    );
+  }
+  if (status === "invited") {
+    return (
+      <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/10 border-0 font-normal gap-1">
+        <Sparkles className="h-3 w-3" />
+        Google-Einladung gesendet (auto)
+      </Badge>
+    );
+  }
+  if (status === "cooldown") {
+    const days = invitedAt ? Math.max(0, GOOGLE_INVITE_COOLDOWN_DAYS - Math.floor((Date.now() - invitedAt) / (1000 * 60 * 60 * 24))) : GOOGLE_INVITE_COOLDOWN_DAYS;
+    return (
+      <Badge className="bg-muted text-muted-foreground hover:bg-muted border-0 font-normal gap-1">
+        <Clock className="h-3 w-3" />
+        Cooldown · {days} Tage
+      </Badge>
+    );
+  }
+  return null;
+}
+
 function ReviewCard({
-  item, done, expanded, reward, googleInvited,
-  onToggleDone, onToggleExpand, onApology, onGoogleInvite,
+  item, done, expanded, reward, googleStatus,
+  onToggleDone, onToggleExpand, onApology,
 }: {
   item: FeedbackItem;
   done: boolean;
   expanded: boolean;
   reward?: ApologyReward;
-  googleInvited: boolean;
+  googleStatus: GoogleStatus;
   onToggleDone: () => void;
   onToggleExpand: () => void;
   onApology: (item: FeedbackItem, reward: ApologyReward) => void | Promise<void>;
-  onGoogleInvite: (item: FeedbackItem, pub: Pub, bonus: number) => void | Promise<void>;
 }) {
   const pub = PUBS.find((p) => p.id === item.pubId)!;
   const isLow = item.stars <= 2;
-  const isHigh = item.stars >= 4;
   const isApp = item.source === "app";
   const canExpand = isApp && !!item.categories;
 
@@ -267,11 +331,8 @@ function ReviewCard({
                   +{reward.credits.toLocaleString("de-DE")} Cr.
                 </Badge>
               )}
-              {googleInvited && (
-                <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/10 border-0 font-normal gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  Google-Einladung
-                </Badge>
+              {isApp && item.stars >= 4 && (
+                <GoogleStatusBadge status={googleStatus} invitedAt={item.googleInvitedAt} />
               )}
               <span className="text-xs text-muted-foreground ml-auto">{item.date}</span>
             </div>
@@ -329,11 +390,6 @@ function ReviewCard({
                   </Button>
                 )}
 
-                {/* Positive: Google share invite */}
-                {isHigh && isApp && !googleInvited && (
-                  <GoogleInvitePopover item={item} pub={pub} onConfirm={onGoogleInvite} />
-                )}
-
                 {/* Negative: Apology dialog */}
                 {isLow && isApp && !reward && (
                   <ApologyDialog item={item} pub={pub} onConfirm={onApology} />
@@ -367,84 +423,7 @@ function ReviewCard({
   );
 }
 
-// ---------- Google-Share Popover (positive Reviews) ----------
 
-function GoogleInvitePopover({
-  item, pub, onConfirm,
-}: {
-  item: FeedbackItem;
-  pub: Pub;
-  onConfirm: (item: FeedbackItem, pub: Pub, bonus: number) => void | Promise<void>;
-}) {
-  const [open, setOpen] = useState(false);
-  const [bonus, setBonus] = useState<number>(GOOGLE_SHARE_BONUS_STEPS[1]);
-  const message = `Hi ${item.author.split(" ")[0]}, danke für deine ${item.stars}⭐ Bewertung im ${pub.name}! Teilst du sie auch auf Google? Wir schenken dir dafür ${bonus} Bonus-Credits 🎁`;
-
-  const copyLink = async () => {
-    await navigator.clipboard.writeText(pub.googleReviewUrl);
-    toast("Google-Link kopiert");
-  };
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button size="sm" variant="outline" className="h-8 gap-1.5 border-blue-300 text-blue-700 hover:bg-blue-500 hover:text-white hover:border-blue-500">
-          <Globe className="h-3.5 w-3.5" />
-          Google-Share
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 space-y-3" align="end">
-        <div>
-          <div className="text-sm font-semibold">Google-Bewertung anstoßen</div>
-          <div className="text-xs text-muted-foreground">Push an {item.author} mit Direktlink + Bonus-Credits</div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-xs">Bonus-Credits</Label>
-          <div className="flex gap-1.5">
-            {GOOGLE_SHARE_BONUS_STEPS.map((c) => (
-              <Button
-                key={c}
-                type="button"
-                size="sm"
-                variant={bonus === c ? "default" : "outline"}
-                className="flex-1 h-8 text-xs"
-                onClick={() => setBonus(c)}
-              >
-                +{c}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-xs">Direktlink</Label>
-          <div className="flex gap-1.5">
-            <Input value={pub.googleReviewUrl} readOnly className="h-8 text-xs" />
-            <Button type="button" size="icon" variant="outline" className="h-8 w-8 shrink-0" onClick={copyLink}>
-              <Copy className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground italic">
-          „{message}"
-        </div>
-
-        <Button
-          className="w-full h-8 gap-1.5"
-          onClick={async () => {
-            await onConfirm(item, pub, bonus);
-            setOpen(false);
-          }}
-        >
-          <BellRing className="h-3.5 w-3.5" />
-          Einladung senden
-        </Button>
-      </PopoverContent>
-    </Popover>
-  );
-}
 
 // ---------- Apology Dialog (negative Reviews) ----------
 

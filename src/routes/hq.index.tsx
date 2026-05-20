@@ -468,11 +468,11 @@ function KpiCard({
 }
 
 function RewardsSummary({ factor }: { factor: number }) {
-  // Mock-Auswertung: 7-Tage-Aufwand für Entschuldigungs- & Google-Share-Credits.
+  // Mock-Auswertung im gewählten Zeitraum.
   const apologyCredits = Math.round(8200 * factor);
   const apologyCount = Math.round(11 * factor);
-  const shareCredits = Math.round(2150 * factor);
-  const shareCount = Math.round(18 * factor);
+  const autoInvites = Math.round(46 * factor);
+  const invitesConverted = Math.round(autoInvites * 0.32);
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <Card className="shadow-sm">
@@ -495,14 +495,15 @@ function RewardsSummary({ factor }: { factor: number }) {
             <Star className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs text-muted-foreground">Google-Share-Einladungen</div>
+            <div className="text-xs text-muted-foreground">Google-Einladungen (auto)</div>
             <div className="text-xl font-semibold tabular-nums">
-              {shareCount} <span className="text-xs text-muted-foreground font-normal">verschickt</span>
+              {autoInvites} <span className="text-xs text-muted-foreground font-normal">verschickt</span>
             </div>
-            <div className="text-[11px] text-muted-foreground">{shareCredits.toLocaleString("de-DE")} Bonus-Credits ausgeschüttet</div>
+            <div className="text-[11px] text-muted-foreground">{invitesConverted} Bewertungen daraus eingegangen · richtlinienkonform, ohne Anreize</div>
           </div>
         </CardContent>
       </Card>
     </div>
   );
 }
+

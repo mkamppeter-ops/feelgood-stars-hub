@@ -17,23 +17,34 @@ export type ApologyReward = {
   sentAt: number;
 };
 
+export type GoogleStatus =
+  | "none"        // noch nichts geschehen
+  | "invited"     // Einladung wurde automatisch gesendet, noch kein Klick
+  | "reviewed"    // Kunde hat bereits auf Google bewertet (einmal pro Kunde)
+  | "cooldown";   // Einladung schon mal gesendet, Wartefrist läuft
+
 export type FeedbackItem = {
   id: string;
   pubId: string;
   source: FeedbackSource;
   stars: number;
   author: string;
+  customerId: string;            // Kunde — bestimmt Einmal-Sperre für Google
   date: string;
   timestamp: number;
   text: string;
-  tags?: string[]; // aggregierte flat-Liste (für kompakte Ansicht)
-  categories?: Record<CategoryKey, CategoryRating>; // nur "app"
+  tags?: string[];
+  categories?: Record<CategoryKey, CategoryRating>;
   reward?: ApologyReward;        // gesetzt, sobald Wiedergutmachung verschickt wurde
-  googleShareInvited?: boolean;  // wurde der Google-Share-CTA bereits ausgelöst
+  googleStatus?: GoogleStatus;   // Status der Google-Auto-Einladung
+  googleInvitedAt?: number;      // ms-Timestamp der letzten Auto-Einladung
 };
 
 export const APOLOGY_CREDIT_STEPS = [100, 250, 500, 1000, 2500, 5000, 10000] as const;
-export const GOOGLE_SHARE_BONUS_STEPS = [50, 100, 250] as const;
+
+// Cooldown bevor wir denselben Kunden noch einmal einladen (60 Tage)
+export const GOOGLE_INVITE_COOLDOWN_DAYS = 60;
+
 
 // Exakte Labels & Tags aus dem Kunden-Formular
 export const CATEGORY_META: Record<CategoryKey, { label: string; icon: string; tags: string[] }> = {
@@ -180,15 +191,18 @@ const RELATIVE = ["vor 12 Min.", "vor 1 Std.", "vor 3 Std.", "vor 5 Std.", "gest
 
 export const FEEDBACK: FeedbackItem[] = SAMPLES.map((s, i) => {
   const pub = PUBS[i % PUBS.length];
+  const customerId = `c-${s.author.toLowerCase().replace(/[^a-z]+/g, "-")}`;
   const base: FeedbackItem = {
     id: `f-${i}`,
     pubId: pub.id,
     source: s.source,
     stars: s.stars,
     author: s.author,
+    customerId,
     text: s.text,
     date: RELATIVE[i % RELATIVE.length],
     timestamp: Date.now() - i * 1000 * 60 * 47,
+    googleStatus: "none",
   };
   if (s.source === "app") {
     base.categories = s.categories;
@@ -198,3 +212,17 @@ export const FEEDBACK: FeedbackItem[] = SAMPLES.map((s, i) => {
   }
   return base;
 }).sort((a, b) => b.timestamp - a.timestamp);
+
+// Seed: ein paar Kunden haben Google bereits bewertet (Einmal-Sperre greift)
+// und ein paar haben bereits eine Auto-Einladung erhalten (Cooldown läuft).
+const REVIEWED_CUSTOMERS = new Set(["c-mira-l-", "c-carla-d-"]);
+const RECENTLY_INVITED = new Set(["c-nina-h-"]);
+for (const f of FEEDBACK) {
+  if (REVIEWED_CUSTOMERS.has(f.customerId)) {
+    f.googleStatus = "reviewed";
+  } else if (RECENTLY_INVITED.has(f.customerId)) {
+    f.googleStatus = "cooldown";
+    f.googleInvitedAt = Date.now() - 1000 * 60 * 60 * 24 * 14; // vor 14 Tagen
+  }
+}
+
