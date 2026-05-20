@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Check, Phone, Star, Globe, Smartphone } from "lucide-react";
-import { FEEDBACK, type FeedbackItem } from "@/lib/feedback-mock";
+import { Check, Phone, Star, Globe, Smartphone, ChevronDown } from "lucide-react";
+import { FEEDBACK, CATEGORY_META, type FeedbackItem, type CategoryKey, type CategoryRating } from "@/lib/feedback-mock";
 import { PUBS } from "@/lib/pubs-mock";
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -17,11 +17,12 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-function Stars({ value }: { value: number }) {
+function Stars({ value, size = "sm" }: { value: number; size?: "sm" | "md" }) {
+  const cls = size === "md" ? "h-4 w-4" : "h-3.5 w-3.5";
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
-        <Star key={i} className={`h-3.5 w-3.5 ${i <= value ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
+        <Star key={i} className={`${cls} ${i <= value ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
       ))}
     </div>
   );
@@ -32,6 +33,7 @@ export function LiveFeedback() {
   const [rating, setRating] = useState<"all" | "low" | "high">("all");
   const [pubId, setPubId] = useState<string>("all");
   const [done, setDone] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
     return FEEDBACK.filter((f) => {
@@ -45,6 +47,14 @@ export function LiveFeedback() {
 
   const toggleDone = (id: string) =>
     setDone((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const toggleExpanded = (id: string) =>
+    setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -99,7 +109,14 @@ export function LiveFeedback() {
       {/* Review cards */}
       <div className="space-y-3">
         {filtered.map((f) => (
-          <ReviewCard key={f.id} item={f} done={done.has(f.id)} onToggle={() => toggleDone(f.id)} />
+          <ReviewCard
+            key={f.id}
+            item={f}
+            done={done.has(f.id)}
+            expanded={expanded.has(f.id)}
+            onToggleDone={() => toggleDone(f.id)}
+            onToggleExpand={() => toggleExpanded(f.id)}
+          />
         ))}
         {filtered.length === 0 && (
           <Card className="shadow-sm"><CardContent className="p-10 text-center text-sm text-muted-foreground">
@@ -111,9 +128,56 @@ export function LiveFeedback() {
   );
 }
 
-function ReviewCard({ item, done, onToggle }: { item: FeedbackItem; done: boolean; onToggle: () => void }) {
+function CategoryRow({ k, rating }: { k: CategoryKey; rating: CategoryRating }) {
+  const meta = CATEGORY_META[k];
+  const isLow = rating.score <= 2;
+  return (
+    <div
+      className={`flex flex-col gap-1.5 rounded-lg border p-3 ${
+        isLow ? "border-red-200 bg-red-50/50" : "bg-muted/30"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-base leading-none" aria-hidden>{meta.icon}</span>
+          <span className="text-sm font-medium truncate">{meta.label}</span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Stars value={rating.score} />
+          <span className={`text-xs tabular-nums ${isLow ? "text-red-600 font-semibold" : "text-muted-foreground"}`}>
+            {rating.score}/5
+          </span>
+        </div>
+      </div>
+      {rating.tags && rating.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {rating.tags.map((t) => (
+            <Badge
+              key={t}
+              className="bg-red-500/10 text-red-600 hover:bg-red-500/10 border-0 font-normal text-[10px] px-1.5 py-0"
+            >
+              {t}
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReviewCard({
+  item, done, expanded, onToggleDone, onToggleExpand,
+}: {
+  item: FeedbackItem;
+  done: boolean;
+  expanded: boolean;
+  onToggleDone: () => void;
+  onToggleExpand: () => void;
+}) {
   const pub = PUBS.find((p) => p.id === item.pubId)!;
   const isLow = item.stars <= 2;
+  const isApp = item.source === "app";
+  const canExpand = isApp && !!item.categories;
 
   return (
     <Card className={`shadow-sm transition-opacity ${done ? "opacity-60" : ""}`}>
@@ -131,7 +195,7 @@ function ReviewCard({ item, done, onToggle }: { item: FeedbackItem; done: boolea
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="text-sm font-semibold">{pub.name}</span>
               <Badge variant="secondary" className="font-normal text-[10px] uppercase tracking-wide">
-                {item.source === "google" ? "Google" : "App"}
+                {isApp ? "Internes Feedback" : "Google"}
               </Badge>
               <Stars value={item.stars} />
               {isLow && (
@@ -140,16 +204,51 @@ function ReviewCard({ item, done, onToggle }: { item: FeedbackItem; done: boolea
               <span className="text-xs text-muted-foreground ml-auto">{item.date}</span>
             </div>
 
-            <p className="text-sm text-foreground/90 leading-relaxed">„{item.text}"</p>
+            {/* App-only: Category breakdown */}
+            {canExpand && expanded && (
+              <div className="pt-1">
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2 font-medium">
+                  Kategorie-Check
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {(Object.keys(CATEGORY_META) as CategoryKey[]).map((k) => (
+                    <CategoryRow key={k} k={k} rating={item.categories![k]} />
+                  ))}
+                </div>
+              </div>
+            )}
 
+            {/* Comment block — clearly separated when categories are shown */}
+            <div className={canExpand && expanded ? "pt-2 border-t" : ""}>
+              {canExpand && expanded && (
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5 font-medium">
+                  Kommentar des Gastes
+                </div>
+              )}
+              <p className="text-sm text-foreground/90 leading-relaxed">„{item.text}"</p>
+            </div>
+
+            {/* Footer: author, tags (compact only), expand & actions */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-xs text-muted-foreground">{item.author}</span>
-                {item.tags?.map((t) => (
+                {/* Compact tag row only when collapsed (app reviews) */}
+                {isApp && !expanded && item.tags?.map((t) => (
                   <Badge key={t} variant="outline" className="font-normal text-[10px]">{t}</Badge>
                 ))}
               </div>
               <div className="flex items-center gap-2 shrink-0">
+                {canExpand && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 gap-1 text-xs"
+                    onClick={onToggleExpand}
+                  >
+                    {expanded ? "Weniger" : "Details"}
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-180" : ""}`} />
+                  </Button>
+                )}
                 <a href={`https://wa.me/${pub.whatsapp}`} target="_blank" rel="noreferrer">
                   <Button size="icon" variant="outline" className="h-8 w-8 hover:bg-emerald-500 hover:text-white hover:border-emerald-500">
                     <WhatsAppIcon className="h-4 w-4" />
@@ -164,7 +263,7 @@ function ReviewCard({ item, done, onToggle }: { item: FeedbackItem; done: boolea
                   size="sm"
                   variant={done ? "default" : "outline"}
                   className={`h-8 gap-1.5 ${done ? "bg-emerald-500 hover:bg-emerald-600 text-white" : ""}`}
-                  onClick={onToggle}
+                  onClick={onToggleDone}
                 >
                   <Check className="h-3.5 w-3.5" />
                   {done ? "Erledigt" : "Erledigen"}
