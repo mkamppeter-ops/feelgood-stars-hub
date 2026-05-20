@@ -28,6 +28,7 @@ import {
   type PushCampaignPreset,
   type PushCampaignAudience,
 } from "@/lib/rewards.functions";
+import { useT } from "@/lib/use-t";
 
 type Preset = {
   id: PushCampaignPreset;
@@ -37,20 +38,26 @@ type Preset = {
   needsCredits?: boolean;
 };
 
-const PRESETS: Preset[] = [
-  { id: "happy_hour",  label: "Happy Hour",     icon: Beer,    message: "🍻 Happy Hour! Nächste 2 Std. alle Drinks −30%. Komm vorbei!" },
-  { id: "free_drink",  label: "Freibier",       icon: Gift,    message: "🎁 Heute Abend ein Freibier auf uns — bis 22 Uhr." },
-  { id: "discount_50", label: "50% Rabatt",     icon: Percent, message: "💸 50% auf deine erste Runde, nur heute Abend." },
-  { id: "credits",     label: "Credit-Boost",   icon: Gem,     message: "💎 1.000 Credits geschenkt — nur heute, auch für deine Freunde.", needsCredits: true },
-  { id: "live_event",  label: "Live-Event",     icon: Music,   message: "🎤 Live-Musik startet gleich — letzte Plätze sichern!" },
-  { id: "custom",      label: "Eigene",         icon: Pencil,  message: "" },
-];
+function usePresets(): Preset[] {
+  const tt = useT();
+  return [
+    { id: "happy_hour",  label: "Happy Hour",                       icon: Beer,    message: tt("🍻 Happy Hour! Nächste 2 Std. alle Drinks −30%. Komm vorbei!", "🍻 Happy Hour! Next 2 hrs all drinks −30%. Come on by!") },
+    { id: "free_drink",  label: tt("Freibier", "Free drink"),       icon: Gift,    message: tt("🎁 Heute Abend ein Freibier auf uns — bis 22 Uhr.", "🎁 Tonight a free drink on us — until 10 pm.") },
+    { id: "discount_50", label: tt("50% Rabatt", "50% off"),        icon: Percent, message: tt("💸 50% auf deine erste Runde, nur heute Abend.", "💸 50% off your first round — tonight only.") },
+    { id: "credits",     label: tt("Credit-Boost", "Credit boost"), icon: Gem,     message: tt("💎 1.000 Credits geschenkt — nur heute, auch für deine Freunde.", "💎 1,000 free credits — today only, and for your friends too."), needsCredits: true },
+    { id: "live_event",  label: tt("Live-Event", "Live event"),     icon: Music,   message: tt("🎤 Live-Musik startet gleich — letzte Plätze sichern!", "🎤 Live music starting soon — grab the last seats!") },
+    { id: "custom",      label: tt("Eigene", "Custom"),             icon: Pencil,  message: "" },
+  ];
+}
 
-const AUDIENCE_LABELS: Record<PushCampaignAudience, string> = {
-  regulars: "Stammgäste dieser Filiale",
-  catchment: "Alle App-Nutzer im Einzugsgebiet (~5 km)",
-  checked_in_today: "Gäste, die heute schon eingecheckt waren",
-};
+function useAudienceLabels(): Record<PushCampaignAudience, string> {
+  const tt = useT();
+  return {
+    regulars: tt("Stammgäste dieser Filiale", "Regulars of this branch"),
+    catchment: tt("Alle App-Nutzer im Einzugsgebiet (~5 km)", "All app users in the catchment area (~5 km)"),
+    checked_in_today: tt("Gäste, die heute schon eingecheckt waren", "Guests who already checked in today"),
+  };
+}
 
 function audienceSize(pub: Pub, ops: LiveOps, a: PushCampaignAudience): number {
   if (a === "regulars") return Math.round(ops.pushReachable * 0.45);
@@ -58,22 +65,25 @@ function audienceSize(pub: Pub, ops: LiveOps, a: PushCampaignAudience): number {
   return Math.round(ops.liveGuests * 1.2);
 }
 
-function fmtTimeAgo(ts: number | null): string | null {
-  if (!ts) return null;
-  const mins = Math.round((Date.now() - ts) / 60000);
-  if (mins < 1) return "gerade eben";
-  if (mins < 60) return `vor ${mins} Min`;
-  const h = Math.floor(mins / 60);
-  return `vor ${h} Std`;
+function useFmtTimeAgo() {
+  const tt = useT();
+  return (ts: number | null): string | null => {
+    if (!ts) return null;
+    const mins = Math.round((Date.now() - ts) / 60000);
+    if (mins < 1) return tt("gerade eben", "just now");
+    if (mins < 60) return tt(`vor ${mins} Min`, `${mins} min ago`);
+    const h = Math.floor(mins / 60);
+    return tt(`vor ${h} Std`, `${h} h ago`);
+  };
 }
 
 export function ActiveOps() {
+  const tt = useT();
   const [live, setLive] = useState<LiveOps[]>(LIVE_OPS);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [dialogPub, setDialogPub] = useState<Pub | null>(null);
   const [now, setNow] = useState(new Date());
 
-  // Auto-Refresh: kleine Live-Schwankungen alle 30s
   useEffect(() => {
     const id = setInterval(() => {
       setLive((prev) => prev.map(tickLive));
@@ -104,7 +114,7 @@ export function ActiveOps() {
     };
   }, [live]);
 
-  const timeStr = now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   const handleCampaignSent = (pubId: string) => {
     setLive((prev) =>
@@ -114,23 +124,22 @@ export function ActiveOps() {
 
   return (
     <div className="space-y-6">
-      {/* Header / KPIs */}
       <section className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <KpiTile
           icon={Clock}
-          label="Live um"
+          label={tt("Live um", "Live at")}
           value={timeStr}
-          hint={`${summary.totalLive} Gäste online`}
+          hint={tt(`${summary.totalLive} Gäste online`, `${summary.totalLive} guests online`)}
         />
         <KpiTile
           icon={Activity}
-          label="Ø Auslastung"
+          label={tt("Ø Auslastung", "Avg occupancy")}
           value={`${summary.avgUtil}%`}
           tone={summary.avgUtil >= 70 ? "emerald" : summary.avgUtil >= 50 ? "amber" : "rose"}
         />
         <KpiTile
           icon={AlertTriangle}
-          label="Pubs unter Ziel"
+          label={tt("Pubs unter Ziel", "Pubs below target")}
           value={`${summary.underCount}`}
           suffix={` / ${live.length}`}
           tone={summary.underCount > 0 ? "rose" : "emerald"}
@@ -138,21 +147,23 @@ export function ActiveOps() {
         <KpiTile
           icon={TrendingUp}
           label="Refresh"
-          value="alle 30s"
-          hint="Live · Mock-Daten"
+          value={tt("alle 30s", "every 30s")}
+          hint={tt("Live · Mock-Daten", "Live · mock data")}
         />
       </section>
 
-      {/* Tabelle */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
-              Live-Status pro Filiale
+              {tt("Live-Status pro Filiale", "Live status per branch")}
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Zeile aufklappen für 24-h-Verlauf und Push-Kampagne starten.
+              {tt(
+                "Zeile aufklappen für 24-h-Verlauf und Push-Kampagne starten.",
+                "Expand a row for the 24-hour trend and to launch a push campaign.",
+              )}
             </p>
           </div>
           <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
@@ -165,13 +176,13 @@ export function ActiveOps() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-8" />
-                <TableHead>Filiale</TableHead>
+                <TableHead>{tt("Filiale", "Branch")}</TableHead>
                 <TableHead className="text-right">Live</TableHead>
-                <TableHead className="text-right">Ziel</TableHead>
+                <TableHead className="text-right">{tt("Ziel", "Target")}</TableHead>
                 <TableHead className="text-right">Δ</TableHead>
-                <TableHead className="text-right">Auslastung</TableHead>
+                <TableHead className="text-right">{tt("Auslastung", "Occupancy")}</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Aktion</TableHead>
+                <TableHead className="text-right">{tt("Aktion", "Action")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -216,8 +227,6 @@ export function ActiveOps() {
   );
 }
 
-// --- Sub-Komponenten ---
-
 function KpiTile({
   icon: Icon, label, value, suffix, hint, tone = "default",
 }: {
@@ -246,13 +255,14 @@ function KpiTile({
 }
 
 function StatusBadge({ status, delta }: { status: ReturnType<typeof getStatus>["status"]; delta: number }) {
+  const tt = useT();
   if (status === "over") {
-    return <Badge className="bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/15 border-emerald-500/30">Über Ziel · +{delta}</Badge>;
+    return <Badge className="bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/15 border-emerald-500/30">{tt("Über Ziel", "Above target")} · +{delta}</Badge>;
   }
   if (status === "under") {
-    return <Badge className="bg-rose-500/15 text-rose-700 hover:bg-rose-500/15 border-rose-500/30">Unter Ziel · {delta}</Badge>;
+    return <Badge className="bg-rose-500/15 text-rose-700 hover:bg-rose-500/15 border-rose-500/30">{tt("Unter Ziel", "Below target")} · {delta}</Badge>;
   }
-  return <Badge variant="secondary">Im Plan</Badge>;
+  return <Badge variant="secondary">{tt("Im Plan", "On plan")}</Badge>;
 }
 
 function ExpandableRow({
@@ -263,6 +273,8 @@ function ExpandableRow({
   delta: number; target: number; util: number;
   isOpen: boolean; onToggle: () => void; onOpenCampaign: () => void;
 }) {
+  const tt = useT();
+  const fmtTimeAgo = useFmtTimeAgo();
   const cooldown = fmtTimeAgo(ops.lastCampaignAt);
   return (
     <>
@@ -308,21 +320,21 @@ function ExpandableRow({
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-start">
               <div>
                 <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                  24-h Verlauf · Ist (gefüllt) vs. Ziel (Linie)
+                  {tt("24-h Verlauf · Ist (gefüllt) vs. Ziel (Linie)", "24-hour trend · actual (filled) vs. target (line)")}
                 </div>
                 <HourlyMiniChart ops={ops} />
               </div>
               <div className="text-sm space-y-2 lg:min-w-[220px]">
                 <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">Kapazität</span>
+                  <span className="text-muted-foreground">{tt("Kapazität", "Capacity")}</span>
                   <span className="font-medium">{ops.capacity}</span>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">Push erreichbar</span>
-                  <span className="font-medium">{ops.pushReachable.toLocaleString("de-DE")}</span>
+                  <span className="text-muted-foreground">{tt("Push erreichbar", "Push reachable")}</span>
+                  <span className="font-medium">{ops.pushReachable.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">Letzte Kampagne</span>
+                  <span className="text-muted-foreground">{tt("Letzte Kampagne", "Last campaign")}</span>
                   <span className="font-medium">{cooldown ?? "—"}</span>
                 </div>
               </div>
@@ -340,7 +352,6 @@ function HourlyMiniChart({ ops }: { ops: LiveOps }) {
   const W = 480, H = 80, pad = 4;
   const barW = (W - pad * 2) / 24;
 
-  // Ist-Punkt nur für aktuelle Stunde, sonst Ziel als "erreicht" simulieren
   const targetPath = ops.hourlyTarget
     .map((v, i) => {
       const x = pad + i * barW + barW / 2;
@@ -350,7 +361,7 @@ function HourlyMiniChart({ ops }: { ops: LiveOps }) {
     .join(" ");
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-20" role="img" aria-label="Stundenverlauf">
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-20" role="img" aria-label="Hourly trend">
       {ops.hourlyTarget.map((t, i) => {
         const isNow = i === hour;
         const ist = isNow ? ops.liveGuests : Math.round(t * (0.7 + ((i * 13) % 60) / 100));
@@ -376,6 +387,9 @@ function CampaignDialog({
 }: {
   pub: Pub; ops: LiveOps; onClose: () => void; onSent: () => void;
 }) {
+  const tt = useT();
+  const PRESETS = usePresets();
+  const AUDIENCE_LABELS = useAudienceLabels();
   const [presetId, setPresetId] = useState<PushCampaignPreset>("happy_hour");
   const preset = PRESETS.find((p) => p.id === presetId)!;
   const [message, setMessage] = useState(preset.message);
@@ -408,12 +422,15 @@ function CampaignDialog({
         validHours,
         credits: preset.needsCredits ? credits : undefined,
       });
-      toast.success(`Push gesendet · ${pub.name}`, {
-        description: `${reach.toLocaleString("de-DE")} Empfänger · gültig ${validHours}h`,
+      toast.success(tt(`Push gesendet · ${pub.name}`, `Push sent · ${pub.name}`), {
+        description: tt(
+          `${reach.toLocaleString()} Empfänger · gültig ${validHours}h`,
+          `${reach.toLocaleString()} recipients · valid ${validHours}h`,
+        ),
       });
       onSent();
     } catch {
-      toast.error("Versand fehlgeschlagen");
+      toast.error(tt("Versand fehlgeschlagen", "Sending failed"));
     } finally {
       setSending(false);
     }
@@ -425,10 +442,10 @@ function CampaignDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
-            Push-Kampagne · {pub.name}
+            {tt("Push-Kampagne", "Push campaign")} · {pub.name}
           </DialogTitle>
           <DialogDescription>
-            Live: {ops.liveGuests} Gäste · {pub.city}
+            Live: {ops.liveGuests} {tt("Gäste", "guests")} · {pub.city}
           </DialogDescription>
         </DialogHeader>
 
@@ -436,9 +453,12 @@ function CampaignDialog({
           <div className="flex items-start gap-2 p-3 rounded-md bg-amber-500/10 border border-amber-500/30 text-sm">
             <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
             <div>
-              <div className="font-medium text-amber-700">Kunden nicht ermüden</div>
+              <div className="font-medium text-amber-700">{tt("Kunden nicht ermüden", "Don't fatigue your customers")}</div>
               <div className="text-amber-700/80">
-                Letzte Kampagne vor {cooldownMin} Min. Empfohlen: mind. {PUSH_COOLDOWN_MIN} Min Pause.
+                {tt(
+                  `Letzte Kampagne vor ${cooldownMin} Min. Empfohlen: mind. ${PUSH_COOLDOWN_MIN} Min Pause.`,
+                  `Last campaign ${cooldownMin} min ago. Recommended: at least ${PUSH_COOLDOWN_MIN} min pause.`,
+                )}
               </div>
             </div>
           </div>
@@ -446,7 +466,7 @@ function CampaignDialog({
 
         <div className="space-y-4">
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Vorlage</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">{tt("Vorlage", "Template")}</Label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
               {PRESETS.map((p) => {
                 const Icon = p.icon;
@@ -479,10 +499,13 @@ function CampaignDialog({
                     variant={credits === c ? "default" : "outline"}
                     onClick={() => {
                       setCredits(c);
-                      setMessage(`💎 ${c.toLocaleString("de-DE")} Credits geschenkt — nur heute, auch für deine Freunde.`);
+                      setMessage(tt(
+                        `💎 ${c.toLocaleString()} Credits geschenkt — nur heute, auch für deine Freunde.`,
+                        `💎 ${c.toLocaleString()} free credits — today only, and for your friends too.`,
+                      ));
                     }}
                   >
-                    {c.toLocaleString("de-DE")}
+                    {c.toLocaleString()}
                   </Button>
                 ))}
               </div>
@@ -491,7 +514,7 @@ function CampaignDialog({
 
           <div>
             <Label htmlFor="msg" className="text-xs uppercase tracking-wide text-muted-foreground">
-              Push-Nachricht
+              {tt("Push-Nachricht", "Push message")}
             </Label>
             <Textarea
               id="msg"
@@ -499,13 +522,13 @@ function CampaignDialog({
               onChange={(e) => setMessage(e.target.value)}
               rows={3}
               className="mt-2"
-              placeholder="Was möchtest du den Gästen sagen?"
+              placeholder={tt("Was möchtest du den Gästen sagen?", "What do you want to tell your guests?")}
             />
-            <div className="text-xs text-muted-foreground mt-1">{message.length} Zeichen</div>
+            <div className="text-xs text-muted-foreground mt-1">{message.length} {tt("Zeichen", "characters")}</div>
           </div>
 
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Reichweite</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">{tt("Reichweite", "Reach")}</Label>
             <RadioGroup
               value={audience}
               onValueChange={(v) => setAudience(v as PushCampaignAudience)}
@@ -518,7 +541,7 @@ function CampaignDialog({
                     <span className="text-sm">{AUDIENCE_LABELS[a]}</span>
                   </div>
                   <span className="text-xs text-muted-foreground tabular-nums">
-                    ~{audienceSize(pub, ops, a).toLocaleString("de-DE")}
+                    ~{audienceSize(pub, ops, a).toLocaleString()}
                   </span>
                 </label>
               ))}
@@ -526,7 +549,7 @@ function CampaignDialog({
           </div>
 
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Gültigkeit</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">{tt("Gültigkeit", "Validity")}</Label>
             <div className="flex gap-2 mt-2">
               {[1, 2, 4].map((h) => (
                 <Button
@@ -543,23 +566,23 @@ function CampaignDialog({
                 variant={validHours === 99 ? "default" : "outline"}
                 onClick={() => setValidHours(99)}
               >
-                bis Ladenschluss
+                {tt("bis Ladenschluss", "until close")}
               </Button>
             </div>
           </div>
 
           <div className="rounded-md border bg-muted/30 p-3">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Vorschau</div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">{tt("Vorschau", "Preview")}</div>
             <div className="text-sm font-medium">{pub.name}</div>
             <div className="text-sm text-muted-foreground">{message || "—"}</div>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={sending}>Abbrechen</Button>
+          <Button variant="outline" onClick={onClose} disabled={sending}>{tt("Abbrechen", "Cancel")}</Button>
           <Button onClick={handleSend} disabled={sending || !message.trim()}>
             <Zap className="h-4 w-4 mr-1" />
-            {sending ? "Sende…" : `An ${reach.toLocaleString("de-DE")} senden`}
+            {sending ? tt("Sende…", "Sending…") : tt(`An ${reach.toLocaleString()} senden`, `Send to ${reach.toLocaleString()}`)}
           </Button>
         </DialogFooter>
       </DialogContent>
