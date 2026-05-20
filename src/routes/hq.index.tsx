@@ -96,6 +96,7 @@ function HQPage() {
             { icon: Building2, label: "Sortiment", tab: "sortiment" },
             { icon: CalendarCheck, label: "Events", tab: "events" },
             { icon: MessageSquare, label: "Feedback", tab: "feedback" },
+            { icon: Settings, label: "Data Settings", tab: "settings" },
           ].map(({ icon: Icon, label, tab }) => {
             const active = activeTab === tab;
             return (
