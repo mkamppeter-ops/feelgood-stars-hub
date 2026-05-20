@@ -39,7 +39,9 @@ function LoginPage() {
   }
 
   function loginAs(role: Role) {
-    setSession(role);
+    // Demo: assign a fixed pub to non-HQ roles
+    const pubId = role === "hq_admin" ? undefined : PUBS[2].id;
+    setSession(role, pubId);
     navigate({ to: defaultRouteForRole(role) });
   }
 
