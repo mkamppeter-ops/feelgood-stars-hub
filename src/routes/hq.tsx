@@ -15,7 +15,8 @@ import {
   Building2, MessageSquare, Settings, Bell, Search,
 } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
-import { SALES_GLOBAL } from "@/lib/sales-mock";
+import { SALES_GLOBAL, SALES_BY_PUB, formatEUR } from "@/lib/sales-mock";
+import { ArrowUpRight } from "lucide-react";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 import { LiveFeedback } from "@/components/live-feedback";
 import { SalesOps } from "@/components/sales-ops";
