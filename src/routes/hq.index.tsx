@@ -542,3 +542,97 @@ function RewardsSummary({ factor }: { factor: number }) {
   );
 }
 
+function PubsGrid({ onOpen }: { onOpen: (id: string) => void }) {
+  const [sort, setSort] = useState<"score" | "name">("score");
+  const sorted = useMemo(() => {
+    const arr = [...PUBS];
+    if (sort === "score") {
+      arr.sort((a, b) => computeScore(b) - computeScore(a));
+    } else {
+      arr.sort((a, b) => a.name.localeCompare(b.name, "de"));
+    }
+    return arr;
+  }, [sort]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold">Alle Pubs</h2>
+          <p className="text-xs text-muted-foreground">{PUBS.length} Filialen · Klick öffnet Detailseite</p>
+        </div>
+        <div className="inline-flex rounded-md border p-0.5 text-xs">
+          <button
+            onClick={() => setSort("score")}
+            className={`px-3 py-1.5 rounded ${sort === "score" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+          >
+            Score ↓
+          </button>
+          <button
+            onClick={() => setSort("name")}
+            className={`px-3 py-1.5 rounded ${sort === "name" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+          >
+            Name A–Z
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {sorted.map((p) => {
+          const score = computeScore(p);
+          const scoreTone =
+            score >= 85 ? "text-emerald-600 bg-emerald-500/10"
+            : score >= 75 ? "text-foreground bg-muted"
+            : "text-amber-600 bg-amber-500/10";
+          return (
+            <button
+              key={p.id}
+              onClick={() => onOpen(p.id)}
+              className="text-left rounded-xl border bg-card p-4 hover:border-primary/40 hover:bg-muted/30 transition-colors shadow-sm flex flex-col gap-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{p.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">{p.city}</div>
+                </div>
+                <span className={`shrink-0 rounded-md px-2 py-1 text-xs font-semibold tabular-nums ${scoreTone}`}>
+                  {score}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-md bg-muted/50 px-2 py-1.5">
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Umsatz</div>
+                  <div className={`font-semibold tabular-nums ${p.revenueTarget >= 100 ? "text-emerald-600" : "text-amber-600"}`}>
+                    {p.revenueTarget}%
+                  </div>
+                </div>
+                <div className="rounded-md bg-muted/50 px-2 py-1.5">
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Walk-In</div>
+                  <div className="font-semibold tabular-nums">{p.walkInRatio}%</div>
+                </div>
+                <div className="rounded-md bg-muted/50 px-2 py-1.5">
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Feedback</div>
+                  <div className="font-semibold tabular-nums">{p.feedback.toFixed(1)} ⭐</div>
+                </div>
+                <div className="rounded-md bg-muted/50 px-2 py-1.5">
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Booking</div>
+                  <div className={`font-semibold tabular-nums ${p.bookingRatio >= 80 ? "text-emerald-600" : p.bookingRatio >= 70 ? "" : "text-amber-600"}`}>
+                    {p.bookingRatio}%
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t">
+                <span className="truncate">{p.manager}</span>
+                <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
