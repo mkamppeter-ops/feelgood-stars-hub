@@ -21,7 +21,7 @@ import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/c
 import { LiveFeedback } from "@/components/live-feedback";
 import { SalesOps } from "@/components/sales-ops";
 
-export const Route = createFileRoute("/hq")({
+export const Route = createFileRoute("/hq/")({
   head: () => ({
     meta: [
       { title: "Pub Ops Navigator — HQ Dashboard" },
