@@ -310,13 +310,14 @@ function CostRatio({
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string; amount: number; ratio: number; target: number;
-  tone: "primary" | "violet" | "amber" | "slate";
+  tone: "primary" | "violet" | "amber" | "slate" | "rose";
 }) {
   const toneMap = {
     primary: { chip: "bg-primary/10 text-primary", bar: "bg-primary" },
     violet:  { chip: "bg-violet-500/10 text-violet-600", bar: "bg-violet-500" },
     amber:   { chip: "bg-amber-500/10 text-amber-600", bar: "bg-amber-500" },
     slate:   { chip: "bg-slate-500/10 text-slate-600", bar: "bg-slate-400" },
+    rose:    { chip: "bg-rose-500/10 text-rose-600", bar: "bg-rose-500" },
   } as const;
   const overBudget = ratio > target;
   return (
