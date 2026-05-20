@@ -90,18 +90,20 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Filiale</span>
-            <Select value={pubId} onValueChange={setPubId}>
-              <SelectTrigger className="h-8 w-[200px] text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Pubs</SelectItem>
-                {PUBS.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {!lockedPubId && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Filiale</span>
+              <Select value={pubId} onValueChange={setPubId}>
+                <SelectTrigger className="h-8 w-[200px] text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Pubs</SelectItem>
+                  {PUBS.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="ml-auto text-xs text-muted-foreground">
             {filtered.length} Bewertungen · {done.size} erledigt
           </div>
