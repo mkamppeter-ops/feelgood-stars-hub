@@ -274,37 +274,6 @@ function HQPage() {
                 </CardContent>
               </Card>
 
-              {/* Chart */}
-              <Card className="shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-base">Spend per Booking — Top 5 Pubs</CardTitle>
-                  <p className="text-xs text-muted-foreground mt-1">Durchschnittlicher Umsatz pro Buchung (€)</p>
-                </CardHeader>
-                <CardContent className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                      <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
-                      <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={(v) => `€${v}`} />
-                      <Tooltip
-                        cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
-                        contentStyle={{
-                          borderRadius: 8,
-                          border: "1px solid hsl(var(--border))",
-                          background: "hsl(var(--card))",
-                          fontSize: 12,
-                        }}
-                        formatter={(v: number) => [`€${v}`, "Spend / Booking"]}
-                      />
-                      <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                        {chartData.map((_, i) => (
-                          <Cell key={i} fill={i === 0 ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.45)"} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
             </TabsContent>
 
             <TabsContent value="sales" className="mt-0 space-y-6">
