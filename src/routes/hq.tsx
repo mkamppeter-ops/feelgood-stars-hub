@@ -31,6 +31,7 @@ const chartData = PUBS.slice(0, 5).map((p) => ({
 }));
 
 function HQPage() {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-muted/30 flex">
       {/* Sidebar */}
