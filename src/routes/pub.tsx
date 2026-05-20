@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation, Trans } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,17 +8,18 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   Trophy, Gauge, Star, TrendingUp, MapPin, ArrowUp, Sparkles, Globe, Smartphone,
 } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
 import { FEEDBACK, CATEGORY_META, CATEGORY_ORDER, type FeedbackItem } from "@/lib/feedback-mock";
-import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
+import { DateRangePicker, RANGE_FACTOR, useRangeLabels, type DateRange } from "@/components/date-range-picker";
 import { SalesOps } from "@/components/sales-ops";
 
 import { RequireRole, LogoutButton } from "@/components/auth-guard";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { useSession } from "@/lib/auth-mock";
 
 export const Route = createFileRoute("/pub")({
@@ -27,7 +29,7 @@ export const Route = createFileRoute("/pub")({
   head: () => ({
     meta: [
       { title: "Pub Ops Navigator — Local View" },
-      { name: "description", content: "Lokales Dashboard für den Bar-Manager: Performance, Umsätze und Gast-Feedback der eigenen Filiale." },
+      { name: "description", content: "Local dashboard for the bar manager." },
     ],
   }),
   component: () => (
@@ -38,11 +40,12 @@ export const Route = createFileRoute("/pub")({
 });
 
 function PubLocalView() {
+  const { t } = useTranslation();
+  const rangeLabels = useRangeLabels();
   const { mode } = Route.useSearch();
   const session = useSession();
   const isStaff = session?.role === "bar_staff" || mode === "staff";
   const isManager = session?.role === "pub_manager";
-  // Locked pub from session for non-HQ roles; fallback to default demo pub
   const lockedPubId = session?.pubId ?? PUBS[2].id;
   const [pubId, setPubId] = useState(lockedPubId);
   const [range, setRange] = useState<DateRange>("last7");
@@ -81,16 +84,16 @@ function PubLocalView() {
             </div>
             <div className="min-w-0">
               <div className="text-sm font-semibold leading-tight truncate">
-                {isStaff ? "Staff View" : "Local View"}
+                {isStaff ? t("pub.staffView") : t("pub.localView")}
               </div>
               <div className="text-[11px] text-muted-foreground leading-tight truncate">
-                {pub.name} · {RANGE_LABELS[range]}
+                {pub.name} · {rangeLabels[range]}
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {isStaff && (
-              <Badge variant="secondary" className="hidden sm:inline-flex">Staff-View</Badge>
+              <Badge variant="secondary" className="hidden sm:inline-flex">{t("pub.staffBadge")}</Badge>
             )}
             {lockSelector ? (
               <div className="hidden sm:flex items-center gap-2 h-9 px-3 rounded-md border bg-muted/30 text-sm">
@@ -112,9 +115,10 @@ function PubLocalView() {
             {!isStaff && <DateRangePicker value={range} onChange={setRange} />}
             {!isStaff && (
               <a href="/feedback" target="_blank" rel="noopener" className="hidden md:inline-flex">
-                <Button variant="outline" size="sm">Gast-View</Button>
+                <Button variant="outline" size="sm">{t("common.guestView")}</Button>
               </a>
             )}
+            <LanguageSwitcher />
             <LogoutButton />
           </div>
         </div>
@@ -125,9 +129,11 @@ function PubLocalView() {
         {isStaff ? (
           <>
             <section>
-              <p className="text-sm text-muted-foreground">Hi 👋</p>
+              <p className="text-sm text-muted-foreground">{t("pub.hi")}</p>
               <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-1">
-                Gäste-Reviews · <span className="text-primary">{pub.name}</span>
+                <Trans i18nKey="pub.reviewsTitle" values={{ name: pub.name }} components={{ 1: <span className="text-primary" /> }}>
+                  Gäste-Reviews · <span className="text-primary">{pub.name}</span>
+                </Trans>
               </h1>
               <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                 <MapPin className="h-3.5 w-3.5" />
@@ -135,8 +141,7 @@ function PubLocalView() {
               </div>
               <Card className="mt-4 border-amber-200 bg-amber-50/60">
                 <CardContent className="p-4 text-sm text-amber-900">
-                  <strong>Hinweis:</strong> Reviews werden zentral durch das HQ-Team beantwortet.
-                  Du siehst hier ausschließlich die eingegangenen Bewertungen deiner Schicht — read-only.
+                  <Trans i18nKey="pub.reviewNote" components={{ strong: <strong /> }} />
                 </CardContent>
               </Card>
             </section>
@@ -149,13 +154,15 @@ function PubLocalView() {
           <>
             {/* Welcome */}
             <section>
-              <p className="text-sm text-muted-foreground">Willkommen zurück 👋</p>
+              <p className="text-sm text-muted-foreground">{t("pub.welcomeBack")}</p>
               <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-1">
-                Willkommen im <span className="text-primary">{pub.name}</span> Dashboard
+                <Trans i18nKey="pub.welcomeTitle" values={{ name: pub.name }} components={{ 1: <span className="text-primary" /> }}>
+                  Willkommen im <span className="text-primary">{pub.name}</span> Dashboard
+                </Trans>
               </h1>
               <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                 <MapPin className="h-3.5 w-3.5" />
-                {pub.city} · Manager: {pub.manager}
+                {pub.city} · {t("pub.managerLine", { name: pub.manager })}
               </div>
             </section>
 
@@ -169,7 +176,7 @@ function PubLocalView() {
                     <div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
                         <Gauge className="h-3.5 w-3.5" />
-                        Pub Performance Score
+                        {t("pub.perfScore")}
                       </div>
                       <div className="mt-3 flex items-baseline gap-2">
                         <span className={`text-6xl font-bold tabular-nums tracking-tight ${scoreColor}`}>
@@ -180,9 +187,9 @@ function PubLocalView() {
                       <div className="flex items-center gap-2 mt-2 text-xs">
                         <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 border-0 font-normal gap-1">
                           <ArrowUp className="h-3 w-3" />
-                          +3 ggü. Vorwoche
+                          {t("pub.deltaWeek", { n: 3 })}
                         </Badge>
-                        <span className="text-muted-foreground">stärkster Anstieg seit 3 Wochen</span>
+                        <span className="text-muted-foreground">{t("pub.strongestRise")}</span>
                       </div>
                     </div>
                     <div className="hidden sm:flex h-16 w-16 rounded-2xl bg-primary/10 items-center justify-center shrink-0">
@@ -221,32 +228,36 @@ function PubLocalView() {
               <Card className="shadow-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                    Dein Platz im Leaderboard
+                    {t("pub.leaderboardPos")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-baseline gap-2">
                     <span className="text-5xl font-bold tabular-nums">#{pub.rank}</span>
-                    <span className="text-sm text-muted-foreground">von {PUBS.length}</span>
+                    <span className="text-sm text-muted-foreground">{t("pub.rankOf", { n: PUBS.length })}</span>
                   </div>
 
                   {pub.rank === 1 ? (
                     <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
                       <div className="flex items-center gap-2 text-amber-700 font-semibold text-sm">
                         <Trophy className="h-4 w-4" />
-                        🏆 Du bist Spitzenreiter!
+                        {t("pub.topRank")}
                       </div>
                       <p className="text-xs text-amber-700/80 mt-1">
-                        Halte das Tempo — {PUBS[1].name} ist nur {pub.score - PUBS[1].score} Punkte hinter dir.
+                        {t("pub.topRankHint", { name: PUBS[1].name, points: pub.score - PUBS[1].score })}
                       </p>
                     </div>
                   ) : (
                     <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
                       <div className="text-sm font-semibold">
-                        🔥 Du bist auf Platz {pub.rank}!
+                        {t("pub.youAreRank", { rank: pub.rank })}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Noch <span className="font-semibold text-primary">{pointsToNext} Punkte</span> bis Platz {pub.rank - 1}
+                        <Trans
+                          i18nKey="pub.pointsToNext"
+                          values={{ points: pointsToNext, rank: pub.rank - 1 }}
+                          components={{ 1: <span className="font-semibold text-primary" /> }}
+                        />
                         {nextPub && <> ({nextPub.name})</>}.
                       </p>
                       <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
@@ -260,12 +271,12 @@ function PubLocalView() {
 
                   <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
                     <div className="rounded-md border p-2">
-                      <div className="text-muted-foreground">Booking</div>
+                      <div className="text-muted-foreground">{t("pub.booking")}</div>
                       <div className="font-semibold tabular-nums">{pub.bookingRatio}%</div>
                     </div>
                     <div className="rounded-md border p-2">
                       <div className="text-muted-foreground flex items-center gap-1">
-                        <Star className="h-3 w-3" /> Feedback
+                        <Star className="h-3 w-3" /> {t("pub.feedback")}
                       </div>
                       <div className="font-semibold tabular-nums">{pub.feedback.toFixed(1)}</div>
                     </div>
@@ -276,10 +287,10 @@ function PubLocalView() {
 
             {/* Mini KPI strip — only this pub's numbers */}
             <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <MiniStat label="Spend / Booking" value={`€${pub.spendPerBooking}`} delta="+€1.20" />
-              <MiniStat label="Revenue Target" value={`${pub.revenueTarget}%`} delta={pub.revenueTarget >= 100 ? "über Ziel" : "knapp"} positive={pub.revenueTarget >= 100} />
-              <MiniStat label="Booking Ratio" value={`${pub.bookingRatio}%`} delta="+1.4%" />
-              <MiniStat label={<><Star className="h-3 w-3 inline -mt-0.5 mr-0.5" /> Rating</>} value={pub.feedback.toFixed(1)} delta="+0.1" />
+              <MiniStat label={t("pub.spendPerBooking")} value={`€${pub.spendPerBooking}`} delta="+€1.20" />
+              <MiniStat label={t("pub.revenueTarget")} value={`${pub.revenueTarget}%`} delta={pub.revenueTarget >= 100 ? t("pub.aboveTarget") : t("pub.close")} positive={pub.revenueTarget >= 100} />
+              <MiniStat label={t("pub.bookingRatio")} value={`${pub.bookingRatio}%`} delta="+1.4%" />
+              <MiniStat label={<><Star className="h-3 w-3 inline -mt-0.5 mr-0.5" /> {t("pub.rating")}</>} value={pub.feedback.toFixed(1)} delta="+0.1" />
             </section>
 
             {/* Tabs: Sales + Feedback (this pub only) */}
@@ -287,11 +298,11 @@ function PubLocalView() {
               <TabsList>
                 <TabsTrigger value="sales">
                   <TrendingUp className="h-4 w-4 mr-1.5" />
-                  Sales &amp; Operations
+                  {t("pub.tabSales")}
                 </TabsTrigger>
                 <TabsTrigger value="feedback">
                   <Star className="h-4 w-4 mr-1.5" />
-                  Gäste-Feedback
+                  {t("pub.tabFeedback")}
                   <span className="ml-2 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
                     {pubFeedback.length}
                   </span>
@@ -344,11 +355,12 @@ function Stars({ value }: { value: number }) {
 }
 
 function LocalFeedback({ items, pubName }: { items: FeedbackItem[]; pubName: string }) {
+  const { t } = useTranslation();
   if (items.length === 0) {
     return (
       <Card className="shadow-sm">
         <CardContent className="p-10 text-center text-sm text-muted-foreground">
-          Noch keine Bewertungen für {pubName} im gewählten Zeitraum.
+          {t("pub.noReviews", { name: pubName })}
         </CardContent>
       </Card>
     );
@@ -357,7 +369,7 @@ function LocalFeedback({ items, pubName }: { items: FeedbackItem[]; pubName: str
   return (
     <div className="space-y-3">
       <div className="text-xs text-muted-foreground">
-        {items.length} Bewertungen für <span className="font-medium text-foreground">{pubName}</span>
+        {t("pub.reviewsCount", { count: items.length })} <span className="font-medium text-foreground">{pubName}</span>
       </div>
       {items.map((f) => (
         <Card key={f.id} className="shadow-sm">
@@ -371,11 +383,11 @@ function LocalFeedback({ items, pubName }: { items: FeedbackItem[]; pubName: str
               <div className="flex-1 min-w-0 space-y-2">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <Badge variant="secondary" className="font-normal text-[10px] uppercase">
-                    {f.source === "google" ? "Google" : "Internes Feedback"}
+                    {f.source === "google" ? t("pub.google") : t("pub.internal")}
                   </Badge>
                   <Stars value={f.stars} />
                   {f.stars <= 2 && (
-                    <Badge className="bg-red-500/10 text-red-600 hover:bg-red-500/10 border-0 font-normal">Kritisch</Badge>
+                    <Badge className="bg-red-500/10 text-red-600 hover:bg-red-500/10 border-0 font-normal">{t("pub.critical")}</Badge>
                   )}
                   <span className="text-xs text-muted-foreground ml-auto">{f.date}</span>
                 </div>
