@@ -14,24 +14,49 @@ import { supabase } from "@/integrations/supabase/client";
 
 type PubSettings = {
   pub_id: string;
+  month: string;
   staff_costs_monthly: number;
   rent_monthly: number;
   revenue_target_monthly: number;
+  active_users_target: number;
   seats: number;
   opening_hour: number;
   closing_hour: number;
   occupancy_targets: Record<string, number>;
 };
 
-const DEFAULTS: Omit<PubSettings, "pub_id"> = {
+const DEFAULTS: Omit<PubSettings, "pub_id" | "month"> = {
   staff_costs_monthly: 18000,
   rent_monthly: 4500,
   revenue_target_monthly: 45000,
+  active_users_target: 500,
   seats: 60,
   opening_hour: 17,
   closing_hour: 24,
   occupancy_targets: { "17": 30, "18": 50, "19": 70, "20": 85, "21": 90, "22": 80, "23": 60 },
 };
+
+function currentMonth(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function buildMonthOptions(): string[] {
+  const out: string[] = [];
+  const now = new Date();
+  // 12 past, current, 3 future
+  for (let i = -12; i <= 3; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  return out;
+}
+
+function monthLabel(m: string): string {
+  const [y, mo] = m.split("-").map(Number);
+  return new Date(y, mo - 1, 1).toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+}
+
 
 function buildHours(open: number, close: number): number[] {
   const hours: number[] = [];
@@ -47,15 +72,19 @@ function hourLabel(h: number) {
 
 export function DataSettings() {
   const [selectedPubId, setSelectedPubId] = useState(PUBS[0].id);
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth());
   const [allSettings, setAllSettings] = useState<Record<string, PubSettings>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Form state
-  const [form, setForm] = useState<Omit<PubSettings, "pub_id">>(DEFAULTS);
-  const [initial, setInitial] = useState<Omit<PubSettings, "pub_id">>(DEFAULTS);
+  type FormState = Omit<PubSettings, "pub_id" | "month">;
 
-  // Load all settings once
+  const [form, setForm] = useState<FormState>(DEFAULTS);
+  const [initial, setInitial] = useState<FormState>(DEFAULTS);
+
+  const monthOptions = useMemo(() => buildMonthOptions(), []);
+  const key = (pubId: string, month: string) => `${pubId}__${month}`;
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -66,9 +95,10 @@ export function DataSettings() {
       } else if (data) {
         const map: Record<string, PubSettings> = {};
         for (const row of data) {
-          map[row.pub_id] = {
-            ...row,
-            occupancy_targets: (row.occupancy_targets as Record<string, number>) ?? {},
+          const r = row as any;
+          map[key(r.pub_id, r.month)] = {
+            ...r,
+            occupancy_targets: (r.occupancy_targets as Record<string, number>) ?? {},
           } as PubSettings;
         }
         setAllSettings(map);
@@ -78,14 +108,14 @@ export function DataSettings() {
     return () => { cancelled = true; };
   }, []);
 
-  // When pub or cache changes → populate form
   useEffect(() => {
-    const existing = allSettings[selectedPubId];
-    const next = existing
+    const existing = allSettings[key(selectedPubId, selectedMonth)];
+    const next: FormState = existing
       ? {
           staff_costs_monthly: Number(existing.staff_costs_monthly),
           rent_monthly: Number(existing.rent_monthly),
-          revenue_target_monthly: Number((existing as PubSettings).revenue_target_monthly ?? 0),
+          revenue_target_monthly: Number(existing.revenue_target_monthly ?? 0),
+          active_users_target: Number(existing.active_users_target ?? 0),
           seats: existing.seats,
           opening_hour: existing.opening_hour,
           closing_hour: existing.closing_hour,
@@ -94,7 +124,7 @@ export function DataSettings() {
       : { ...DEFAULTS };
     setForm(next);
     setInitial(next);
-  }, [selectedPubId, allSettings]);
+  }, [selectedPubId, selectedMonth, allSettings]);
 
   const hours = useMemo(() => buildHours(form.opening_hour, form.closing_hour), [form.opening_hour, form.closing_hour]);
 
@@ -109,16 +139,17 @@ export function DataSettings() {
 
   async function handleSave() {
     setSaving(true);
-    // Trim occupancy_targets to current opening hours only
     const trimmed: Record<string, number> = {};
     for (const h of hours) {
       trimmed[String(h)] = form.occupancy_targets[String(h)] ?? 60;
     }
     const payload = {
       pub_id: selectedPubId,
+      month: selectedMonth,
       staff_costs_monthly: form.staff_costs_monthly,
       rent_monthly: form.rent_monthly,
       revenue_target_monthly: form.revenue_target_monthly,
+      active_users_target: form.active_users_target,
       seats: form.seats,
       opening_hour: form.opening_hour,
       closing_hour: form.closing_hour,
@@ -126,7 +157,7 @@ export function DataSettings() {
     };
     const { error } = await supabase
       .from("pub_settings")
-      .upsert(payload, { onConflict: "pub_id" });
+      .upsert(payload, { onConflict: "pub_id,month" });
     setSaving(false);
     if (error) {
       toast.error("Speichern fehlgeschlagen", { description: error.message });
@@ -135,7 +166,7 @@ export function DataSettings() {
     toast.success("Settings gespeichert");
     setAllSettings((prev) => ({
       ...prev,
-      [selectedPubId]: { ...payload, occupancy_targets: trimmed } as PubSettings,
+      [key(selectedPubId, selectedMonth)]: { ...payload, occupancy_targets: trimmed } as PubSettings,
     }));
   }
 
@@ -159,7 +190,7 @@ export function DataSettings() {
           <div className="space-y-1">
             {PUBS.map((p) => {
               const active = p.id === selectedPubId;
-              const hasData = !!allSettings[p.id];
+              const hasData = Object.keys(allSettings).some((k) => k.startsWith(`${p.id}__`));
               return (
                 <button
                   key={p.id}
@@ -182,14 +213,27 @@ export function DataSettings() {
 
       {/* Form */}
       <div className="space-y-6">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h2 className="text-lg font-semibold">{selectedPub.name}</h2>
             <p className="text-xs text-muted-foreground">
-              Stammdaten für Kalkulationen — überschreibt Mock-Werte, sobald gespeichert.
+              Stammdaten je Monat — überschreibt Mock-Werte, sobald gespeichert.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <Label className="text-xs text-muted-foreground">Monat</Label>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="h-8 w-[170px] text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {monthLabel(m)}{m === currentMonth() ? " (aktuell)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Button variant="outline" size="sm" onClick={handleReset} disabled={!dirty || saving}>
               <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
               Zurücksetzen
@@ -213,7 +257,7 @@ export function DataSettings() {
                   Kosten
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="revenue">Umsatzziel / Monat</Label>
                   <div className="relative">
@@ -257,6 +301,21 @@ export function DataSettings() {
                       className="pr-12"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">EUR</span>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="active-users">Ziel Active Users</Label>
+                  <div className="relative">
+                    <Input
+                      id="active-users"
+                      type="number"
+                      min={0}
+                      step={10}
+                      value={form.active_users_target}
+                      onChange={(e) => setForm((f) => ({ ...f, active_users_target: Math.max(0, parseInt(e.target.value) || 0) }))}
+                      className="pr-12"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">Users</span>
                   </div>
                 </div>
               </CardContent>
