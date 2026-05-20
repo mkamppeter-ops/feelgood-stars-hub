@@ -136,7 +136,7 @@ function HQPage() {
         </header>
 
         <main className="flex-1 p-6 overflow-auto">
-          <Tabs defaultValue="overview" className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="active-ops" className="gap-1.5">
