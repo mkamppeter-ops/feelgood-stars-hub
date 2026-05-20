@@ -103,6 +103,16 @@ export const SALES_GLOBAL: SalesSnapshot = (() => {
     revenue: all.reduce((s, x) => s + x.revenueTrend[i].revenue, 0),
   }));
 
+  const costs = all.reduce(
+    (acc, x) => ({
+      marketing: acc.marketing + x.costs.marketing,
+      staff:     acc.staff + x.costs.staff,
+      rent:      acc.rent + x.costs.rent,
+      other:     acc.other + x.costs.other,
+    }),
+    { marketing: 0, staff: 0, rent: 0, other: 0 },
+  );
+
   return {
     revenue,
     orders,
@@ -111,6 +121,7 @@ export const SALES_GLOBAL: SalesSnapshot = (() => {
     walkInsRevenue,
     topSellers,
     revenueTrend,
+    costs,
   };
 })();
 
