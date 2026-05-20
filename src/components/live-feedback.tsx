@@ -45,11 +45,15 @@ function Stars({ value, size = "sm" }: { value: number; size?: "sm" | "md" }) {
     </div>
   );
 }
-// Status, der Top-Priorität hat: "reviewed" sperrt einen Kunden überall.
+// Status, der Top-Priorität hat: "reviewed" sperrt einen Kunden überall;
+// "clicked" überschreibt nur "invited"/"cooldown"/"none" desselben Kunden.
+const STATUS_RANK: Record<GoogleStatus, number> = {
+  none: 0, cooldown: 1, invited: 2, clicked: 3, reviewed: 4,
+};
 function resolveGoogleStatus(item: FeedbackItem, customerLatest: Map<string, GoogleStatus>) {
-  const latest = customerLatest.get(item.customerId);
-  if (latest === "reviewed") return "reviewed" as GoogleStatus;
-  return item.googleStatus ?? "none";
+  const own = item.googleStatus ?? "none";
+  const latest = customerLatest.get(item.customerId) ?? "none";
+  return STATUS_RANK[latest] > STATUS_RANK[own] ? latest : own;
 }
 
 export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
