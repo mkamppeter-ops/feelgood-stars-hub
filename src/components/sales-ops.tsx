@@ -15,6 +15,12 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
     avgTicket: +(data.avgTicket * (0.97 + factor * 0.03)).toFixed(2),
     reservationsRevenue: Math.round(data.reservationsRevenue * factor),
     walkInsRevenue: Math.round(data.walkInsRevenue * factor),
+    costs: {
+      marketing: Math.round(data.costs.marketing * factor),
+      staff:     Math.round(data.costs.staff * factor),
+      rent:      Math.round(data.costs.rent * factor),
+      other:     Math.round(data.costs.other * factor),
+    },
   }), [data, factor]);
 
   const totalSplit = scaled.reservationsRevenue + scaled.walkInsRevenue;
@@ -22,6 +28,10 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
     { name: "Reservierungen", value: scaled.reservationsRevenue, color: "hsl(var(--primary))" },
     { name: "Walk-ins",       value: scaled.walkInsRevenue,      color: "hsl(var(--primary) / 0.35)" },
   ];
+
+  const ratio = (n: number) => (scaled.revenue > 0 ? (n / scaled.revenue) * 100 : 0);
+  const totalCosts = scaled.costs.marketing + scaled.costs.staff + scaled.costs.rent + scaled.costs.other;
+  const margin = scaled.revenue - totalCosts;
 
   const maxSellerRev = Math.max(...data.topSellers.map((s) => s.revenue));
 
