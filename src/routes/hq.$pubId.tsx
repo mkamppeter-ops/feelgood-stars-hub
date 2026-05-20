@@ -59,7 +59,7 @@ function Stars({ value }: { value: number }) {
 }
 
 function PubDetailPage() {
-  const { pub } = Route.useLoaderData();
+  const { pub } = Route.useLoaderData() as { pub: Pub };
 
   return (
     <div className="min-h-screen bg-muted/30">
