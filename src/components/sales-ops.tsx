@@ -262,3 +262,52 @@ function SplitStat({
     </div>
   );
 }
+
+function CostRatio({
+  icon: Icon, label, amount, ratio, target, tone,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string; amount: number; ratio: number; target: number;
+  tone: "primary" | "violet" | "amber" | "slate";
+}) {
+  const toneMap = {
+    primary: { chip: "bg-primary/10 text-primary", bar: "bg-primary" },
+    violet:  { chip: "bg-violet-500/10 text-violet-600", bar: "bg-violet-500" },
+    amber:   { chip: "bg-amber-500/10 text-amber-600", bar: "bg-amber-500" },
+    slate:   { chip: "bg-slate-500/10 text-slate-600", bar: "bg-slate-400" },
+  } as const;
+  const overBudget = ratio > target;
+  return (
+    <div className="rounded-lg border p-4 bg-card">
+      <div className="flex items-center justify-between gap-2">
+        <div className={`h-8 w-8 rounded-md flex items-center justify-center ${toneMap[tone].chip}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+          overBudget ? "text-red-600 bg-red-500/10" : "text-emerald-600 bg-emerald-500/10"
+        }`}>
+          Ziel ≤{target}%
+        </span>
+      </div>
+      <div className="mt-3">
+        <div className="text-xs text-muted-foreground">{label} Ratio</div>
+        <div className="text-2xl font-semibold tracking-tight tabular-nums">
+          {ratio.toFixed(1)}<span className="text-base text-muted-foreground font-normal">%</span>
+        </div>
+        <div className="text-[11px] text-muted-foreground tabular-nums">{formatEUR(amount)}</div>
+      </div>
+      <div className="mt-3 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+        <div className={`h-full rounded-full ${toneMap[tone].bar}`} style={{ width: `${Math.min(100, ratio * (50 / target))}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`h-2 w-2 rounded-full ${color}`} />
+      <span className="tabular-nums">{label}</span>
+    </span>
+  );
+}
