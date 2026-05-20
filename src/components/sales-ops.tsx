@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie, Legend, LineChart, Line,
 } from "recharts";
-import { Euro, Receipt, TrendingUp, CalendarCheck, Footprints } from "lucide-react";
+import { Euro, Receipt, TrendingUp, CalendarCheck, Footprints, Megaphone, Users, Building, Package } from "lucide-react";
 import { type SalesSnapshot, formatEUR } from "@/lib/sales-mock";
 
 export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: number }) {
