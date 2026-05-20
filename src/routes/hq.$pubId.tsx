@@ -7,7 +7,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import {
-  ArrowLeft, Phone, Gauge, TrendingUp, Target, Star, MapPin, Trophy, Users, CalendarCheck,
+  ArrowLeft, Phone, Gauge, Target, Star, MapPin, Trophy, Users, CalendarCheck,
 } from "lucide-react";
 import { getPub, computeScore, type Pub } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
