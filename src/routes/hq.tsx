@@ -15,8 +15,10 @@ import {
   Building2, MessageSquare, Settings, Bell, Search,
 } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
+import { SALES_GLOBAL } from "@/lib/sales-mock";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 import { LiveFeedback } from "@/components/live-feedback";
+import { SalesOps } from "@/components/sales-ops";
 
 export const Route = createFileRoute("/hq")({
   head: () => ({
@@ -109,6 +111,7 @@ function HQPage() {
           <Tabs defaultValue="overview" className="space-y-6">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="sales">Sales &amp; Operations</TabsTrigger>
               <TabsTrigger value="feedback" className="gap-2">
                 Live Feedback
                 <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
@@ -240,6 +243,10 @@ function HQPage() {
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="sales" className="mt-0">
+              <SalesOps data={SALES_GLOBAL} factor={factor} />
             </TabsContent>
 
             <TabsContent value="feedback" className="mt-0">
