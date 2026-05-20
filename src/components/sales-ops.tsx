@@ -35,7 +35,7 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
   const ebitda = scaled.revenue - totalCosts;
   const ebitdaMargin = scaled.revenue > 0 ? (ebitda / scaled.revenue) * 100 : 0;
 
-  const maxSellerRev = Math.max(...data.topSellers.map((s) => s.revenue));
+  
 
   return (
     <div className="space-y-6">
