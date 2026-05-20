@@ -44,7 +44,7 @@ const history = (base: number): { day: string; score: number }[] => {
 
 export const PUBS: Pub[] = [
   {
-    id: "crown-anchor", rank: 1, name: "The Crown & Anchor", city: "München",
+    id: "crown-anchor", rank: 1, name: "Pub&Go Bayreuth", city: "Bayreuth",
     manager: "Lena Hofbauer", phone: "+4915112345678", whatsapp: "4915112345678",
     score: 94, bookingRatio: 88, walkInRatio: 32, feedback: 4.9, spendPerBooking: 38, revenueTarget: 112,
     activeAppUsers: 2300, appUsersTarget: 2000,
@@ -58,7 +58,7 @@ export const PUBS: Pub[] = [
     ],
   },
   {
-    id: "red-lion", rank: 2, name: "Red Lion Tavern", city: "Berlin",
+    id: "red-lion", rank: 2, name: "Pub&Go Berlin Friedrichshain", city: "Berlin",
     manager: "Marcus Weber", phone: "+4915223456789", whatsapp: "4915223456789",
     score: 89, bookingRatio: 82, walkInRatio: 29, feedback: 4.7, spendPerBooking: 34, revenueTarget: 104,
     activeAppUsers: 2050, appUsersTarget: 1900,
@@ -72,7 +72,7 @@ export const PUBS: Pub[] = [
     ],
   },
   {
-    id: "foggy-dog", rank: 3, name: "The Foggy Dog", city: "Hamburg",
+    id: "foggy-dog", rank: 3, name: "Pub&Go Berlin Prenzlauer Berg", city: "Berlin",
     manager: "Sophie Brandt", phone: "+4915334567890", whatsapp: "4915334567890",
     score: 86, bookingRatio: 79, walkInRatio: 27, feedback: 4.6, spendPerBooking: 31, revenueTarget: 98,
     activeAppUsers: 1800, appUsersTarget: 1800,
@@ -85,7 +85,7 @@ export const PUBS: Pub[] = [
     ],
   },
   {
-    id: "old-oak", rank: 4, name: "Old Oak House", city: "Köln",
+    id: "old-oak", rank: 4, name: "Pub&Go Cottbus", city: "Cottbus",
     manager: "Tobias Richter", phone: "+4915445678901", whatsapp: "4915445678901",
     score: 82, bookingRatio: 75, walkInRatio: 25, feedback: 4.5, spendPerBooking: 29, revenueTarget: 95,
     activeAppUsers: 1550, appUsersTarget: 1700,
@@ -98,7 +98,7 @@ export const PUBS: Pub[] = [
     ],
   },
   {
-    id: "iron-barrel", rank: 5, name: "The Iron Barrel", city: "Frankfurt",
+    id: "iron-barrel", rank: 5, name: "Pub&Go Fürth", city: "Fürth",
     manager: "Aylin Demir", phone: "+4915556789012", whatsapp: "4915556789012",
     score: 78, bookingRatio: 71, walkInRatio: 23, feedback: 4.4, spendPerBooking: 27, revenueTarget: 91,
     activeAppUsers: 1380, appUsersTarget: 1600,
@@ -111,7 +111,7 @@ export const PUBS: Pub[] = [
     ],
   },
   {
-    id: "black-sheep", rank: 6, name: "Black Sheep Inn", city: "Stuttgart",
+    id: "black-sheep", rank: 6, name: "Pub&Go Greifswald", city: "Greifswald",
     manager: "Jonas Keller", phone: "+4915667890123", whatsapp: "4915667890123",
     score: 74, bookingRatio: 68, walkInRatio: 21, feedback: 4.3, spendPerBooking: 26, revenueTarget: 88,
     activeAppUsers: 1200, appUsersTarget: 1500,
@@ -124,7 +124,7 @@ export const PUBS: Pub[] = [
     ],
   },
   {
-    id: "tipsy-fox", rank: 7, name: "The Tipsy Fox", city: "Leipzig",
+    id: "tipsy-fox", rank: 7, name: "Pub&Go Jena", city: "Jena",
     manager: "Mira Sokolov", phone: "+4915778901234", whatsapp: "4915778901234",
     score: 71, bookingRatio: 64, walkInRatio: 19, feedback: 4.2, spendPerBooking: 24, revenueTarget: 84,
     activeAppUsers: 1050, appUsersTarget: 1400,
@@ -137,7 +137,7 @@ export const PUBS: Pub[] = [
     ],
   },
   {
-    id: "whistling-kettle", rank: 8, name: "Whistling Kettle", city: "Düsseldorf",
+    id: "whistling-kettle", rank: 8, name: "Pub&Go Rostock", city: "Rostock",
     manager: "Paul Lehmann", phone: "+4915889012345", whatsapp: "4915889012345",
     score: 67, bookingRatio: 61, walkInRatio: 17, feedback: 4.0, spendPerBooking: 23, revenueTarget: 79,
     activeAppUsers: 880, appUsersTarget: 1300,
