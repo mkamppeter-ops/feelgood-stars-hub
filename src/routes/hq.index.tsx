@@ -144,7 +144,9 @@ function HQPage() {
                   <CardHeader className="flex flex-row items-center justify-between space-y-0">
                     <div>
                       <CardTitle className="text-base">Leaderboard</CardTitle>
-                      <p className="text-xs text-muted-foreground mt-1">Ranking nach Pub Performance Score</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Score = Mittel aus Umsatz-Ziel, Walk-In Ratio &amp; Gäste-Feedback
+                      </p>
                     </div>
                     <Badge variant="secondary" className="font-normal">{PUBS.length} Pubs</Badge>
                   </CardHeader>
@@ -155,23 +157,27 @@ function HQPage() {
                           <TableHead className="w-16">#</TableHead>
                           <TableHead>Pub</TableHead>
                           <TableHead className="text-right">Score</TableHead>
-                          <TableHead className="text-right">Booking</TableHead>
+                          <TableHead className="text-right hidden sm:table-cell">Umsatz-Ziel</TableHead>
+                          <TableHead className="text-right hidden md:table-cell">Walk-In</TableHead>
                           <TableHead className="text-right">Feedback</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {PUBS.map((p) => (
+                        {[...PUBS]
+                          .map((p) => ({ p, score: computeScore(p) }))
+                          .sort((a, b) => b.score - a.score)
+                          .map(({ p, score }, idx) => (
                           <TableRow
                             key={p.id}
                             onClick={() => navigate({ to: "/hq/$pubId", params: { pubId: p.id } })}
-                            className={`cursor-pointer group ${p.rank === 1 ? "bg-amber-50/60 dark:bg-amber-500/5" : ""}`}
+                            className={`cursor-pointer group ${idx === 0 ? "bg-amber-50/60 dark:bg-amber-500/5" : ""}`}
                           >
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                {p.rank === 1 ? (
+                                {idx === 0 ? (
                                   <Trophy className="h-4 w-4 text-amber-500" />
                                 ) : (
-                                  <span className="text-muted-foreground font-mono text-xs">{p.rank}</span>
+                                  <span className="text-muted-foreground font-mono text-xs">{idx + 1}</span>
                                 )}
                               </div>
                             </TableCell>
@@ -181,10 +187,13 @@ function HQPage() {
                             </TableCell>
                             <TableCell className="text-right">
                               <span className={`inline-flex items-center justify-end font-semibold ${
-                                p.score >= 85 ? "text-emerald-600" : p.score >= 75 ? "text-foreground" : "text-amber-600"
-                              }`}>{p.score}</span>
+                                score >= 85 ? "text-emerald-600" : score >= 75 ? "text-foreground" : "text-amber-600"
+                              }`}>{score}</span>
                             </TableCell>
-                            <TableCell className="text-right tabular-nums">{p.bookingRatio}%</TableCell>
+                            <TableCell className="text-right tabular-nums hidden sm:table-cell">
+                              <span className={p.revenueTarget >= 100 ? "text-emerald-600 font-medium" : "text-amber-600"}>{p.revenueTarget}%</span>
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums hidden md:table-cell">{p.walkInRatio}%</TableCell>
                             <TableCell className="text-right tabular-nums">{p.feedback.toFixed(1)} ⭐</TableCell>
                           </TableRow>
                         ))}
@@ -192,6 +201,7 @@ function HQPage() {
                     </Table>
                   </CardContent>
                 </Card>
+
 
                 <Card className="shadow-sm">
                   <CardHeader>
