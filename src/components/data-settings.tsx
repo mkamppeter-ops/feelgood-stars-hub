@@ -72,15 +72,19 @@ function hourLabel(h: number) {
 
 export function DataSettings() {
   const [selectedPubId, setSelectedPubId] = useState(PUBS[0].id);
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth());
   const [allSettings, setAllSettings] = useState<Record<string, PubSettings>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Form state
-  const [form, setForm] = useState<Omit<PubSettings, "pub_id">>(DEFAULTS);
-  const [initial, setInitial] = useState<Omit<PubSettings, "pub_id">>(DEFAULTS);
+  type FormState = Omit<PubSettings, "pub_id" | "month">;
 
-  // Load all settings once
+  const [form, setForm] = useState<FormState>(DEFAULTS);
+  const [initial, setInitial] = useState<FormState>(DEFAULTS);
+
+  const monthOptions = useMemo(() => buildMonthOptions(), []);
+  const key = (pubId: string, month: string) => `${pubId}__${month}`;
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -91,9 +95,10 @@ export function DataSettings() {
       } else if (data) {
         const map: Record<string, PubSettings> = {};
         for (const row of data) {
-          map[row.pub_id] = {
-            ...row,
-            occupancy_targets: (row.occupancy_targets as Record<string, number>) ?? {},
+          const r = row as any;
+          map[key(r.pub_id, r.month)] = {
+            ...r,
+            occupancy_targets: (r.occupancy_targets as Record<string, number>) ?? {},
           } as PubSettings;
         }
         setAllSettings(map);
@@ -103,14 +108,14 @@ export function DataSettings() {
     return () => { cancelled = true; };
   }, []);
 
-  // When pub or cache changes → populate form
   useEffect(() => {
-    const existing = allSettings[selectedPubId];
-    const next = existing
+    const existing = allSettings[key(selectedPubId, selectedMonth)];
+    const next: FormState = existing
       ? {
           staff_costs_monthly: Number(existing.staff_costs_monthly),
           rent_monthly: Number(existing.rent_monthly),
-          revenue_target_monthly: Number((existing as PubSettings).revenue_target_monthly ?? 0),
+          revenue_target_monthly: Number(existing.revenue_target_monthly ?? 0),
+          active_users_target: Number(existing.active_users_target ?? 0),
           seats: existing.seats,
           opening_hour: existing.opening_hour,
           closing_hour: existing.closing_hour,
@@ -119,7 +124,7 @@ export function DataSettings() {
       : { ...DEFAULTS };
     setForm(next);
     setInitial(next);
-  }, [selectedPubId, allSettings]);
+  }, [selectedPubId, selectedMonth, allSettings]);
 
   const hours = useMemo(() => buildHours(form.opening_hour, form.closing_hour), [form.opening_hour, form.closing_hour]);
 
@@ -134,16 +139,17 @@ export function DataSettings() {
 
   async function handleSave() {
     setSaving(true);
-    // Trim occupancy_targets to current opening hours only
     const trimmed: Record<string, number> = {};
     for (const h of hours) {
       trimmed[String(h)] = form.occupancy_targets[String(h)] ?? 60;
     }
     const payload = {
       pub_id: selectedPubId,
+      month: selectedMonth,
       staff_costs_monthly: form.staff_costs_monthly,
       rent_monthly: form.rent_monthly,
       revenue_target_monthly: form.revenue_target_monthly,
+      active_users_target: form.active_users_target,
       seats: form.seats,
       opening_hour: form.opening_hour,
       closing_hour: form.closing_hour,
@@ -151,7 +157,7 @@ export function DataSettings() {
     };
     const { error } = await supabase
       .from("pub_settings")
-      .upsert(payload, { onConflict: "pub_id" });
+      .upsert(payload, { onConflict: "pub_id,month" });
     setSaving(false);
     if (error) {
       toast.error("Speichern fehlgeschlagen", { description: error.message });
@@ -160,7 +166,7 @@ export function DataSettings() {
     toast.success("Settings gespeichert");
     setAllSettings((prev) => ({
       ...prev,
-      [selectedPubId]: { ...payload, occupancy_targets: trimmed } as PubSettings,
+      [key(selectedPubId, selectedMonth)]: { ...payload, occupancy_targets: trimmed } as PubSettings,
     }));
   }
 
