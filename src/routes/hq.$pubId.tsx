@@ -10,7 +10,9 @@ import {
   ArrowLeft, Phone, Gauge, TrendingUp, Target, Star, MapPin, Trophy,
 } from "lucide-react";
 import { getPub, type Pub } from "@/lib/pubs-mock";
+import { SALES_BY_PUB } from "@/lib/sales-mock";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
+import { SalesOps } from "@/components/sales-ops";
 
 export const Route = createFileRoute("/hq/$pubId")({
   loader: ({ params }) => {
