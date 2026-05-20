@@ -114,6 +114,7 @@ function HQPage() {
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="sales">Sales &amp; Operations</TabsTrigger>
+              <TabsTrigger value="sortiment">Sortiment</TabsTrigger>
               <TabsTrigger value="feedback" className="gap-2">
                 Live Feedback
                 <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
