@@ -101,6 +101,7 @@ function HQPage() {
             { icon: Building2, label: t("nav.sortiment"), tab: "sortiment" },
             { icon: CalendarCheck, label: t("nav.events"), tab: "events" },
             { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback" },
+            { icon: Megaphone, label: t("nav.marketing", "Marketing"), tab: "marketing" },
             { icon: Settings, label: t("nav.dataSettings"), tab: "settings" },
           ].map(({ icon: Icon, label, tab }) => {
             const active = activeTab === tab;
