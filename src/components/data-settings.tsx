@@ -14,24 +14,49 @@ import { supabase } from "@/integrations/supabase/client";
 
 type PubSettings = {
   pub_id: string;
+  month: string;
   staff_costs_monthly: number;
   rent_monthly: number;
   revenue_target_monthly: number;
+  active_users_target: number;
   seats: number;
   opening_hour: number;
   closing_hour: number;
   occupancy_targets: Record<string, number>;
 };
 
-const DEFAULTS: Omit<PubSettings, "pub_id"> = {
+const DEFAULTS: Omit<PubSettings, "pub_id" | "month"> = {
   staff_costs_monthly: 18000,
   rent_monthly: 4500,
   revenue_target_monthly: 45000,
+  active_users_target: 500,
   seats: 60,
   opening_hour: 17,
   closing_hour: 24,
   occupancy_targets: { "17": 30, "18": 50, "19": 70, "20": 85, "21": 90, "22": 80, "23": 60 },
 };
+
+function currentMonth(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function buildMonthOptions(): string[] {
+  const out: string[] = [];
+  const now = new Date();
+  // 12 past, current, 3 future
+  for (let i = -12; i <= 3; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  return out;
+}
+
+function monthLabel(m: string): string {
+  const [y, mo] = m.split("-").map(Number);
+  return new Date(y, mo - 1, 1).toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+}
+
 
 function buildHours(open: number, close: number): number[] {
   const hours: number[] = [];
