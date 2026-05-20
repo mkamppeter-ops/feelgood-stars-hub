@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +16,7 @@ import {
 import { PUBS, computeScore, getAppReach } from "@/lib/pubs-mock";
 import { SALES_GLOBAL, SALES_BY_PUB, formatEUR } from "@/lib/sales-mock";
 import { ArrowUpRight } from "lucide-react";
-import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
+import { DateRangePicker, RANGE_FACTOR, useRangeLabels, type DateRange } from "@/components/date-range-picker";
 import { LiveFeedback } from "@/components/live-feedback";
 import { SalesOps } from "@/components/sales-ops";
 import { Sortiment } from "@/components/sortiment";
@@ -25,12 +26,13 @@ import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { ActiveOps } from "@/components/active-ops";
 import { RequireRole, LogoutButton } from "@/components/auth-guard";
 import { DataSettings } from "@/components/data-settings";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export const Route = createFileRoute("/hq/")({
   head: () => ({
     meta: [
       { title: "Pub Ops Navigator — HQ Dashboard" },
-      { name: "description", content: "Management-Dashboard für die Pub-Kette: KPIs, Leaderboard und Direct Contact." },
+      { name: "description", content: "Management dashboard for the pub chain: KPIs, leaderboard and direct contact." },
     ],
   }),
   component: () => (
@@ -42,6 +44,8 @@ export const Route = createFileRoute("/hq/")({
 
 
 function HQPage() {
+  const { t } = useTranslation();
+  const rangeLabels = useRangeLabels();
   const navigate = useNavigate();
   const [range, setRange] = useState<DateRange>("last7");
   const [pulseKey, setPulseKey] = useState(0);
@@ -89,14 +93,14 @@ function HQPage() {
         </div>
         <nav className="flex-1 p-3 space-y-1 text-sm">
           {[
-            { icon: LayoutDashboard, label: "Overview", tab: "overview" },
-            { icon: Building2, label: "Pubs", tab: "pubs" },
-            { icon: Activity, label: "Active Ops", tab: "active-ops" },
-            { icon: TrendingUp, label: "Sales & Ops", tab: "sales" },
-            { icon: Building2, label: "Sortiment", tab: "sortiment" },
-            { icon: CalendarCheck, label: "Events", tab: "events" },
-            { icon: MessageSquare, label: "Feedback", tab: "feedback" },
-            { icon: Settings, label: "Data Settings", tab: "settings" },
+            { icon: LayoutDashboard, label: t("nav.overview"), tab: "overview" },
+            { icon: Building2, label: t("nav.pubs"), tab: "pubs" },
+            { icon: Activity, label: t("nav.activeOps"), tab: "active-ops" },
+            { icon: TrendingUp, label: t("nav.salesOps"), tab: "sales" },
+            { icon: Building2, label: t("nav.sortiment"), tab: "sortiment" },
+            { icon: CalendarCheck, label: t("nav.events"), tab: "events" },
+            { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback" },
+            { icon: Settings, label: t("nav.dataSettings"), tab: "settings" },
           ].map(({ icon: Icon, label, tab }) => {
             const active = activeTab === tab;
             return (
@@ -114,7 +118,7 @@ function HQPage() {
           })}
         </nav>
         <div className="p-3 border-t">
-          <Link to="/admin" className="text-xs text-muted-foreground hover:text-foreground">← Admin</Link>
+          <Link to="/admin" className="text-xs text-muted-foreground hover:text-foreground">← {t("nav.admin")}</Link>
         </div>
       </aside>
 
@@ -123,14 +127,15 @@ function HQPage() {
         {/* Topbar */}
         <header className="h-16 border-b bg-card/60 backdrop-blur flex items-center justify-between px-6 gap-4">
           <div className="min-w-0">
-            <h1 className="text-lg font-semibold tracking-tight truncate">HQ Dashboard</h1>
-            <p className="text-xs text-muted-foreground truncate">Zeitraum: {RANGE_LABELS[range]}</p>
+            <h1 className="text-lg font-semibold tracking-tight truncate">{t("hq.title")}</h1>
+            <p className="text-xs text-muted-foreground truncate">{t("common.period")}: {rangeLabels[range]}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <DateRangePicker value={range} onChange={handleRangeChange} />
             <a href="/feedback" target="_blank" rel="noopener" className="hidden md:inline-flex">
-              <Button variant="outline" size="sm">Gast-View</Button>
+              <Button variant="outline" size="sm">{t("common.guestView")}</Button>
             </a>
+            <LanguageSwitcher />
             <Button variant="outline" size="icon" className="hidden sm:inline-flex"><Search className="h-4 w-4" /></Button>
             <Button variant="outline" size="icon" className="hidden sm:inline-flex"><Bell className="h-4 w-4" /></Button>
             <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground flex items-center justify-center text-sm font-semibold">HQ</div>
@@ -141,20 +146,20 @@ function HQPage() {
         <main className="flex-1 p-6 overflow-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="overview">{t("nav.overview")}</TabsTrigger>
               <TabsTrigger value="pubs" className="gap-1.5">
                 <Building2 className="h-3.5 w-3.5" />
-                Pubs
+                {t("nav.pubs")}
               </TabsTrigger>
               <TabsTrigger value="active-ops" className="gap-1.5">
                 <Activity className="h-3.5 w-3.5" />
-                Active Ops
+                {t("nav.activeOps")}
               </TabsTrigger>
-              <TabsTrigger value="sales">Sales &amp; Operations</TabsTrigger>
-              <TabsTrigger value="sortiment">Sortiment</TabsTrigger>
-              <TabsTrigger value="events">Events</TabsTrigger>
+              <TabsTrigger value="sales">{t("nav.sales")}</TabsTrigger>
+              <TabsTrigger value="sortiment">{t("nav.sortiment")}</TabsTrigger>
+              <TabsTrigger value="events">{t("nav.events")}</TabsTrigger>
               <TabsTrigger value="feedback" className="gap-2">
-                Live Feedback
+                {t("nav.liveFeedback")}
                 <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
               </TabsTrigger>
             </TabsList>
@@ -174,19 +179,19 @@ function HQPage() {
             <TabsContent value="overview" className="space-y-6 mt-0">
               {/* KPIs */}
               <section key={pulseKey} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 animate-in fade-in duration-500">
-                <KpiCard icon={Gauge} label="Ø Pub Performance Score" value={`${kpis.score}`} suffix="/100" delta="+3.2%" tone="primary" />
-                <KpiCard icon={Target} label="Ø Umsatz-Ziel" value={`${kpis.revenueGoal}`} suffix="%" delta="+2.4%" tone={kpis.revenueGoal >= 100 ? "emerald" : "amber"} />
+                <KpiCard icon={Gauge} label={t("hq.kpi.score")} value={`${kpis.score}`} suffix="/100" delta="+3.2%" tone="primary" />
+                <KpiCard icon={Target} label={t("hq.kpi.revenueGoal")} value={`${kpis.revenueGoal}`} suffix="%" delta="+2.4%" tone={kpis.revenueGoal >= 100 ? "emerald" : "amber"} />
                 <KpiCard
                   icon={Smartphone}
-                  label="Ø App-User Reach"
+                  label={t("hq.kpi.appReach")}
                   value={`${kpis.appReach}`}
                   suffix="%"
                   delta="+5.1%"
                   tone={kpis.appReach >= 100 ? "emerald" : kpis.appReach >= 80 ? "amber" : "primary"}
-                  sub={`${kpis.appUsers.toLocaleString("de-DE")} / ${kpis.appTarget.toLocaleString("de-DE")} User`}
+                  sub={`${kpis.appUsers.toLocaleString()} / ${kpis.appTarget.toLocaleString()} ${t("hq.kpi.users")}`}
                 />
-                <KpiCard icon={Users} label="Ø Walk-In Ratio" value={`${kpis.walkIn}`} suffix="%" delta="+0.8%" tone="amber" />
-                <KpiCard icon={Star} label="Ø Gäste-Feedback" value={`${kpis.feedback}`} suffix=" ⭐" delta="+0.1" tone="violet" />
+                <KpiCard icon={Users} label={t("hq.kpi.walkIn")} value={`${kpis.walkIn}`} suffix="%" delta="+0.8%" tone="amber" />
+                <KpiCard icon={Star} label={t("hq.kpi.guestFeedback")} value={`${kpis.feedback}`} suffix=" ⭐" delta="+0.1" tone="violet" />
               </section>
 
               {/* Middle row: Leaderboard + Direct Contact */}
@@ -194,23 +199,23 @@ function HQPage() {
                 <Card className="xl:col-span-2 shadow-sm">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0">
                     <div>
-                      <CardTitle className="text-base">Leaderboard</CardTitle>
+                      <CardTitle className="text-base">{t("hq.leaderboard.title")}</CardTitle>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Score = Mittel aus Umsatz-Ziel, Walk-In Ratio &amp; Gäste-Feedback
+                        {t("hq.leaderboard.subtitle")}
                       </p>
                     </div>
-                    <Badge variant="secondary" className="font-normal">{PUBS.length} Pubs</Badge>
+                    <Badge variant="secondary" className="font-normal">{t("hq.leaderboard.countPubs", { count: PUBS.length })}</Badge>
                   </CardHeader>
                   <CardContent>
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-16">#</TableHead>
-                          <TableHead>Pub</TableHead>
-                          <TableHead className="text-right">Score</TableHead>
-                          <TableHead className="text-right hidden sm:table-cell">Umsatz-Ziel</TableHead>
-                          <TableHead className="text-right hidden md:table-cell">Walk-In</TableHead>
-                          <TableHead className="text-right">Feedback</TableHead>
+                          <TableHead>{t("hq.leaderboard.colPub")}</TableHead>
+                          <TableHead className="text-right">{t("hq.leaderboard.colScore")}</TableHead>
+                          <TableHead className="text-right hidden sm:table-cell">{t("hq.leaderboard.colRevenue")}</TableHead>
+                          <TableHead className="text-right hidden md:table-cell">{t("hq.leaderboard.colWalkIn")}</TableHead>
+                          <TableHead className="text-right">{t("hq.leaderboard.colFeedback")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -256,8 +261,8 @@ function HQPage() {
 
                 <Card className="shadow-sm">
                   <CardHeader>
-                    <CardTitle className="text-base">Direct Contact</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-1">Schnell-Eingreif-Liste · Filialleiter</p>
+                    <CardTitle className="text-base">{t("hq.contact.title")}</CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">{t("hq.contact.subtitle")}</p>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {PUBS.slice(0, 6).map((p) => (
@@ -290,13 +295,13 @@ function HQPage() {
                   <div>
                     <CardTitle className="text-base flex items-center gap-2">
                       <CalendarCheck className="h-4 w-4 text-emerald-600" />
-                      Booking Ratio nach Filiale
+                      {t("hq.booking.title")}
                     </CardTitle>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Anteil reservierter Tische — Ø {kpis.booking}% über alle {PUBS.length} Pubs
+                      {t("hq.booking.subtitle", { avg: kpis.booking, count: PUBS.length })}
                     </p>
                   </div>
-                  <Badge variant="secondary" className="font-normal tabular-nums">Ø {kpis.booking}%</Badge>
+                  <Badge variant="secondary" className="font-normal tabular-nums">{t("hq.booking.avg", { avg: kpis.booking })}</Badge>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {[...PUBS].sort((a, b) => b.bookingRatio - a.bookingRatio).map((p) => (
@@ -331,13 +336,13 @@ function HQPage() {
                   <div>
                     <CardTitle className="text-base flex items-center gap-2">
                       <Smartphone className="h-4 w-4 text-primary" />
-                      App-User Reach nach Filiale
+                      {t("hq.appReach.title")}
                     </CardTitle>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Aktive App-Nutzer im Einzugsgebiet vs. Marketing-Zielwert — sichert das Umsatzziel von 100 %.
+                      {t("hq.appReach.subtitle")}
                     </p>
                   </div>
-                  <Badge variant="secondary" className="font-normal tabular-nums">Ø {kpis.appReach}%</Badge>
+                  <Badge variant="secondary" className="font-normal tabular-nums">{t("hq.booking.avg", { avg: kpis.appReach })}</Badge>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {[...PUBS]
@@ -353,7 +358,7 @@ function HQPage() {
                           <div className="min-w-0">
                             <div className="text-sm font-medium truncate">{p.name}</div>
                             <div className="text-[11px] text-muted-foreground truncate tabular-nums">
-                              {p.activeAppUsers.toLocaleString("de-DE")} / {p.appUsersTarget.toLocaleString("de-DE")}
+                              {p.activeAppUsers.toLocaleString()} / {p.appUsersTarget.toLocaleString()}
                             </div>
                           </div>
                           <span className={`text-base font-semibold tabular-nums ${
@@ -380,23 +385,23 @@ function HQPage() {
               <Card className="shadow-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <div>
-                    <CardTitle className="text-base">Sales nach Filiale</CardTitle>
+                    <CardTitle className="text-base">{t("hq.sales.title")}</CardTitle>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Umsatz, Ø Bon und EBITDA für jede Bar — Klick öffnet die Detailansicht
+                      {t("hq.sales.subtitle")}
                     </p>
                   </div>
-                  <Badge variant="secondary" className="font-normal">{PUBS.length} Pubs</Badge>
+                  <Badge variant="secondary" className="font-normal">{t("hq.leaderboard.countPubs", { count: PUBS.length })}</Badge>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Pub</TableHead>
-                        <TableHead className="text-right">Umsatz</TableHead>
-                        <TableHead className="text-right hidden md:table-cell">Ø Bon</TableHead>
-                        <TableHead className="text-right hidden lg:table-cell">Reservierungen</TableHead>
-                        <TableHead className="text-right hidden lg:table-cell">Walk-ins</TableHead>
-                        <TableHead className="text-right">EBITDA</TableHead>
+                        <TableHead>{t("hq.sales.colPub")}</TableHead>
+                        <TableHead className="text-right">{t("hq.sales.colRevenue")}</TableHead>
+                        <TableHead className="text-right hidden md:table-cell">{t("hq.sales.colAvgTicket")}</TableHead>
+                        <TableHead className="text-right hidden lg:table-cell">{t("hq.sales.colReservations")}</TableHead>
+                        <TableHead className="text-right hidden lg:table-cell">{t("hq.sales.colWalkIns")}</TableHead>
+                        <TableHead className="text-right">{t("hq.sales.colEBITDA")}</TableHead>
                         <TableHead className="w-10"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -431,7 +436,7 @@ function HQPage() {
                                 <div className={`text-sm font-semibold tabular-nums ${ebitda >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                                   {formatEUR(ebitda)}
                                 </div>
-                                <div className="text-[10px] text-muted-foreground tabular-nums">{ebitdaPct.toFixed(1)}% Marge</div>
+                                <div className="text-[10px] text-muted-foreground tabular-nums">{t("hq.sales.margin", { pct: ebitdaPct.toFixed(1) })}</div>
                               </TableCell>
                               <TableCell>
                                 <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -446,7 +451,7 @@ function HQPage() {
             </TabsContent>
 
             <TabsContent value="sortiment" className="mt-0 space-y-6">
-              <Sortiment data={SALES_GLOBAL} factor={factor} title="Sortiment & Konsum — Alle Filialen" />
+              <Sortiment data={SALES_GLOBAL} factor={factor} title={t("hq.sortiment.title")} />
               <SortimentMatrix />
             </TabsContent>
 
@@ -506,7 +511,7 @@ function KpiCard({
 }
 
 function RewardsSummary({ factor }: { factor: number }) {
-  // Mock-Auswertung im gewählten Zeitraum.
+  const { t } = useTranslation();
   const apologyCredits = Math.round(8200 * factor);
   const apologyCount = Math.round(11 * factor);
   const autoInvites = Math.round(46 * factor);
@@ -520,11 +525,11 @@ function RewardsSummary({ factor }: { factor: number }) {
             <Gift className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs text-muted-foreground">Wiedergutmachungs-Credits</div>
+            <div className="text-xs text-muted-foreground">{t("hq.rewards.apologyTitle")}</div>
             <div className="text-xl font-semibold tabular-nums">
-              {apologyCredits.toLocaleString("de-DE")} <span className="text-xs text-muted-foreground font-normal">Cr.</span>
+              {apologyCredits.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">{t("hq.rewards.creditUnit")}</span>
             </div>
-            <div className="text-[11px] text-muted-foreground">{apologyCount} Fälle im gewählten Zeitraum</div>
+            <div className="text-[11px] text-muted-foreground">{t("hq.rewards.apologyCases", { count: apologyCount })}</div>
           </div>
         </CardContent>
       </Card>
@@ -534,12 +539,12 @@ function RewardsSummary({ factor }: { factor: number }) {
             <Star className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs text-muted-foreground">Google-Einladungen (auto)</div>
+            <div className="text-xs text-muted-foreground">{t("hq.rewards.googleTitle")}</div>
             <div className="text-xl font-semibold tabular-nums">
-              {autoInvites} <span className="text-xs text-muted-foreground font-normal">verschickt</span>
+              {autoInvites} <span className="text-xs text-muted-foreground font-normal">{t("hq.rewards.sent")}</span>
             </div>
             <div className="text-[11px] text-muted-foreground">
-              {invitesClicked} Link geöffnet · {invitesConfirmed} als bewertet bestätigt · richtlinienkonform, ohne Anreize
+              {t("hq.rewards.googleDetail", { clicked: invitesClicked, confirmed: invitesConfirmed })}
             </div>
           </div>
         </CardContent>
@@ -549,13 +554,14 @@ function RewardsSummary({ factor }: { factor: number }) {
 }
 
 function PubsGrid({ onOpen }: { onOpen: (id: string) => void }) {
+  const { t } = useTranslation();
   const [sort, setSort] = useState<"score" | "name">("score");
   const sorted = useMemo(() => {
     const arr = [...PUBS];
     if (sort === "score") {
       arr.sort((a, b) => computeScore(b) - computeScore(a));
     } else {
-      arr.sort((a, b) => a.name.localeCompare(b.name, "de"));
+      arr.sort((a, b) => a.name.localeCompare(b.name));
     }
     return arr;
   }, [sort]);
@@ -564,21 +570,21 @@ function PubsGrid({ onOpen }: { onOpen: (id: string) => void }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold">Alle Pubs</h2>
-          <p className="text-xs text-muted-foreground">{PUBS.length} Filialen · Klick öffnet Detailseite</p>
+          <h2 className="text-base font-semibold">{t("hq.pubsGrid.title")}</h2>
+          <p className="text-xs text-muted-foreground">{t("hq.pubsGrid.subtitle", { count: PUBS.length })}</p>
         </div>
         <div className="inline-flex rounded-md border p-0.5 text-xs">
           <button
             onClick={() => setSort("score")}
             className={`px-3 py-1.5 rounded ${sort === "score" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
           >
-            Score ↓
+            {t("hq.pubsGrid.sortScore")}
           </button>
           <button
             onClick={() => setSort("name")}
             className={`px-3 py-1.5 rounded ${sort === "name" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
           >
-            Name A–Z
+            {t("hq.pubsGrid.sortName")}
           </button>
         </div>
       </div>
@@ -608,21 +614,21 @@ function PubsGrid({ onOpen }: { onOpen: (id: string) => void }) {
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-md bg-muted/50 px-2 py-1.5">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Umsatz</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("hq.pubsGrid.revenue")}</div>
                   <div className={`font-semibold tabular-nums ${p.revenueTarget >= 100 ? "text-emerald-600" : "text-amber-600"}`}>
                     {p.revenueTarget}%
                   </div>
                 </div>
                 <div className="rounded-md bg-muted/50 px-2 py-1.5">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Walk-In</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("hq.pubsGrid.walkIn")}</div>
                   <div className="font-semibold tabular-nums">{p.walkInRatio}%</div>
                 </div>
                 <div className="rounded-md bg-muted/50 px-2 py-1.5">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Feedback</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("hq.pubsGrid.feedback")}</div>
                   <div className="font-semibold tabular-nums">{p.feedback.toFixed(1)} ⭐</div>
                 </div>
                 <div className="rounded-md bg-muted/50 px-2 py-1.5">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Booking</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("hq.pubsGrid.booking")}</div>
                   <div className={`font-semibold tabular-nums ${p.bookingRatio >= 80 ? "text-emerald-600" : p.bookingRatio >= 70 ? "" : "text-amber-600"}`}>
                     {p.bookingRatio}%
                   </div>

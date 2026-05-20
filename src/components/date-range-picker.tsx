@@ -1,16 +1,10 @@
 import { Calendar } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
 export type DateRange = "today" | "yesterday" | "last7" | "thisMonth";
-
-export const RANGE_LABELS: Record<DateRange, string> = {
-  today: "Heute",
-  yesterday: "Gestern",
-  last7: "Letzte 7 Tage",
-  thisMonth: "Dieser Monat",
-};
 
 // Multiplier applied to KPI numbers to simulate filter effect
 export const RANGE_FACTOR: Record<DateRange, number> = {
@@ -20,9 +14,28 @@ export const RANGE_FACTOR: Record<DateRange, number> = {
   thisMonth: 1.05,
 };
 
+// Back-compat for non-React callers. Use useRangeLabels() inside components.
+export const RANGE_LABELS: Record<DateRange, string> = {
+  today: "Heute",
+  yesterday: "Gestern",
+  last7: "Letzte 7 Tage",
+  thisMonth: "Dieser Monat",
+};
+
+export function useRangeLabels(): Record<DateRange, string> {
+  const { t } = useTranslation();
+  return {
+    today: t("date.today"),
+    yesterday: t("date.yesterday"),
+    last7: t("date.last7"),
+    thisMonth: t("date.thisMonth"),
+  };
+}
+
 export function DateRangePicker({
   value, onChange,
 }: { value: DateRange; onChange: (v: DateRange) => void }) {
+  const labels = useRangeLabels();
   return (
     <div className="inline-flex items-center gap-2 rounded-lg border bg-card shadow-sm pl-3 pr-1 h-9">
       <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -31,8 +44,8 @@ export function DateRangePicker({
           <SelectValue />
         </SelectTrigger>
         <SelectContent align="end">
-          {(Object.keys(RANGE_LABELS) as DateRange[]).map((k) => (
-            <SelectItem key={k} value={k}>{RANGE_LABELS[k]}</SelectItem>
+          {(Object.keys(labels) as DateRange[]).map((k) => (
+            <SelectItem key={k} value={k}>{labels[k]}</SelectItem>
           ))}
         </SelectContent>
       </Select>

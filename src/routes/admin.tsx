@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { RequireRole, LogoutButton } from "@/components/auth-guard";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

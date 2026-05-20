@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Building2, Save, RotateCcw, Loader2, Euro, Users as UsersIcon, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,9 +53,9 @@ function buildMonthOptions(): string[] {
   return out;
 }
 
-function monthLabel(m: string): string {
+function monthLabel(m: string, locale: string): string {
   const [y, mo] = m.split("-").map(Number);
-  return new Date(y, mo - 1, 1).toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+  return new Date(y, mo - 1, 1).toLocaleDateString(locale, { month: "long", year: "numeric" });
 }
 
 
@@ -71,6 +72,8 @@ function hourLabel(h: number) {
 }
 
 export function DataSettings() {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "de-DE";
   const [selectedPubId, setSelectedPubId] = useState(PUBS[0].id);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth());
   const [allSettings, setAllSettings] = useState<Record<string, PubSettings>>({});
@@ -91,7 +94,7 @@ export function DataSettings() {
       const { data, error } = await supabase.from("pub_settings").select("*");
       if (cancelled) return;
       if (error) {
-        toast.error("Settings konnten nicht geladen werden", { description: error.message });
+        toast.error(t("settings.loadError"), { description: error.message });
       } else if (data) {
         const map: Record<string, PubSettings> = {};
         for (const row of data) {
@@ -160,10 +163,10 @@ export function DataSettings() {
       .upsert(payload, { onConflict: "pub_id,month" });
     setSaving(false);
     if (error) {
-      toast.error("Speichern fehlgeschlagen", { description: error.message });
+      toast.error(t("settings.saveError"), { description: error.message });
       return;
     }
-    toast.success("Settings gespeichert");
+    toast.success(t("settings.saved"));
     setAllSettings((prev) => ({
       ...prev,
       [key(selectedPubId, selectedMonth)]: { ...payload, occupancy_targets: trimmed } as PubSettings,
@@ -183,7 +186,7 @@ export function DataSettings() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Building2 className="h-4 w-4 text-primary" />
-            Pubs
+            {t("nav.pubs")}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-2">
@@ -217,18 +220,18 @@ export function DataSettings() {
           <div>
             <h2 className="text-lg font-semibold">{selectedPub.name}</h2>
             <p className="text-xs text-muted-foreground">
-              Stammdaten je Monat — überschreibt Mock-Werte, sobald gespeichert.
+              {t("settings.pubHeaderSub")}
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-1.5">
-              <Label className="text-xs text-muted-foreground">Monat</Label>
+              <Label className="text-xs text-muted-foreground">{t("settings.monthLabel")}</Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                 <SelectTrigger className="h-8 w-[170px] text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {monthOptions.map((m) => (
                     <SelectItem key={m} value={m}>
-                      {monthLabel(m)}{m === currentMonth() ? " (aktuell)" : ""}
+                      {monthLabel(m, locale)}{m === currentMonth() ? ` (${t("settings.monthCurrent")})` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -236,11 +239,11 @@ export function DataSettings() {
             </div>
             <Button variant="outline" size="sm" onClick={handleReset} disabled={!dirty || saving}>
               <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-              Zurücksetzen
+              {t("common.reset")}
             </Button>
             <Button size="sm" onClick={handleSave} disabled={!dirty || saving || loading}>
               {saving ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
-              Speichern
+              {t("common.save")}
             </Button>
           </div>
         </div>
@@ -254,12 +257,12 @@ export function DataSettings() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Euro className="h-4 w-4 text-amber-600" />
-                  Kosten
+                  {t("settings.costsTitle")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="revenue">Umsatzziel / Monat</Label>
+                  <Label htmlFor="revenue">{t("settings.revenueTarget")}</Label>
                   <div className="relative">
                     <Input
                       id="revenue"
@@ -274,7 +277,7 @@ export function DataSettings() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="staff">Personalkosten / Monat</Label>
+                  <Label htmlFor="staff">{t("settings.staffCosts")}</Label>
                   <div className="relative">
                     <Input
                       id="staff"
@@ -289,7 +292,7 @@ export function DataSettings() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="rent">Miete / Monat</Label>
+                  <Label htmlFor="rent">{t("settings.rent")}</Label>
                   <div className="relative">
                     <Input
                       id="rent"
@@ -304,7 +307,7 @@ export function DataSettings() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="active-users">Ziel Active Users</Label>
+                  <Label htmlFor="active-users">{t("settings.activeUsersTarget")}</Label>
                   <div className="relative">
                     <Input
                       id="active-users"
@@ -315,7 +318,7 @@ export function DataSettings() {
                       onChange={(e) => setForm((f) => ({ ...f, active_users_target: Math.max(0, parseInt(e.target.value) || 0) }))}
                       className="pr-12"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">Users</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{t("settings.usersUnit")}</span>
                   </div>
                 </div>
               </CardContent>
@@ -326,12 +329,12 @@ export function DataSettings() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <UsersIcon className="h-4 w-4 text-primary" />
-                  Kapazität & Öffnungszeit
+                  {t("settings.capacityTitle")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="seats">Sitzplätze gesamt</Label>
+                  <Label htmlFor="seats">{t("settings.seats")}</Label>
                   <Input
                     id="seats"
                     type="number"
@@ -342,7 +345,7 @@ export function DataSettings() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Öffnung</Label>
+                  <Label>{t("settings.opening")}</Label>
                   <Select
                     value={String(form.opening_hour)}
                     onValueChange={(v) => setForm((f) => ({ ...f, opening_hour: Number(v) }))}
@@ -356,7 +359,7 @@ export function DataSettings() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Schließung</Label>
+                  <Label>{t("settings.closing")}</Label>
                   <Select
                     value={String(form.closing_hour)}
                     onValueChange={(v) => setForm((f) => ({ ...f, closing_hour: Number(v) }))}
