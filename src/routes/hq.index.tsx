@@ -10,7 +10,7 @@ import {
 
 import {
   Trophy, TrendingUp, Users, Star, Gauge, Phone, LayoutDashboard,
-  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone, Gift,
+  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone, Gift, Activity,
 } from "lucide-react";
 import { PUBS, computeScore, getAppReach } from "@/lib/pubs-mock";
 import { SALES_GLOBAL, SALES_BY_PUB, formatEUR } from "@/lib/sales-mock";
