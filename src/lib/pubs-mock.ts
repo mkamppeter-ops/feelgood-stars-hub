@@ -12,6 +12,8 @@ export type Pub = {
   feedback: number;       // ⭐ 0–5
   spendPerBooking: number;
   revenueTarget: number;  // % Zielerreichung
+  activeAppUsers: number;   // 7-Tage-aktive App-Nutzer im Einzugsgebiet
+  appUsersTarget: number;   // Zielwert, der für 100% Umsatzziel nötig ist
   scoreHistory: { day: string; score: number }[];
   reviews: { author: string; date: string; stars: number; text: string }[];
 };
@@ -23,6 +25,12 @@ export function computeScore(p: Pick<Pub, "revenueTarget" | "walkInRatio" | "fee
   const walkInScore  = Math.min(100, (p.walkInRatio / 30) * 100);
   const feedbackScore = (p.feedback / 5) * 100;
   return Math.round((revenueScore + walkInScore + feedbackScore) / 3);
+}
+
+// App-Reach = wie nah ist der Pub am benötigten Nutzer-Pool für 100% Umsatzziel
+export function getAppReach(p: Pick<Pub, "activeAppUsers" | "appUsersTarget">): number {
+  if (!p.appUsersTarget) return 0;
+  return Math.round((p.activeAppUsers / p.appUsersTarget) * 100);
 }
 
 const history = (base: number): { day: string; score: number }[] => {
