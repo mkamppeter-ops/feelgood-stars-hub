@@ -157,10 +157,6 @@ function HQPage() {
                 Live Feedback
                 <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
               </TabsTrigger>
-              <TabsTrigger value="settings" className="gap-1.5">
-                <Settings className="h-3.5 w-3.5" />
-                Data Settings
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="pubs" className="mt-0">
