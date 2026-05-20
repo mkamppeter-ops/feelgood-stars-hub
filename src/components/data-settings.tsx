@@ -213,14 +213,27 @@ export function DataSettings() {
 
       {/* Form */}
       <div className="space-y-6">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h2 className="text-lg font-semibold">{selectedPub.name}</h2>
             <p className="text-xs text-muted-foreground">
-              Stammdaten für Kalkulationen — überschreibt Mock-Werte, sobald gespeichert.
+              Stammdaten je Monat — überschreibt Mock-Werte, sobald gespeichert.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <Label className="text-xs text-muted-foreground">Monat</Label>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="h-8 w-[170px] text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {monthLabel(m)}{m === currentMonth() ? " (aktuell)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Button variant="outline" size="sm" onClick={handleReset} disabled={!dirty || saving}>
               <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
               Zurücksetzen
