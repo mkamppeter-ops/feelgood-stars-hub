@@ -56,6 +56,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pub_settings: {
+        Row: {
+          closing_hour: number
+          created_at: string
+          occupancy_targets: Json
+          opening_hour: number
+          pub_id: string
+          rent_monthly: number
+          seats: number
+          staff_costs_monthly: number
+          updated_at: string
+        }
+        Insert: {
+          closing_hour?: number
+          created_at?: string
+          occupancy_targets?: Json
+          opening_hour?: number
+          pub_id: string
+          rent_monthly?: number
+          seats?: number
+          staff_costs_monthly?: number
+          updated_at?: string
+        }
+        Update: {
+          closing_hour?: number
+          created_at?: string
+          occupancy_targets?: Json
+          opening_hour?: number
+          pub_id?: string
+          rent_monthly?: number
+          seats?: number
+          staff_costs_monthly?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

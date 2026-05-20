@@ -24,6 +24,7 @@ import { EventsResults } from "@/components/events-results";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { ActiveOps } from "@/components/active-ops";
 import { RequireRole, LogoutButton } from "@/components/auth-guard";
+import { DataSettings } from "@/components/data-settings";
 
 export const Route = createFileRoute("/hq/")({
   head: () => ({
@@ -95,6 +96,7 @@ function HQPage() {
             { icon: Building2, label: "Sortiment", tab: "sortiment" },
             { icon: CalendarCheck, label: "Events", tab: "events" },
             { icon: MessageSquare, label: "Feedback", tab: "feedback" },
+            { icon: Settings, label: "Data Settings", tab: "settings" },
           ].map(({ icon: Icon, label, tab }) => {
             const active = activeTab === tab;
             return (
@@ -155,10 +157,18 @@ function HQPage() {
                 Live Feedback
                 <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
               </TabsTrigger>
+              <TabsTrigger value="settings" className="gap-1.5">
+                <Settings className="h-3.5 w-3.5" />
+                Data Settings
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="pubs" className="mt-0">
               <PubsGrid onOpen={(id) => navigate({ to: "/hq/$pubId", params: { pubId: id } })} />
+            </TabsContent>
+
+            <TabsContent value="settings" className="mt-0">
+              <DataSettings />
             </TabsContent>
 
             <TabsContent value="active-ops" className="mt-0">
