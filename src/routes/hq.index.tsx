@@ -44,6 +44,7 @@ function HQPage() {
   const navigate = useNavigate();
   const [range, setRange] = useState<DateRange>("last7");
   const [pulseKey, setPulseKey] = useState(0);
+  const [activeTab, setActiveTab] = useState("overview");
   const factor = RANGE_FACTOR[range];
 
   const kpis = useMemo(() => {
