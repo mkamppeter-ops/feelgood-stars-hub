@@ -133,9 +133,9 @@ function HQPage() {
               {/* KPIs */}
               <section key={pulseKey} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 animate-in fade-in duration-500">
                 <KpiCard icon={Gauge} label="Ø Pub Performance Score" value={`${kpis.score}`} suffix="/100" delta="+3.2%" tone="primary" />
-                <KpiCard icon={TrendingUp} label="Gesamt Booking Ratio" value={`${kpis.booking}`} suffix="%" delta="+1.8%" tone="emerald" />
-                <KpiCard icon={Users} label="Walk-In Quote" value={`${kpis.walkIn}`} suffix="%" delta="-0.6%" tone="amber" negative />
-                <KpiCard icon={Star} label="Interner Feedback-Schnitt" value={`${kpis.feedback}`} suffix=" ⭐" delta="+0.1" tone="violet" />
+                <KpiCard icon={Target} label="Ø Umsatz-Ziel" value={`${kpis.revenueGoal}`} suffix="%" delta="+2.4%" tone={kpis.revenueGoal >= 100 ? "emerald" : "amber"} />
+                <KpiCard icon={Users} label="Ø Walk-In Ratio" value={`${kpis.walkIn}`} suffix="%" delta="+0.8%" tone="amber" />
+                <KpiCard icon={Star} label="Ø Gäste-Feedback" value={`${kpis.feedback}`} suffix=" ⭐" delta="+0.1" tone="violet" />
               </section>
 
               {/* Middle row: Leaderboard + Direct Contact */}
