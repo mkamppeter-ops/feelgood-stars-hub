@@ -219,13 +219,21 @@ export const FEEDBACK: FeedbackItem[] = SAMPLES.map((s, i) => {
   return base;
 }).sort((a, b) => b.timestamp - a.timestamp);
 
-// Seed: ein paar Kunden haben Google bereits bewertet (Einmal-Sperre greift)
-// und ein paar haben bereits eine Auto-Einladung erhalten (Cooldown läuft).
+// Seed: ein paar Kunden haben Google bereits bewertet (Einmal-Sperre greift),
+// einer hat den Link angeklickt (clicked), einer hat nur eine Einladung
+// bekommen ohne Reaktion (cooldown).
 const REVIEWED_CUSTOMERS = new Set(["c-mira-l-", "c-carla-d-"]);
+const CLICKED_CUSTOMERS = new Set(["c-sophia-k-"]);
 const RECENTLY_INVITED = new Set(["c-nina-h-"]);
 for (const f of FEEDBACK) {
   if (REVIEWED_CUSTOMERS.has(f.customerId)) {
     f.googleStatus = "reviewed";
+    f.googleReviewedAt = Date.now() - 1000 * 60 * 60 * 24 * 21;
+    f.googleReviewedSource = "customer";
+  } else if (CLICKED_CUSTOMERS.has(f.customerId)) {
+    f.googleStatus = "clicked";
+    f.googleInvitedAt = Date.now() - 1000 * 60 * 60 * 24 * 5;
+    f.googleClickedAt = Date.now() - 1000 * 60 * 60 * 24 * 4;
   } else if (RECENTLY_INVITED.has(f.customerId)) {
     f.googleStatus = "cooldown";
     f.googleInvitedAt = Date.now() - 1000 * 60 * 60 * 24 * 14; // vor 14 Tagen
