@@ -12,6 +12,7 @@ export type SalesSnapshot = {
 };
 
 export type CostBreakdown = {
+  cogs: number;        // € Cost of Goods Sold
   marketing: number;   // €
   staff: number;       // €
   rent: number;        // €
