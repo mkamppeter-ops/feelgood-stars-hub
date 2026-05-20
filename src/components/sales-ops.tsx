@@ -46,6 +46,41 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
         <SalesKpi icon={TrendingUp} label="Ø Bon (Spend / Head)" value={formatEUR(scaled.avgTicket)} delta="+2.3%" tone="violet" />
       </section>
 
+      {/* EBITDA hero */}
+      <Card className="shadow-sm overflow-hidden border-0 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-primary/10">
+        <CardContent className="p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">EBITDA</span>
+                  <Badge variant="secondary" className="font-normal text-[10px]">vor Steuern · Zinsen · Abschreibungen</Badge>
+                </div>
+                <div className="mt-1 flex items-baseline gap-3">
+                  <span className={`text-4xl font-semibold tracking-tight tabular-nums ${ebitda >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                    {formatEUR(ebitda)}
+                  </span>
+                  <span className={`text-lg font-medium tabular-nums ${ebitda >= 0 ? "text-emerald-600/80" : "text-red-600/80"}`}>
+                    {ebitdaMargin.toFixed(1)}% Marge
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 tabular-nums">
+                  Umsatz {formatEUR(scaled.revenue)} − Kosten {formatEUR(totalCosts)}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 lg:min-w-[320px]">
+              <MiniStat label="Umsatz"  value={formatEUR(scaled.revenue)}  tone="primary" />
+              <MiniStat label="Kosten"  value={formatEUR(totalCosts)}      tone="slate" />
+              <MiniStat label="EBITDA"  value={formatEUR(ebitda)}          tone="emerald" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Cost structure */}
       <Card className="shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -56,36 +91,41 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
             </p>
           </div>
           <Badge variant="secondary" className="font-normal tabular-nums">
-            Marge {((margin / scaled.revenue) * 100).toFixed(1)}%
+            EBITDA {ebitdaMargin.toFixed(1)}%
           </Badge>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <CostRatio icon={Megaphone} label="Marketing"    amount={scaled.costs.marketing} ratio={ratio(scaled.costs.marketing)} target={5}  tone="violet" />
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <CostRatio icon={ShoppingBasket} label="Wareneinsatz" amount={scaled.costs.cogs}     ratio={ratio(scaled.costs.cogs)}      target={30} tone="rose" />
             <CostRatio icon={Users}     label="Personal"     amount={scaled.costs.staff}     ratio={ratio(scaled.costs.staff)}     target={30} tone="primary" />
             <CostRatio icon={Building}  label="Miete"        amount={scaled.costs.rent}      ratio={ratio(scaled.costs.rent)}      target={10} tone="amber" />
+            <CostRatio icon={Megaphone} label="Marketing"    amount={scaled.costs.marketing} ratio={ratio(scaled.costs.marketing)} target={5}  tone="violet" />
             <CostRatio icon={Package}   label="Sonstige (HQ)" amount={scaled.costs.other}    ratio={ratio(scaled.costs.other)}     target={7}  tone="slate" />
           </div>
 
           {/* Stacked cost bar */}
           <div>
             <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
-              <div className="bg-violet-500"     style={{ width: `${ratio(scaled.costs.marketing)}%` }} />
-              <div className="bg-primary"        style={{ width: `${ratio(scaled.costs.staff)}%` }} />
-              <div className="bg-amber-500"      style={{ width: `${ratio(scaled.costs.rent)}%` }} />
-              <div className="bg-slate-400"      style={{ width: `${ratio(scaled.costs.other)}%` }} />
-              <div className="bg-emerald-500/70" style={{ width: `${Math.max(0, ratio(margin))}%` }} />
+              <div className="bg-rose-500"        style={{ width: `${ratio(scaled.costs.cogs)}%` }} />
+              <div className="bg-primary"         style={{ width: `${ratio(scaled.costs.staff)}%` }} />
+              <div className="bg-amber-500"       style={{ width: `${ratio(scaled.costs.rent)}%` }} />
+              <div className="bg-violet-500"      style={{ width: `${ratio(scaled.costs.marketing)}%` }} />
+              <div className="bg-slate-400"       style={{ width: `${ratio(scaled.costs.other)}%` }} />
+              <div className="bg-emerald-500/70"  style={{ width: `${Math.max(0, ratio(ebitda))}%` }} />
             </div>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-              <LegendDot color="bg-violet-500"     label={`Marketing ${ratio(scaled.costs.marketing).toFixed(1)}%`} />
+              <LegendDot color="bg-rose-500"       label={`Wareneinsatz ${ratio(scaled.costs.cogs).toFixed(1)}%`} />
               <LegendDot color="bg-primary"        label={`Personal ${ratio(scaled.costs.staff).toFixed(1)}%`} />
               <LegendDot color="bg-amber-500"      label={`Miete ${ratio(scaled.costs.rent).toFixed(1)}%`} />
+              <LegendDot color="bg-violet-500"     label={`Marketing ${ratio(scaled.costs.marketing).toFixed(1)}%`} />
               <LegendDot color="bg-slate-400"      label={`Sonstige ${ratio(scaled.costs.other).toFixed(1)}%`} />
-              <LegendDot color="bg-emerald-500/70" label={`Marge ${((margin / scaled.revenue) * 100).toFixed(1)}%`} />
+              <LegendDot color="bg-emerald-500/70" label={`EBITDA ${ebitdaMargin.toFixed(1)}%`} />
             </div>
           </div>
         </CardContent>
       </Card>
+
+
 
 
 
