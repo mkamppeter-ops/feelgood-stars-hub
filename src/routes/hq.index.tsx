@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Tooltip } from "recharts";
+
 import {
   Trophy, TrendingUp, Users, Star, Gauge, Phone, LayoutDashboard,
   Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck,
