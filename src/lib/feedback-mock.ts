@@ -10,6 +10,13 @@ export type CategoryRating = {
   tags?: string[]; // nur wenn score <= 3, exakt aus TAGS-Liste
 };
 
+export type ApologyReward = {
+  credits: number;
+  channel: "push" | "whatsapp";
+  message: string;
+  sentAt: number;
+};
+
 export type FeedbackItem = {
   id: string;
   pubId: string;
@@ -21,7 +28,12 @@ export type FeedbackItem = {
   text: string;
   tags?: string[]; // aggregierte flat-Liste (für kompakte Ansicht)
   categories?: Record<CategoryKey, CategoryRating>; // nur "app"
+  reward?: ApologyReward;        // gesetzt, sobald Wiedergutmachung verschickt wurde
+  googleShareInvited?: boolean;  // wurde der Google-Share-CTA bereits ausgelöst
 };
+
+export const APOLOGY_CREDIT_STEPS = [100, 250, 500, 1000, 2500, 5000, 10000] as const;
+export const GOOGLE_SHARE_BONUS_STEPS = [50, 100, 250] as const;
 
 // Exakte Labels & Tags aus dem Kunden-Formular
 export const CATEGORY_META: Record<CategoryKey, { label: string; icon: string; tags: string[] }> = {
