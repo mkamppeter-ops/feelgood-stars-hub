@@ -164,9 +164,17 @@ function LoginPage() {
           </div>
         </Card>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Demo-Modus · keine echte Authentifizierung
-        </p>
+        <div className="mt-6 text-center space-y-3">
+          <a
+            href="/feedback"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
+          >
+            🍺 Als Gast Feedback geben (QR-Demo)
+          </a>
+          <p className="text-xs text-muted-foreground">
+            Demo-Modus · keine echte Authentifizierung
+          </p>
+        </div>
       </div>
     </div>
   );

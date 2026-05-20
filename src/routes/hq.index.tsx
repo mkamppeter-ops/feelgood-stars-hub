@@ -120,6 +120,9 @@ function HQPage() {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <DateRangePicker value={range} onChange={handleRangeChange} />
+            <a href="/feedback" target="_blank" rel="noopener" className="hidden md:inline-flex">
+              <Button variant="outline" size="sm">Gast-View</Button>
+            </a>
             <Button variant="outline" size="icon" className="hidden sm:inline-flex"><Search className="h-4 w-4" /></Button>
             <Button variant="outline" size="icon" className="hidden sm:inline-flex"><Bell className="h-4 w-4" /></Button>
             <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground flex items-center justify-center text-sm font-semibold">HQ</div>
