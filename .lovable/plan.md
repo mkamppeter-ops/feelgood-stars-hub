@@ -1,66 +1,91 @@
-
 ## Ziel
 
-Eine neue Kern-Kennzahl **„Aktive App-Nutzer"** einführen, die zeigt, wie viele über Marketing aktivierte Nutzer wir aktuell haben — gemessen gegen einen **Zielwert pro Pub**, der nötig ist, um den Zielumsatz zu erreichen. So wird sichtbar, ob die Marketing-Pipeline die Pubs ausreichend „füllt".
+Im Feedback-Workflow zwei neue Belohnungs- und Wiedergutmachungs-Mechaniken einbauen, die im HQ-Dashboard sichtbar/steuerbar sind:
 
-## Datenmodell (`src/lib/pubs-mock.ts`)
+1. **Positive Bewertungen (4–5 ⭐):** Auto-Credits laufen wie bisher. Zusätzlich CTA „Auch auf Google teilen" — pro Filiale hinterlegter Google-Review-Link, optional Bonus-Credits beim Teilen.
+2. **Negative Bewertungen (1–2 ⭐):** Nach Sichtung im HQ kann der Manager dem Kunden „Entschuldigungs-Credits" zuweisen (100 / 250 / 500 / 1.000 / 2.500 / 5.000 / 10.000) + persönliche Nachricht via **Push** (default) oder **WhatsApp** (Fallback).
 
-Pro Pub zwei neue Felder:
-- `activeAppUsers: number` — aktuelle Nutzer (z. B. 7-Tage-aktive App-User im Einzugsgebiet)
-- `appUsersTarget: number` — Zielwert, der für 100 % Umsatzziel nötig ist
+Beides bleibt zunächst Frontend-Mock (kein echter Push/WhatsApp-Versand), aber sauber strukturiert, damit später eine echte Server-Function angedockt werden kann.
 
-Plus abgeleitete Kennzahl (Helper):
-- `appUsersReach = activeAppUsers / appUsersTarget × 100` (in %)
+---
 
-Mock-Werte werden so gesetzt, dass die Top-Pubs ~100–115 % Reach haben, die schlechtesten ~60–75 % — passend zu ihrem Umsatzziel-Wert.
+## 1. Datenmodell
 
-## Score-Anbindung — bewusst NEIN
+**`src/lib/pubs-mock.ts`** — `Pub`-Type erweitern:
+- `googleReviewUrl: string` (z. B. `https://g.page/r/.../review`)
 
-Der Performance-Score bleibt wie vereinbart: **Umsatz-Ziel + Walk-In + Feedback**. App-Reach ist die *Erklärungs*-Kennzahl ("warum wird das Umsatzziel verfehlt?"), kein zusätzlicher Score-Faktor. Sonst wäre er doppelt gewichtet (App-Reach → Umsatzziel → Score).
+**`src/lib/feedback-mock.ts`** — `FeedbackItem` erweitern:
+- `customerId?: string` (Mock — nur App-Feedback)
+- `customerName?: string`
+- `reward?: { credits: number; channel: "push" | "whatsapp"; message: string; sentAt: number }` — gesetzt, sobald ein Apology-Reward ausgelöst wurde
+- `googleShareInvited?: boolean` (für positive Reviews — wurde der CTA bereits getriggert)
 
-## UI-Platzierung
+**Neue Konstante:** `APOLOGY_CREDIT_STEPS = [100, 250, 500, 1000, 2500, 5000, 10000]`
 
-### 1) HQ Overview (`src/routes/hq.index.tsx`)
+---
 
-**a) Neue KPI-Kachel** in der oberen KPI-Reihe — Reihe wird von 4 auf **5 Kacheln** (auf xl-Grid `xl:grid-cols-5`):
-- Icon: `Smartphone` (lucide)
-- Label: „Ø App-User Reach"
-- Wert: z. B. „92 %" (Mittel über alle Pubs)
-- Sub: kleine Zahl „14.230 / 15.400 User"
-- Ton: grün ≥ 100 %, amber 80–99 %, rot < 80 %
+## 2. UI im HQ — `src/components/live-feedback.tsx`
 
-**b) Neue Card „App-User Reach nach Filiale"** unterhalb der Booking-Ratio-Card. Selbes Grid-Layout wie Booking-Ratio (4er-Grid mit Mini-Progress-Bar), zeigt pro Pub:
-- aktuelle User vs. Ziel (z. B. „1.840 / 2.000")
-- Reach in %, farbcodiert
-- Progress-Bar
-- Klick → Pub-Detailseite
+Im `ReviewCard` zwei kontextabhängige Aktionen ergänzen, basierend auf `item.stars`:
 
-### 2) Pub-Detailseite (`src/routes/hq.$pubId.tsx`)
+### A) Positive Reviews (Stars ≥ 4, Quelle = App)
+- Neuer Button **„Google-Review anstoßen"** (Globe-Icon) neben WhatsApp/Phone.
+- Click → öffnet ein kleines Popover mit:
+  - vorformulierter Push-Text („Danke für deine Bewertung — teilst du sie auch auf Google? Dafür gibt's 250 Bonus-Credits 🎁")
+  - Auswahl Bonus-Credits (50 / 100 / 250)
+  - Button „Einladung senden" → markiert `googleShareInvited = true`, Toast „Einladung an {Kunde} gesendet".
+- Direktlink-Vorschau: `pub.googleReviewUrl` (read-only, kopierbar).
 
-Neue KPI-Kachel im Header-KPI-Block:
-- „Aktive App-Nutzer"
-- Anzeige: `1.840 / 2.000` + Reach-%-Badge
-- Kurzer Hinweistext: „Ziel sichert 100 % Umsatzziel"
+### B) Negative Reviews (Stars ≤ 2)
+- Neuer prominenter Button **„Entschuldigen + Credits"** (Gift-Icon, amber/red Akzent) — erscheint statt/zusätzlich zu „Erledigen".
+- Click → Dialog (shadcn `Dialog`) mit:
+  1. **Schritt 1 – Prüfung bestätigen:** Checkbox „Ich habe die negative Bewertung geprüft und die Ursache verstanden."
+  2. **Schritt 2 – Credit-Stufe wählen:** RadioGroup mit den 7 Stufen, default `500`. Anzeige der Filial-Empfehlung („Empfohlen ab 1⭐: 1.000 Credits").
+  3. **Schritt 3 – Kanal:** RadioGroup `Push` (default) / `WhatsApp`. Hinweis: WhatsApp nur möglich, wenn Telefonnr. hinterlegt.
+  4. **Schritt 4 – Nachricht:** Textarea mit vorbefülltem Entschuldigungstext, inkl. Platzhalter `{credits}` und `{pub}`. Editierbar.
+  5. **Senden** → setzt `reward` auf dem `FeedbackItem`, schließt Dialog, Toast „Entschuldigung + {credits} Credits an {Kunde} gesendet (via {channel})". Card markiert mit grünem Badge „Wiedergutmachung +{credits} Cr.".
 
-Optional kleiner Insight-Hinweis, wenn Reach < 80 %: „⚠ Marketing aufstocken — App-Reach unter Zielmarke; Umsatzziel gefährdet."
+Bereits vergebene Rewards werden in der Card als Info-Zeile angezeigt (statt erneutem Button).
 
-## Bewusst NICHT enthalten
+---
 
-- Keine Zeitreihe der App-User (kein Chart) — nur aktueller Stand vs. Ziel, das reicht für die Aussage.
-- Keine Score-Formel-Änderung.
-- Keine neuen Tabs/Routen.
-- Keine Marketing-Detailseite (Quellen, Kampagnen) — kann später folgen.
+## 3. HQ-Sichtbarkeit / Reporting (klein, am Ende)
+
+In `src/routes/hq.index.tsx` im bestehenden Header-KPI-Bereich **eine** weitere Mini-KPI ergänzen, damit der Aufwand sichtbar wird:
+- „Wiedergutmachungs-Credits (7 Tage)" — Summe aller `reward.credits` der letzten 7 Tage über alle Filialen.
+
+Kein neuer Tab, kein neuer Routen-Eintrag.
+
+---
+
+## 4. Backend-Vorbereitung (nur Stubs, kein echter Versand)
+
+Damit später Push/WhatsApp echt verschickt werden kann, eine **leere** Server-Function-Datei anlegen mit klarer Signatur — aber noch Mock-Return:
+
+`src/lib/rewards.functions.ts`:
+```ts
+sendApologyReward({ feedbackId, credits, channel, message }) → { ok: true, sentAt }
+inviteGoogleReview({ feedbackId, bonusCredits }) → { ok: true, link }
+```
+Beide noch ohne `requireSupabaseAuth` und ohne echte DB / WhatsApp / Push — nur damit das Frontend bereits gegen die richtige API ruft. Hinweis im Code, dass für den echten Versand später:
+- Push → eigene Server-Function + FCM/APNS
+- WhatsApp → Twilio Connector (siehe vorhandene Twilio-Doku)
+- Google-Link → `pub.googleReviewUrl` reicht, kein Backend nötig
+
+---
+
+## Offene Frage (vor Umsetzung kurz klären)
+
+**Soll der echte Versand (Push / WhatsApp via Twilio) jetzt schon mit angebunden werden, oder reicht erstmal der UI-Flow mit Mock-Backend?**
+
+Ich würde Stufe 1 (UI + Mock) jetzt bauen und den echten Versand als Folge-Schritt machen, sobald Push-Infrastruktur / Twilio-Connection bestätigt ist. So bekommst du das Konzept sofort klickbar im Dashboard.
+
+---
 
 ## Dateien
 
-- **Bearbeiten** `src/lib/pubs-mock.ts` — Felder `activeAppUsers`, `appUsersTarget` ergänzen, Helper `getAppReach()` exportieren.
-- **Bearbeiten** `src/routes/hq.index.tsx` — 5. KPI-Kachel + neue „App-User Reach"-Card.
-- **Bearbeiten** `src/routes/hq.$pubId.tsx` — KPI-Kachel im Pub-Header.
-
-## Akzeptanzkriterien
-
-1. HQ Overview zeigt Ø App-User Reach in der KPI-Reihe.
-2. Neue Card listet alle 8 Pubs mit „aktuell / Ziel" und Reach-% farbcodiert.
-3. Pub-Detailseite zeigt die Kennzahl prominent.
-4. Mock-Werte sind plausibel: höhere Reach-Werte korrelieren grob mit höheren `revenueTarget`-Werten.
-5. Layout bleibt auf 815px-Viewport sauber (KPI-Reihe wickelt korrekt auf 2 Spalten).
+- `src/lib/pubs-mock.ts` (Feld `googleReviewUrl`)
+- `src/lib/feedback-mock.ts` (Felder `customerName`, `reward`, `googleShareInvited`; Konstante `APOLOGY_CREDIT_STEPS`)
+- `src/components/live-feedback.tsx` (zwei neue Actions + Dialog + Popover)
+- `src/routes/hq.index.tsx` (eine Mini-KPI ergänzen)
+- `src/lib/rewards.functions.ts` (neu, Mock-Stubs)
