@@ -19,6 +19,7 @@ import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/c
 import { LiveFeedback } from "@/components/live-feedback";
 import { SalesOps } from "@/components/sales-ops";
 import { Sortiment } from "@/components/sortiment";
+import { SortimentMatrix } from "@/components/sortiment-matrix";
 
 export const Route = createFileRoute("/hq/")({
   head: () => ({
@@ -344,6 +345,7 @@ function HQPage() {
 
             <TabsContent value="sortiment" className="mt-0 space-y-6">
               <Sortiment data={SALES_GLOBAL} factor={factor} title="Sortiment & Konsum — Alle Filialen" />
+              <SortimentMatrix />
             </TabsContent>
 
 

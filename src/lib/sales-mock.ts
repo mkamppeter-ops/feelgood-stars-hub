@@ -144,3 +144,39 @@ export const SALES_GLOBAL: SalesSnapshot = (() => {
 
 export const formatEUR = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+
+// ----- Product × Pub matrix for the Sortiments-Heatmap -----
+export type ProductMatrix = {
+  products: { name: string; category: TopSeller["category"] }[];
+  pubIds: string[];
+  byPub: Record<string, Record<string, { qty: number; revenue: number }>>;
+  avgQty: Record<string, number>;
+  avgRevenue: Record<string, number>;
+};
+
+export function getProductMatrix(): ProductMatrix {
+  const pubIds = Object.keys(SALES_BY_PUB);
+  const productMap = new Map<string, TopSeller["category"]>();
+  const byPub: Record<string, Record<string, { qty: number; revenue: number }>> = {};
+
+  for (const pid of pubIds) {
+    byPub[pid] = {};
+    for (const s of SALES_BY_PUB[pid].topSellers) {
+      productMap.set(s.name, s.category);
+      byPub[pid][s.name] = { qty: s.qty, revenue: s.revenue };
+    }
+  }
+
+  const products = [...productMap.entries()].map(([name, category]) => ({ name, category }));
+  const avgQty: Record<string, number> = {};
+  const avgRevenue: Record<string, number> = {};
+  for (const p of products) {
+    const qs = pubIds.map((pid) => byPub[pid][p.name]?.qty ?? 0);
+    const rs = pubIds.map((pid) => byPub[pid][p.name]?.revenue ?? 0);
+    avgQty[p.name] = qs.reduce((a, b) => a + b, 0) / pubIds.length;
+    avgRevenue[p.name] = rs.reduce((a, b) => a + b, 0) / pubIds.length;
+  }
+
+  return { products, pubIds, byPub, avgQty, avgRevenue };
+}
+
