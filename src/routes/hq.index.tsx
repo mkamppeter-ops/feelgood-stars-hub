@@ -504,6 +504,8 @@ function RewardsSummary({ factor }: { factor: number }) {
       </Card>
     </div>
   );
+}
+
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
