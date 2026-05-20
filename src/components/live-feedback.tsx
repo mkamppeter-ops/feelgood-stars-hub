@@ -28,22 +28,24 @@ function Stars({ value, size = "sm" }: { value: number; size?: "sm" | "md" }) {
   );
 }
 
-export function LiveFeedback() {
+export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
   const [source, setSource] = useState<"all" | "app" | "google">("all");
   const [rating, setRating] = useState<"all" | "low" | "high">("all");
-  const [pubId, setPubId] = useState<string>("all");
+  const [pubId, setPubId] = useState<string>(lockedPubId ?? "all");
   const [done, setDone] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const effectivePubId = lockedPubId ?? pubId;
 
   const filtered = useMemo(() => {
     return FEEDBACK.filter((f) => {
       if (source !== "all" && f.source !== source) return false;
       if (rating === "low" && f.stars > 2) return false;
       if (rating === "high" && f.stars < 4) return false;
-      if (pubId !== "all" && f.pubId !== pubId) return false;
+      if (effectivePubId !== "all" && f.pubId !== effectivePubId) return false;
       return true;
     });
-  }, [source, rating, pubId]);
+  }, [source, rating, effectivePubId]);
 
   const toggleDone = (id: string) =>
     setDone((prev) => {
