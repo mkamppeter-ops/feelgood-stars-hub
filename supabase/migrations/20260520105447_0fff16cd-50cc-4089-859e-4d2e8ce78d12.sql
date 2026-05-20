@@ -1,0 +1,1 @@
+ALTER TABLE public.pub_settings ADD COLUMN IF NOT EXISTS revenue_target_monthly numeric NOT NULL DEFAULT 0;

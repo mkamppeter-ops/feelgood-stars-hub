@@ -16,6 +16,7 @@ type PubSettings = {
   pub_id: string;
   staff_costs_monthly: number;
   rent_monthly: number;
+  revenue_target_monthly: number;
   seats: number;
   opening_hour: number;
   closing_hour: number;
@@ -25,6 +26,7 @@ type PubSettings = {
 const DEFAULTS: Omit<PubSettings, "pub_id"> = {
   staff_costs_monthly: 18000,
   rent_monthly: 4500,
+  revenue_target_monthly: 45000,
   seats: 60,
   opening_hour: 17,
   closing_hour: 24,
@@ -83,6 +85,7 @@ export function DataSettings() {
       ? {
           staff_costs_monthly: Number(existing.staff_costs_monthly),
           rent_monthly: Number(existing.rent_monthly),
+          revenue_target_monthly: Number((existing as PubSettings).revenue_target_monthly ?? 0),
           seats: existing.seats,
           opening_hour: existing.opening_hour,
           closing_hour: existing.closing_hour,
@@ -115,6 +118,7 @@ export function DataSettings() {
       pub_id: selectedPubId,
       staff_costs_monthly: form.staff_costs_monthly,
       rent_monthly: form.rent_monthly,
+      revenue_target_monthly: form.revenue_target_monthly,
       seats: form.seats,
       opening_hour: form.opening_hour,
       closing_hour: form.closing_hour,
@@ -209,7 +213,22 @@ export function DataSettings() {
                   Kosten
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="revenue">Umsatzziel / Monat</Label>
+                  <div className="relative">
+                    <Input
+                      id="revenue"
+                      type="number"
+                      min={0}
+                      step={500}
+                      value={form.revenue_target_monthly}
+                      onChange={(e) => setForm((f) => ({ ...f, revenue_target_monthly: Number(e.target.value) || 0 }))}
+                      className="pr-12"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">EUR</span>
+                  </div>
+                </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="staff">Personalkosten / Monat</Label>
                   <div className="relative">

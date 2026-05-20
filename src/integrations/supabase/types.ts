@@ -64,6 +64,7 @@ export type Database = {
           opening_hour: number
           pub_id: string
           rent_monthly: number
+          revenue_target_monthly: number
           seats: number
           staff_costs_monthly: number
           updated_at: string
@@ -75,6 +76,7 @@ export type Database = {
           opening_hour?: number
           pub_id: string
           rent_monthly?: number
+          revenue_target_monthly?: number
           seats?: number
           staff_costs_monthly?: number
           updated_at?: string
@@ -86,6 +88,7 @@ export type Database = {
           opening_hour?: number
           pub_id?: string
           rent_monthly?: number
+          revenue_target_monthly?: number
           seats?: number
           staff_costs_monthly?: number
           updated_at?: string
