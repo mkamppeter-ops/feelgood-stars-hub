@@ -44,6 +44,49 @@ export function SalesOps({ data, factor = 1 }: { data: SalesSnapshot; factor?: n
         <SalesKpi icon={TrendingUp} label="Ø Bon (Spend / Head)" value={formatEUR(scaled.avgTicket)} delta="+2.3%" tone="violet" />
       </section>
 
+      {/* Cost structure */}
+      <Card className="shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle className="text-base">Kostenstruktur</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Ausgaben in % vom Umsatz · niedriger = besser
+            </p>
+          </div>
+          <Badge variant="secondary" className="font-normal tabular-nums">
+            Marge {((margin / scaled.revenue) * 100).toFixed(1)}%
+          </Badge>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <CostRatio icon={Megaphone} label="Marketing"    amount={scaled.costs.marketing} ratio={ratio(scaled.costs.marketing)} target={5}  tone="violet" />
+            <CostRatio icon={Users}     label="Personal"     amount={scaled.costs.staff}     ratio={ratio(scaled.costs.staff)}     target={30} tone="primary" />
+            <CostRatio icon={Building}  label="Miete"        amount={scaled.costs.rent}      ratio={ratio(scaled.costs.rent)}      target={10} tone="amber" />
+            <CostRatio icon={Package}   label="Sonstige (HQ)" amount={scaled.costs.other}    ratio={ratio(scaled.costs.other)}     target={7}  tone="slate" />
+          </div>
+
+          {/* Stacked cost bar */}
+          <div>
+            <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
+              <div className="bg-violet-500"     style={{ width: `${ratio(scaled.costs.marketing)}%` }} />
+              <div className="bg-primary"        style={{ width: `${ratio(scaled.costs.staff)}%` }} />
+              <div className="bg-amber-500"      style={{ width: `${ratio(scaled.costs.rent)}%` }} />
+              <div className="bg-slate-400"      style={{ width: `${ratio(scaled.costs.other)}%` }} />
+              <div className="bg-emerald-500/70" style={{ width: `${Math.max(0, ratio(margin))}%` }} />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+              <LegendDot color="bg-violet-500"     label={`Marketing ${ratio(scaled.costs.marketing).toFixed(1)}%`} />
+              <LegendDot color="bg-primary"        label={`Personal ${ratio(scaled.costs.staff).toFixed(1)}%`} />
+              <LegendDot color="bg-amber-500"      label={`Miete ${ratio(scaled.costs.rent).toFixed(1)}%`} />
+              <LegendDot color="bg-slate-400"      label={`Sonstige ${ratio(scaled.costs.other).toFixed(1)}%`} />
+              <LegendDot color="bg-emerald-500/70" label={`Marge ${((margin / scaled.revenue) * 100).toFixed(1)}%`} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+
+
       {/* Top sellers + revenue split */}
       <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <Card className="xl:col-span-2 shadow-sm">
