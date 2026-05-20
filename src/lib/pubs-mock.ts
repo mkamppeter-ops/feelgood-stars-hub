@@ -6,14 +6,24 @@ export type Pub = {
   manager: string;
   phone: string;
   whatsapp: string;
-  score: number;
-  bookingRatio: number;
-  feedback: number;
+  score: number;          // derived — see computeScore()
+  bookingRatio: number;   // % der Tische, die reserviert sind
+  walkInRatio: number;    // % der Gäste, die als Walk-in kommen
+  feedback: number;       // ⭐ 0–5
   spendPerBooking: number;
-  revenueTarget: number; // percentage achievement
+  revenueTarget: number;  // % Zielerreichung
   scoreHistory: { day: string; score: number }[];
   reviews: { author: string; date: string; stars: number; text: string }[];
 };
+
+// Score = Mittel aus Umsatz-Ziel, Walk-In Ratio und Gäste-Feedback
+// Ziel walk-in = 30%, Ziel revenueTarget = 100%, Feedback skaliert /5
+export function computeScore(p: Pick<Pub, "revenueTarget" | "walkInRatio" | "feedback">): number {
+  const revenueScore = Math.min(100, p.revenueTarget);
+  const walkInScore  = Math.min(100, (p.walkInRatio / 30) * 100);
+  const feedbackScore = (p.feedback / 5) * 100;
+  return Math.round((revenueScore + walkInScore + feedbackScore) / 3);
+}
 
 const history = (base: number): { day: string; score: number }[] => {
   const days = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
