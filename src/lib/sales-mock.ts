@@ -111,7 +111,7 @@ export const SALES_GLOBAL: SalesSnapshot = (() => {
       }
     }
   }
-  const topSellers = [...map.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 6);
+  const topSellers = [...map.values()].sort((a, b) => b.revenue - a.revenue);
 
   // sum trend day-by-day
   const revenueTrend = DAYS.map((d, i) => ({
