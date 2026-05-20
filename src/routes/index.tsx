@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import { Star, Camera, X, Mail, Gift, MapPin, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -236,9 +236,17 @@ function Index() {
     <main className="min-h-screen bg-background flex justify-center">
       <div className="w-full max-w-md flex flex-col px-6 pt-12 pb-8 min-h-screen">
         <header className="mb-10">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Wie war dein Besuch?
-          </h1>
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Wie war dein Besuch?
+            </h1>
+            <Link
+              to="/hq"
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-sm hover:bg-muted transition-colors"
+            >
+              HQ Dashboard →
+            </Link>
+          </div>
           <p className="mt-2 text-sm text-muted-foreground">
             Bewerte jede Kategorie mit 1 bis 5 Sternen.
           </p>
