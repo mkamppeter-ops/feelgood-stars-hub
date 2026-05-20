@@ -70,16 +70,13 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
 
   const effectivePubId = lockedPubId ?? pubId;
 
-  // Globale Sicht pro Kunde — wer hat schon bewertet?
+  // Globale Sicht pro Kunde — höchster Status gewinnt (siehe STATUS_RANK).
   const customerLatest = useMemo(() => {
     const map = new Map<string, GoogleStatus>();
     for (const f of FEEDBACK) {
-      const current = googleStatus[f.id] ?? f.googleStatus ?? "none";
-      const prev = map.get(f.customerId);
-      // "reviewed" gewinnt immer; sonst "invited"/"cooldown" über "none"
-      if (current === "reviewed" || prev !== "reviewed") {
-        if (current === "reviewed" || !prev || prev === "none") map.set(f.customerId, current);
-      }
+      const current = (googleStatus[f.id] ?? f.googleStatus ?? "none") as GoogleStatus;
+      const prev = map.get(f.customerId) ?? "none";
+      if (STATUS_RANK[current] > STATUS_RANK[prev]) map.set(f.customerId, current);
     }
     return map;
   }, [googleStatus]);
