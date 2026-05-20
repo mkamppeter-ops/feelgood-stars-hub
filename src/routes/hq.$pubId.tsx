@@ -153,10 +153,38 @@ function PubDetailPage() {
         {/* KPIs */}
         <section key={pulseKey} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in duration-500">
           <PubKpi icon={Gauge} label="Performance Score" value={`${kpis.score}`} suffix="/100" tone="primary" />
-          <PubKpi icon={TrendingUp} label="Booking Ratio" value={`${kpis.booking}`} suffix="%" tone="emerald" />
           <PubKpi icon={Target} label="Umsatz-Ziel" value={`${kpis.revenue}`} suffix="%" tone={kpis.revenue >= 100 ? "emerald" : "amber"} />
+          <PubKpi icon={Users} label="Walk-In Ratio" value={`${kpis.walkIn}`} suffix="%" tone="amber" />
           <PubKpi icon={Star} label="Gäste-Feedback" value={kpis.feedback.toFixed(1)} suffix=" ⭐" tone="violet" />
         </section>
+
+        {/* Booking Ratio — separate Kennzahl */}
+        <Card className="shadow-sm">
+          <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-3 sm:min-w-[200px]">
+              <div className="h-10 w-10 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                <CalendarCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Booking Ratio</div>
+                <div className="text-2xl font-semibold tabular-nums">
+                  {kpis.booking}<span className="text-base text-muted-foreground font-normal">%</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 w-full">
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${kpis.booking >= 80 ? "bg-emerald-500" : kpis.booking >= 70 ? "bg-primary" : "bg-amber-500"}`}
+                  style={{ width: `${kpis.booking}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Anteil reservierter Tische dieser Filiale · separat ausgewiesen, nicht im Performance Score enthalten.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
 
         {/* Sales & Operations — auf Filial-Ebene */}
