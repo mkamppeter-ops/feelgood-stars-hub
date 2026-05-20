@@ -19,7 +19,6 @@ import { SalesOps } from "@/components/sales-ops";
 
 import { RequireRole, LogoutButton } from "@/components/auth-guard";
 import { useSession } from "@/lib/auth-mock";
-import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/pub")({
   validateSearch: (s: Record<string, unknown>) => ({
