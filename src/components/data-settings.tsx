@@ -118,6 +118,7 @@ export function DataSettings() {
       pub_id: selectedPubId,
       staff_costs_monthly: form.staff_costs_monthly,
       rent_monthly: form.rent_monthly,
+      revenue_target_monthly: form.revenue_target_monthly,
       seats: form.seats,
       opening_hour: form.opening_hour,
       closing_hour: form.closing_hour,
