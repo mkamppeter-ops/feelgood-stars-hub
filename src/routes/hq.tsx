@@ -15,7 +15,8 @@ import {
   Building2, MessageSquare, Settings, Bell, Search,
 } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
-import { SALES_GLOBAL } from "@/lib/sales-mock";
+import { SALES_GLOBAL, SALES_BY_PUB, formatEUR } from "@/lib/sales-mock";
+import { ArrowUpRight } from "lucide-react";
 import { DateRangePicker, RANGE_FACTOR, RANGE_LABELS, type DateRange } from "@/components/date-range-picker";
 import { LiveFeedback } from "@/components/live-feedback";
 import { SalesOps } from "@/components/sales-ops";
@@ -245,8 +246,74 @@ function HQPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="sales" className="mt-0">
+            <TabsContent value="sales" className="mt-0 space-y-6">
               <SalesOps data={SALES_GLOBAL} factor={factor} />
+
+              {/* Per-Pub Sales Breakdown */}
+              <Card className="shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                  <div>
+                    <CardTitle className="text-base">Sales nach Filiale</CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Umsatz, Bons und Ø Bon für jede Bar — Klick öffnet die Detailansicht
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="font-normal">{PUBS.length} Pubs</Badge>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Pub</TableHead>
+                        <TableHead className="text-right">Umsatz</TableHead>
+                        <TableHead className="text-right hidden sm:table-cell">Bons</TableHead>
+                        <TableHead className="text-right hidden md:table-cell">Ø Bon</TableHead>
+                        <TableHead className="text-right hidden lg:table-cell">Reservierungen</TableHead>
+                        <TableHead className="text-right hidden lg:table-cell">Walk-ins</TableHead>
+                        <TableHead className="text-right">Top Seller</TableHead>
+                        <TableHead className="w-10"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {[...PUBS]
+                        .map((p) => ({ pub: p, s: SALES_BY_PUB[p.id] }))
+                        .sort((a, b) => b.s.revenue - a.s.revenue)
+                        .map(({ pub, s }) => {
+                          const revenue = Math.round(s.revenue * factor);
+                          const orders = Math.round(s.orders * factor);
+                          const avg = +(revenue / orders).toFixed(2);
+                          const resv = Math.round(s.reservationsRevenue * factor);
+                          const walk = Math.round(s.walkInsRevenue * factor);
+                          const top = s.topSellers[0];
+                          return (
+                            <TableRow
+                              key={pub.id}
+                              onClick={() => navigate({ to: "/hq/$pubId", params: { pubId: pub.id } })}
+                              className="cursor-pointer group"
+                            >
+                              <TableCell>
+                                <div className="font-medium group-hover:text-primary transition-colors">{pub.name}</div>
+                                <div className="text-xs text-muted-foreground">{pub.city}</div>
+                              </TableCell>
+                              <TableCell className="text-right font-semibold tabular-nums">{formatEUR(revenue)}</TableCell>
+                              <TableCell className="text-right tabular-nums hidden sm:table-cell">{orders.toLocaleString("de-DE")}</TableCell>
+                              <TableCell className="text-right tabular-nums hidden md:table-cell">{formatEUR(avg)}</TableCell>
+                              <TableCell className="text-right tabular-nums hidden lg:table-cell text-muted-foreground">{formatEUR(resv)}</TableCell>
+                              <TableCell className="text-right tabular-nums hidden lg:table-cell text-muted-foreground">{formatEUR(walk)}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="text-xs font-medium truncate max-w-[160px] ml-auto">{top.name}</div>
+                                <div className="text-[10px] text-muted-foreground">{top.qty}× · {formatEUR(top.revenue)}</div>
+                              </TableCell>
+                              <TableCell>
+                                <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="feedback" className="mt-0">
