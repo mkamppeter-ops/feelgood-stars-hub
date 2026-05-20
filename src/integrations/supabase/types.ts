@@ -58,8 +58,10 @@ export type Database = {
       }
       pub_settings: {
         Row: {
+          active_users_target: number
           closing_hour: number
           created_at: string
+          month: string
           occupancy_targets: Json
           opening_hour: number
           pub_id: string
@@ -70,8 +72,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active_users_target?: number
           closing_hour?: number
           created_at?: string
+          month?: string
           occupancy_targets?: Json
           opening_hour?: number
           pub_id: string
@@ -82,8 +86,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active_users_target?: number
           closing_hour?: number
           created_at?: string
+          month?: string
           occupancy_targets?: Json
           opening_hour?: number
           pub_id?: string
