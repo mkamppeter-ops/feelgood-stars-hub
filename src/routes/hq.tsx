@@ -23,29 +23,7 @@ export const Route = createFileRoute("/hq")({
   component: HQPage,
 });
 
-type Pub = {
-  rank: number;
-  name: string;
-  city: string;
-  manager: string;
-  phone: string;
-  whatsapp: string;
-  score: number;
-  bookingRatio: number;
-  feedback: number;
-  spendPerBooking: number;
-};
-
-const PUBS: Pub[] = [
-  { rank: 1, name: "The Crown & Anchor", city: "München", manager: "Lena Hofbauer", phone: "+4915112345678", whatsapp: "4915112345678", score: 94, bookingRatio: 88, feedback: 4.9, spendPerBooking: 38 },
-  { rank: 2, name: "Red Lion Tavern", city: "Berlin", manager: "Marcus Weber", phone: "+4915223456789", whatsapp: "4915223456789", score: 89, bookingRatio: 82, feedback: 4.7, spendPerBooking: 34 },
-  { rank: 3, name: "The Foggy Dog", city: "Hamburg", manager: "Sophie Brandt", phone: "+4915334567890", whatsapp: "4915334567890", score: 86, bookingRatio: 79, feedback: 4.6, spendPerBooking: 31 },
-  { rank: 4, name: "Old Oak House", city: "Köln", manager: "Tobias Richter", phone: "+4915445678901", whatsapp: "4915445678901", score: 82, bookingRatio: 75, feedback: 4.5, spendPerBooking: 29 },
-  { rank: 5, name: "The Iron Barrel", city: "Frankfurt", manager: "Aylin Demir", phone: "+4915556789012", whatsapp: "4915556789012", score: 78, bookingRatio: 71, feedback: 4.4, spendPerBooking: 27 },
-  { rank: 6, name: "Black Sheep Inn", city: "Stuttgart", manager: "Jonas Keller", phone: "+4915667890123", whatsapp: "4915667890123", score: 74, bookingRatio: 68, feedback: 4.3, spendPerBooking: 26 },
-  { rank: 7, name: "The Tipsy Fox", city: "Leipzig", manager: "Mira Sokolov", phone: "+4915778901234", whatsapp: "4915778901234", score: 71, bookingRatio: 64, feedback: 4.2, spendPerBooking: 24 },
-  { rank: 8, name: "Whistling Kettle", city: "Düsseldorf", manager: "Paul Lehmann", phone: "+4915889012345", whatsapp: "4915889012345", score: 67, bookingRatio: 61, feedback: 4.0, spendPerBooking: 23 },
-];
+import { PUBS } from "@/lib/pubs-mock";
 
 const chartData = PUBS.slice(0, 5).map((p) => ({
   name: p.name.replace(/^The /, ""),
