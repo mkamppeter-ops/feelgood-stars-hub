@@ -54,14 +54,27 @@ function snapshot(seed: number): SalesSnapshot {
     reservationsRevenue,
     walkInsRevenue,
     revenueTrend: trend(revenue / 5),
-    topSellers: [
-      { name: "Craft Beer 0,4l",  category: "Drinks",    qty: 412 + seed * 18, revenue: Math.round(revenue * 0.28) },
-      { name: "Smash Burger",     category: "Food",      qty: 188 + seed * 9,  revenue: Math.round(revenue * 0.21) },
-      { name: "Signature Cocktail", category: "Cocktails", qty: 134 + seed * 7,  revenue: Math.round(revenue * 0.17) },
-      { name: "Loaded Fries",     category: "Food",      qty: 221 + seed * 11, revenue: Math.round(revenue * 0.11) },
-      { name: "House Lager 0,5l", category: "Drinks",    qty: 305 + seed * 12, revenue: Math.round(revenue * 0.09) },
-      { name: "Aperol Spritz",    category: "Cocktails", qty: 96 + seed * 5,   revenue: Math.round(revenue * 0.07) },
-    ],
+    topSellers: (() => {
+      // Real Pub & Go menu items (prices in €, qty scaled by pub seed)
+      const items: { name: string; category: TopSeller["category"]; price: number; baseQty: number }[] = [
+        { name: "Pils 0,3l",              category: "Drinks",    price: 2.60, baseQty: 420 },
+        { name: "Helles 0,4l",            category: "Drinks",    price: 3.30, baseQty: 360 },
+        { name: "Weizen 0,5l",            category: "Drinks",    price: 3.80, baseQty: 240 },
+        { name: "Hey Daddy Cola 0,3l",    category: "Drinks",    price: 2.80, baseQty: 280 },
+        { name: "Apfelschorle 0,3l",      category: "Drinks",    price: 2.80, baseQty: 190 },
+        { name: "Weißwein 0,2l",          category: "Drinks",    price: 5.50, baseQty: 140 },
+        { name: "Daddy Spritz 0,2l",      category: "Cocktails", price: 4.90, baseQty: 175 },
+        { name: "Longdrink 0,4l",         category: "Cocktails", price: 4.50, baseQty: 130 },
+        { name: "Classic Hotdog",         category: "Food",      price: 4.90, baseQty: 210 },
+        { name: "Kino-Popcorn",           category: "Food",      price: 3.50, baseQty: 150 },
+        { name: "Nachos mit Käsedip",     category: "Food",      price: 5.50, baseQty: 120 },
+      ];
+      const scale = 0.6 + seed * 0.08;
+      return items.map((it) => {
+        const qty = Math.round(it.baseQty * scale);
+        return { name: it.name, category: it.category, qty, revenue: Math.round(qty * it.price) };
+      });
+    })(),
     costs: {
       cogs:      Math.round(revenue * cogsPct),
       marketing: Math.round(revenue * marketingPct),
@@ -98,7 +111,7 @@ export const SALES_GLOBAL: SalesSnapshot = (() => {
       }
     }
   }
-  const topSellers = [...map.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 6);
+  const topSellers = [...map.values()].sort((a, b) => b.revenue - a.revenue);
 
   // sum trend day-by-day
   const revenueTrend = DAYS.map((d, i) => ({
