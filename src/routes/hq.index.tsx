@@ -21,6 +21,7 @@ import { SalesOps } from "@/components/sales-ops";
 import { Sortiment } from "@/components/sortiment";
 import { SortimentMatrix } from "@/components/sortiment-matrix";
 import { EventsResults } from "@/components/events-results";
+import { WhatsAppIcon } from "@/components/whatsapp-icon";
 
 export const Route = createFileRoute("/hq/")({
   head: () => ({
