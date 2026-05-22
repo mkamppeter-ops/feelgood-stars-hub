@@ -138,6 +138,7 @@ function PubLocalView() {
         <Tabs value={outerTab} onValueChange={setOuterTab} className="space-y-6">
           <TabsList className="flex flex-wrap h-auto p-1">
             <TabsTrigger value="dashboard"><LayoutDashboard className="h-4 w-4 mr-1.5" />{tt("Dashboard", "Dashboard")}</TabsTrigger>
+            <TabsTrigger value="news"><Newspaper className="h-4 w-4 mr-1.5" />{tt("HQ News & Briefings", "HQ News & Briefings")}</TabsTrigger>
             <TabsTrigger value="hq"><Ticket className="h-4 w-4 mr-1.5" />{tt("HQ Connect", "HQ Connect")}</TabsTrigger>
             <TabsTrigger value="academy"><GraduationCap className="h-4 w-4 mr-1.5" />{tt("Academy", "Academy")}</TabsTrigger>
             <TabsTrigger value="marketing"><Megaphone className="h-4 w-4 mr-1.5" />{tt("Marketing Hub", "Marketing Hub")}</TabsTrigger>
