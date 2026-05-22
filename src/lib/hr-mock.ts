@@ -106,6 +106,46 @@ export const SICK_STATS: PubSickStats[] = PUBS.map((p, i) => {
   };
 });
 
+// Synthetic employee roster across all pubs
+const ROLES = ["Bartender", "Kellner:in", "Shift Lead", "Küche", "Barista"];
+const EMPLOYMENTS: EmploymentType[] = ["fulltime", "parttime", "minijob", "student"];
+
+export const EMPLOYEES: Employee[] = (() => {
+  const list: Employee[] = [];
+  let idx = 0;
+  PUBS.forEach((pub, pi) => {
+    const count = SHIFT_SUMMARY[pi].staffCount;
+    for (let i = 0; i < count; i++) {
+      const seed = pi * 13 + i * 7 + 3;
+      const emp = EMPLOYMENTS[seed % EMPLOYMENTS.length];
+      const contract =
+        emp === "fulltime" ? 40 : emp === "parttime" ? 25 : emp === "minijob" ? 10 : 16;
+      // deterministic pseudo random
+      const r = (n: number) => ((seed * 9301 + n * 49297) % 233280) / 233280;
+      const balance = +(r(1) * 30 - 8).toFixed(1); // -8h ... +22h
+      const vacationTotal = emp === "fulltime" ? 28 : emp === "parttime" ? 24 : 20;
+      const vacationUsed = Math.round(r(2) * vacationTotal * 0.7);
+      const sickDays = Math.round(r(3) * 9);
+      const avgWorked = +(contract + (balance / 4)).toFixed(1);
+      list.push({
+        id: `emp-${pi}-${i}`,
+        pubId: pub.id,
+        name: name(idx++),
+        role: ROLES[seed % ROLES.length],
+        employment: emp,
+        contractHoursWeek: contract,
+        balanceHours: balance,
+        vacationTotalDays: vacationTotal,
+        vacationUsedDays: vacationUsed,
+        sickDaysYear: sickDays,
+        avgWorkedHoursWeek: avgWorked,
+      });
+    }
+  });
+  return list;
+})();
+
+
 export function getPubName(pubId: string): string {
   return PUBS.find((p) => p.id === pubId)?.name ?? pubId;
 }
