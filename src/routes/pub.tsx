@@ -23,6 +23,7 @@ import { Academy } from "@/components/pub/academy";
 import { PubEvents } from "@/components/pub/pub-events";
 import { PromoShop } from "@/components/pub/promo-shop";
 import { TeamHR } from "@/components/pub/team-hr";
+import { StaffSchedule } from "@/components/pub/staff-schedule";
 import { HQNews } from "@/components/pub/hq-news";
 import { useT } from "@/lib/use-t";
 
