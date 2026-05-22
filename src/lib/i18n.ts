@@ -50,7 +50,7 @@ const de = {
     pub_manager: "Pub Manager",
     bar_staff: "Bar Staff",
     it_admin: "IT Admin",
-    ops_admin_de_placeholder: "",
+    
     facility_admin: "Facility Admin",
     ops_admin: "Operations",
   },
