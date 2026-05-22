@@ -39,6 +39,23 @@ export interface PubSickStats {
   ratePct: number;
 }
 
+// Crewmeister-Style Mitarbeiter-Stammdaten
+export type EmploymentType = "fulltime" | "parttime" | "minijob" | "student";
+export interface Employee {
+  id: string;
+  pubId: string;
+  name: string;
+  role: string; // Bartender, Kellner, Shift Lead, Küche
+  employment: EmploymentType;
+  contractHoursWeek: number; // Sollstunden pro Woche
+  /** Vertragsstundensaldo in h, positiv = Überstunden, negativ = Minus */
+  balanceHours: number;
+  vacationTotalDays: number;
+  vacationUsedDays: number;
+  sickDaysYear: number;
+  avgWorkedHoursWeek: number; // tatsächlich gearbeitet im Schnitt / Woche
+}
+
 // Schicht-Übersicht je Pub
 export const SHIFT_SUMMARY: ShiftSummary[] = PUBS.map((p, i) => {
   const staff = 6 + (i % 4);
