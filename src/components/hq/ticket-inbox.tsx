@@ -96,6 +96,27 @@ export function TicketInbox() {
                 <div className="text-[11px] text-muted-foreground mt-1">
                   {tk.author}{tk.pub ? ` · ${tk.pub}` : ""} · {tk.ago}
                 </div>
+                {(() => {
+                  const pub = tk.pub ? PUBS.find((p) => p.name === tk.pub) : undefined;
+                  if (!pub) return null;
+                  return (
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <span className="text-[11px] text-muted-foreground">
+                        {tt("Manager", "Manager")}: <span className="font-medium text-foreground">{pub.manager}</span>
+                      </span>
+                      <a href={`https://wa.me/${pub.whatsapp}`} target="_blank" rel="noreferrer">
+                        <Button size="icon" className="h-7 w-7 bg-emerald-500 hover:bg-emerald-600 text-white">
+                          <WhatsAppIcon className="h-3.5 w-3.5" />
+                        </Button>
+                      </a>
+                      <a href={`tel:${pub.phone}`}>
+                        <Button size="icon" className="h-7 w-7 bg-blue-500 hover:bg-blue-600 text-white">
+                          <Phone className="h-3.5 w-3.5" />
+                        </Button>
+                      </a>
+                    </div>
+                  );
+                })()}
               </div>
               <div className="shrink-0">
                 <Select value={tk.status} onValueChange={(v) => ticketsStore.setStatus(tk.id, v as TicketStatus)}>
