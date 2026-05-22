@@ -1,57 +1,65 @@
-## Ziel
+# Operatives Intranet für /pub
 
-Neuer HQ-Bereich **„Data Settings“**, in dem pro Pub geschäftsrelevante Stammdaten gepflegt werden (Personalkosten, Mietkosten, Sitzplätze, gewünschte Auslastung je Öffnungsstunde). Persistiert in Lovable Cloud, damit später echte Berechnungen darauf aufbauen können.
+Erweiterung der bestehenden `/pub`-Route um vier neue Bereiche per Tab-Navigation. **Keine Änderungen** an Login, `/hq` oder bestehenden Umsatz-Dashboards. Sichtbar für alle /pub-Nutzer (Manager + Staff). Vollständig bilingual (DE/EN) über den bestehenden `useT()`-Helper.
 
-## Datenmodell (Lovable Cloud)
+## Tab-Struktur in /pub
 
-Neue Tabelle `pub_settings`:
-- `pub_id` (text, PK) — referenziert die IDs aus `PUBS` (`crown-anchor`, `red-lion`, …)
-- `staff_costs_monthly` (numeric) — Personalkosten in EUR / Monat
-- `rent_monthly` (numeric) — Mietkosten in EUR / Monat
-- `seats` (integer) — Sitzplätze gesamt
-- `opening_hour` (integer 0–23) — Start Öffnungszeit
-- `closing_hour` (integer 1–24) — Ende Öffnungszeit
-- `occupancy_targets` (jsonb) — `{ "17": 40, "18": 60, "19": 80, ... }` — Ziel-Auslastung in % je Stunde
-- `created_at`, `updated_at`
+Die aktuelle innere `Tabs`-Komponente (Sales / Feedback) wird in eine übergeordnete Top-Level-Tableiste eingebettet:
 
-RLS:
-- Demo-Modus, kein Auth → öffentliche `SELECT`/`INSERT`/`UPDATE` Policies (konsistent zur bestehenden `feedbacks`-Tabelle).
-- Kein `DELETE`.
+```text
+[ Dashboard ] [ HQ Connect ] [ Academy ] [ Marketing Hub ] [ Team & HR ]
+```
 
-## Server Functions (`src/lib/pub-settings.functions.ts`)
+- "Dashboard" enthält den heutigen Inhalt unverändert (Gamification-Hero, Mini-KPIs, Sales/Feedback-Sub-Tabs).
+- Im Staff-Modus bleibt der bisherige Reviews-Only-View als Default, die 4 neuen Tabs sind zusätzlich erreichbar.
+- Tab-State über URL-Search-Param `tab=` (deep-linkbar), Default `dashboard`.
 
-- `getPubSettings(pubId)` — liest die Settings eines Pubs; gibt `null` zurück wenn noch nicht angelegt.
-- `getAllPubSettings()` — alle Settings auf einmal (für Übersicht / Default-Werte).
-- `upsertPubSettings({ pubId, ... })` — Upsert mit Zod-Validierung (Beträge ≥ 0, Stunden 0–24, Auslastungs-% 0–100).
+## 1. HQ Connect — Support & Tickets
 
-Verwendet `supabaseAdmin` (Demo, keine Auth) — gleicher Pattern wie woanders im Projekt.
+- Header: Titel + Button **„Neues Ticket"** (öffnet Dialog mit Kategorie-Select: IT / HR / Facility / Logistik, Titel, Beschreibung, Priorität).
+- Kanban-Board mit 3 Spalten: **Offen**, **In Bearbeitung**, **Gelöst** (Status-Badges in den bekannten Ampelfarben des Designsystems).
+- Ticket-Karten zeigen: Kategorie-Icon, Titel, Kurzbeschreibung, Ersteller, Zeitstempel, Priority-Dot.
+- Mock-Daten: ~8 Tickets über die Spalten verteilt. State lokal in React (kein Backend), Karten per simplem Status-Wechsel-Menü verschiebbar.
 
-## UI
+## 2. Pub&Go Academy — Training & Rewards
 
-### Sidebar (`src/routes/hq.index.tsx`)
-- Neuer Eintrag **„Data Settings“** ganz unten (Icon `Settings`, vor dem Admin-Link), gekoppelt an `tab: "settings"`.
+- Gamification-Banner oben: **„Dein Punktestand: 450 🪙"** + Button **„Belohnungen"** (öffnet Dialog mit Mock-Reward-Liste: Gutscheine, Merch, freie Schicht).
+- Grid (3-spaltig auf Desktop, 1 auf Mobile) mit Trainings-Karten:
+  - Cover-Thumbnail, Titel (z. B. *Kassensystem 101*, *Perfekt Zapfen*, *Hygiene-Basics*, *Cocktail-Grundlagen*, *Gästekommunikation*, *Inventur*), Dauer, Punktwert.
+  - **Progress Bar** unten (Mix aus 0% / 30% / 70% / 100%).
+  - „Weiterlernen"-Button bzw. „Abgeschlossen"-Badge.
 
-### Tab-Leiste
-- Neuer `TabsTrigger value="settings"` mit Settings-Icon.
+## 3. Marketing Hub — Werbematerial
 
-### Neue Komponente `src/components/data-settings.tsx`
-Layout:
-- Links: schlanke Pub-Auswahl-Liste (alle Pubs aus `PUBS`, aktiver Pub hervorgehoben).
-- Rechts: Formular mit drei Sektionen:
-  1. **Kosten** — Personalkosten / Monat, Miete / Monat (Number-Inputs mit EUR-Suffix).
-  2. **Kapazität** — Sitzplätze, Öffnungs- und Schließstunde (Selects 0–24).
-  3. **Ziel-Auslastung pro Stunde** — dynamisch aus Öffnung→Schließung generiert, je Stunde ein Slider 0–100 % mit aktuellem Wert daneben.
-- Footer: „Speichern“-Button (deaktiviert wenn nichts geändert), „Zurücksetzen“-Button, Toast bei Erfolg.
+- Highlight-Banner oben: **„Aktuelle Kampagne: Happy Hour"** mit Zeitraum + CTA „Material ansehen".
+- Zwei-Spalten-Layout:
+  - **Digitale Vorlagen**: Liste/Grid von Social-Media-Templates (Instagram Story, Post, Reel-Cover) mit Vorschau-Thumbnail und Download-Icon.
+  - **Print bestellen**: Bierdeckel, Tischaufsteller, Plakat A3, Flyer mit Mengenangabe und **„Nachbestellen"**-Button (Toast-Feedback).
 
-Datenfluss:
-- `useQuery` lädt `getAllPubSettings()` einmal.
-- Beim Pub-Wechsel: Formular-State aus Cache befüllen, fehlende Werte mit sinnvollen Defaults (z. B. 50 Sitzplätze, 17–24 Uhr, 60 % Ziel pro Stunde).
-- Beim Speichern: `upsertPubSettings` + Query invalidieren.
+## 4. Team & HR — Personalwesen (Mock im eigenen Design)
 
-### Auth-Wiring
-- `attachSupabaseAuth` in `src/start.ts` prüfen/ergänzen (für später, schadet jetzt nicht).
+- **Zeiterfassung-Widget** (oben, markant): großer Status-Block mit Live-Uhr; primärer Button wechselt zustandsabhängig zwischen **„Schicht starten"** → **„Pause"** / **„Ausstempeln"**. Anzeige aktueller Schichtdauer, letzte Stempelung.
+- **Dienstplan (Roster)**: Wochentabelle Mo–So × Schichten (Früh/Spät/Nacht), Zellen zeigen Initialen-Avatare der eingeteilten Mitarbeiter. Eigene Schichten visuell hervorgehoben.
+- **Abwesenheiten**: Zwei Action-Buttons **„Krankmeldung"** und **„Urlaub beantragen"** (öffnen je einen kleinen Dialog mit Datums-/Zeitraumauswahl + Toast-Bestätigung). Darunter Status-Liste eigener Anträge (Beantragt / Genehmigt / Abgelehnt).
+- Hinweis: rein UI-Mock, später gegen Crewmeister/Personio-API austauschbar — Struktur ist bereits darauf vorbereitet (Datenobjekte zentral in einer Mock-Datei).
 
-## Nicht im Scope
-- Keine Anbindung an bestehende KPI-Karten (Score etc. bleiben Mock-basiert) — das passiert in einem späteren Schritt, wenn echte Verbrauchsdaten verdrahtet werden.
-- Keine globalen Defaults / Override-Mechanik (User-Wahl: nur pro Pub).
-- Keine Historie/Versionierung der Settings.
+## Technische Details
+
+**Neue Dateien:**
+- `src/components/pub/hq-connect.tsx`
+- `src/components/pub/academy.tsx`
+- `src/components/pub/marketing-hub.tsx`
+- `src/components/pub/team-hr.tsx`
+- `src/lib/pub-intranet-mock.ts` (zentrale Mock-Daten: Tickets, Trainings, Materialien, Roster, Anträge)
+
+**Geänderte Dateien:**
+- `src/routes/pub.tsx`: äußere Tabs ergänzen (`tab` Search-Param), bestehende Sections unter dem `dashboard`-Tab gruppieren. Staff-Branch behält den Reviews-Default, bekommt aber dieselbe Tab-Leiste.
+
+**Design-Konsistenz:**
+- Nutzt ausschließlich vorhandene shadcn-Komponenten (`Tabs`, `Card`, `Badge`, `Button`, `Dialog`, `Progress`, `Select`, `Avatar`, `Table`).
+- Farben über semantische Tokens (`bg-card`, `text-muted-foreground`, `bg-primary/10` etc.) — keine Hardcoded-Hex-Werte.
+- Icons aus `lucide-react` (Ticket, GraduationCap, Megaphone, Users, Clock, etc.).
+- Alle Strings über `useT()` bilingual.
+
+**Out of scope (explizit nicht angefasst):**
+- Login, `/hq`, `/admin`, `/feedback`, Marketing-Sektion im Admin, bestehende Sales/Feedback-Komponenten, Supabase-Schema, Auth-Logik.
