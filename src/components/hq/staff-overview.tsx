@@ -31,6 +31,11 @@ export function StaffOverview() {
   const [staffMap, setStaffMap] = useState<Record<string, StaffMember>>({});
   const [loading, setLoading] = useState(true);
   const [drilldown, setDrilldown] = useState<{ pubId: string; date: string } | null>(null);
+  const [editStaffId, setEditStaffId] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const openNew = () => { setEditStaffId(null); setSheetOpen(true); };
+  const openEdit = (id: string) => { setEditStaffId(id); setSheetOpen(true); };
 
   const days = useMemo(() => weekDays(weekStart), [weekStart]);
   const week = isoWeekNumber(weekStart);
