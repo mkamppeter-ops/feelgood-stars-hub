@@ -90,21 +90,16 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-            <UserCog className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight">{tt("HR-Übersicht", "HR Overview")}</h2>
-            <p className="text-xs text-muted-foreground">
-              {tt("Dienstpläne, Urlaub & Krankmeldungen über alle Filialen", "Schedules, vacation & sick leave across all branches")}
-            </p>
-          </div>
+      <div className="flex items-center gap-3">
+        <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+          <UserCog className="h-5 w-5" />
         </div>
-        <Badge variant="outline" className="shrink-0 font-normal">
-          {tt("Zeitraum", "Period")}: {periodLabel}
-        </Badge>
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">{tt("HR-Übersicht", "HR Overview")}</h2>
+          <p className="text-xs text-muted-foreground">
+            {tt("Dienstpläne, Urlaub & Krankmeldungen über alle Filialen", "Schedules, vacation & sick leave across all branches")}
+          </p>
+        </div>
       </div>
 
       {/* KPI strip */}
