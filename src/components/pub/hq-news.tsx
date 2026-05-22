@@ -10,7 +10,8 @@ import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { de as deLocale, enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { HQ_NEWS, NEWS_CATEGORY_META, type HQNewsItem, type NewsCategory } from "@/lib/hq-news-mock";
+import { NEWS_CATEGORY_META, type HQNewsItem, type NewsCategory } from "@/lib/hq-news-mock";
+import { useHQNews } from "@/lib/hq-news-store";
 
 const ACK_KEY = "pubgo.hq-news.ack.v1";
 const READ_KEY = "pubgo.hq-news.read.v1";
