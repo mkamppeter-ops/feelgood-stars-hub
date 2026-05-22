@@ -133,7 +133,17 @@ function PubLocalView() {
       </header>
 
 
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <Tabs value={outerTab} onValueChange={setOuterTab} className="space-y-6">
+          <TabsList className="flex flex-wrap h-auto p-1">
+            <TabsTrigger value="dashboard"><LayoutDashboard className="h-4 w-4 mr-1.5" />{tt("Dashboard", "Dashboard")}</TabsTrigger>
+            <TabsTrigger value="hq"><Ticket className="h-4 w-4 mr-1.5" />{tt("HQ Connect", "HQ Connect")}</TabsTrigger>
+            <TabsTrigger value="academy"><GraduationCap className="h-4 w-4 mr-1.5" />{tt("Academy", "Academy")}</TabsTrigger>
+            <TabsTrigger value="marketing"><Megaphone className="h-4 w-4 mr-1.5" />{tt("Marketing Hub", "Marketing Hub")}</TabsTrigger>
+            <TabsTrigger value="hr"><Users className="h-4 w-4 mr-1.5" />{tt("Team & HR", "Team & HR")}</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-8 mt-0">
         {isStaff ? (
           <>
             <section>
