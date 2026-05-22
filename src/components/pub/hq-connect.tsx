@@ -58,17 +58,19 @@ export function HQConnect() {
   }[p]);
 
   const move = (id: string, to: Status) => {
-    setTickets((prev) => prev.map((tk) => (tk.id === id ? { ...tk, status: to } : tk)));
+    ticketsStore.setStatus(id, to);
     toast.success(tt("Status aktualisiert", "Status updated"));
   };
 
   const submit = () => {
     if (!form.title.trim()) return;
-    const id = `T-${String(Math.floor(Math.random() * 900) + 100)}`;
-    setTickets((prev) => [
-      { id, title: form.title, desc: form.desc, category: form.category, priority: form.priority, status: "open", author: tt("Du", "You"), ago: tt("gerade", "just now") },
-      ...prev,
-    ]);
+    ticketsStore.add({
+      title: form.title,
+      desc: form.desc,
+      category: form.category,
+      priority: form.priority,
+      author: tt("Du", "You"),
+    });
     setForm({ title: "", desc: "", category: "it", priority: "med" });
     setOpen(false);
     toast.success(tt("Ticket erstellt", "Ticket created"));
