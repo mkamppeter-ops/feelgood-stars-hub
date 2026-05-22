@@ -371,6 +371,12 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <PubScheduleDialog
+        pubId={scheduleFor}
+        open={scheduleFor !== null}
+        onOpenChange={(o) => !o && setScheduleFor(null)}
+      />
     </div>
   );
 }
