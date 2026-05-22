@@ -200,6 +200,7 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
         <ShiftEditorDialog
           editor={editor}
           pubId={pubId}
+          hours={hours}
           onClose={() => setEditor(null)}
           onSaved={() => { setEditor(null); void reload(); }}
         />
