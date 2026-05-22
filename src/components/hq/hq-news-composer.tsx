@@ -39,19 +39,34 @@ export function HQNewsComposer() {
   const [requiresAck, setRequiresAck] = useState(false);
   const [author, setAuthor] = useState("Marlene Roth");
   const [authorRole, setAuthorRole] = useState("Head of Operations");
+  const [audience, setAudience] = useState<"all" | "select">("all");
+  const [selectedPubs, setSelectedPubs] = useState<Set<string>>(new Set());
 
   const sorted = useMemo(
     () => [...news].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt)),
     [news]
   );
 
-  const canSend = titleDe.trim() && excerptDe.trim();
+  const canSend =
+    !!titleDe.trim() &&
+    !!excerptDe.trim() &&
+    (audience === "all" || selectedPubs.size > 0);
 
   const reset = () => {
     setCategory("ops");
     setTitleDe(""); setTitleEn("");
     setExcerptDe(""); setExcerptEn("");
     setPinned(false); setRequiresAck(false);
+    setAudience("all");
+    setSelectedPubs(new Set());
+  };
+
+  const togglePub = (id: string) => {
+    setSelectedPubs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   };
 
   const send = () => {
@@ -66,6 +81,7 @@ export function HQNewsComposer() {
       requiresAck,
       author: author.trim() || "HQ",
       authorRole: authorRole.trim() || "HQ",
+      pubIds: audience === "all" ? undefined : Array.from(selectedPubs),
     });
     reset();
     setOpen(false);
