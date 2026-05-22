@@ -13,9 +13,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Trash2, Users } from "lucide-react";
 import {
-  STAFF_ROLES, SHIFT_SLOTS, SHIFT_SLOT_META,
-  addDaysISO, isoWeekNumber, listShifts, listStaff, setStaffActive, shiftHours, toISODate, upsertShift, upsertStaff, weekDays, weekStartISO,
-  type ShiftAssignment, type ShiftSlot, type StaffMember,
+  STAFF_ROLES, SHIFT_SLOTS, SHIFT_SLOT_META, DEFAULT_PUB_HOURS,
+  addDaysISO, formatPubHours, getPubHours, isoWeekNumber, isWithinPubHours,
+  listShifts, listStaff, setStaffActive, shiftHours, slotDefaults,
+  toISODate, upsertShift, upsertStaff, weekDays, weekStartISO,
+  type PubHours, type ShiftAssignment, type ShiftSlot, type StaffMember,
 } from "@/lib/staff-schedule";
 
 const WEEKDAY_LABEL = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
