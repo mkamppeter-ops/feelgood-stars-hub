@@ -52,6 +52,8 @@ export interface NewHQNewsInput {
   authorRole: string;
   pinned?: boolean;
   requiresAck?: boolean;
+  /** Empfänger-Filialen. Leer/undefined = an alle. */
+  pubIds?: string[];
 }
 
 export const hqNewsStore = {

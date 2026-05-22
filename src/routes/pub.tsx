@@ -341,7 +341,7 @@ function PubLocalView() {
         )}
           </TabsContent>
 
-          <TabsContent value="news" className="mt-0"><HQNews /></TabsContent>
+          <TabsContent value="news" className="mt-0"><HQNews pubId={effectivePubId} /></TabsContent>
           <TabsContent value="hq" className="mt-0"><HQConnect /></TabsContent>
           <TabsContent value="academy" className="mt-0"><Academy /></TabsContent>
           <TabsContent value="marketing" className="mt-0"><MarketingHub /></TabsContent>

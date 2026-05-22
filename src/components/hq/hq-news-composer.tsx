@@ -10,7 +10,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Megaphone, Pin, AlertTriangle, CheckCircle2, Send, Trash2, Plus,
+  Megaphone, Pin, AlertTriangle, CheckCircle2, Send, Trash2, Plus, Building2, Users2,
 } from "lucide-react";
 import { useT } from "@/lib/use-t";
 import { useTranslation } from "react-i18next";
@@ -18,6 +18,7 @@ import { formatDistanceToNow } from "date-fns";
 import { de as deLocale, enUS } from "date-fns/locale";
 import { NEWS_CATEGORY_META, type NewsCategory } from "@/lib/hq-news-mock";
 import { useHQNews, hqNewsStore } from "@/lib/hq-news-store";
+import { PUBS } from "@/lib/pubs-mock";
 
 
 const CATEGORIES: NewsCategory[] = ["urgent", "marketing", "product", "event", "policy", "ops"];
@@ -38,19 +39,34 @@ export function HQNewsComposer() {
   const [requiresAck, setRequiresAck] = useState(false);
   const [author, setAuthor] = useState("Marlene Roth");
   const [authorRole, setAuthorRole] = useState("Head of Operations");
+  const [audience, setAudience] = useState<"all" | "select">("all");
+  const [selectedPubs, setSelectedPubs] = useState<Set<string>>(new Set());
 
   const sorted = useMemo(
     () => [...news].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt)),
     [news]
   );
 
-  const canSend = titleDe.trim() && excerptDe.trim();
+  const canSend =
+    !!titleDe.trim() &&
+    !!excerptDe.trim() &&
+    (audience === "all" || selectedPubs.size > 0);
 
   const reset = () => {
     setCategory("ops");
     setTitleDe(""); setTitleEn("");
     setExcerptDe(""); setExcerptEn("");
     setPinned(false); setRequiresAck(false);
+    setAudience("all");
+    setSelectedPubs(new Set());
+  };
+
+  const togglePub = (id: string) => {
+    setSelectedPubs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   };
 
   const send = () => {
@@ -65,6 +81,7 @@ export function HQNewsComposer() {
       requiresAck,
       author: author.trim() || "HQ",
       authorRole: authorRole.trim() || "HQ",
+      pubIds: audience === "all" ? undefined : Array.from(selectedPubs),
     });
     reset();
     setOpen(false);
@@ -152,6 +169,89 @@ export function HQNewsComposer() {
               </div>
             </div>
 
+            {/* Audience selector */}
+            <div className="space-y-2 pt-1">
+              <Label className="text-xs">{tt("Empfänger", "Recipients")}</Label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAudience("all")}
+                  className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-md border text-xs transition-colors ${
+                    audience === "all"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card hover:bg-muted border-border"
+                  }`}
+                >
+                  <Users2 className="h-3.5 w-3.5" />
+                  {tt("Alle Filialen", "All branches")}
+                  <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{PUBS.length}</Badge>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAudience("select")}
+                  className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-md border text-xs transition-colors ${
+                    audience === "select"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card hover:bg-muted border-border"
+                  }`}
+                >
+                  <Building2 className="h-3.5 w-3.5" />
+                  {tt("Auswählen…", "Select…")}
+                  {audience === "select" && selectedPubs.size > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{selectedPubs.size}</Badge>
+                  )}
+                </button>
+              </div>
+
+              {audience === "select" && (
+                <div className="rounded-md border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[11px] text-muted-foreground">
+                      {selectedPubs.size === 0
+                        ? tt("Mindestens eine Filiale auswählen.", "Pick at least one branch.")
+                        : tt(`${selectedPubs.size} Filiale(n) ausgewählt`, `${selectedPubs.size} branch(es) selected`)}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="text-[11px] text-primary hover:underline"
+                        onClick={() => setSelectedPubs(new Set(PUBS.map((p) => p.id)))}
+                      >
+                        {tt("Alle", "All")}
+                      </button>
+                      <span className="text-muted-foreground/50">·</span>
+                      <button
+                        type="button"
+                        className="text-[11px] text-muted-foreground hover:underline"
+                        onClick={() => setSelectedPubs(new Set())}
+                      >
+                        {tt("Keine", "None")}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 max-h-56 overflow-auto">
+                    {PUBS.map((p) => {
+                      const checked = selectedPubs.has(p.id);
+                      return (
+                        <label
+                          key={p.id}
+                          className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer text-sm transition-colors ${
+                            checked ? "bg-primary/10" : "hover:bg-muted"
+                          }`}
+                        >
+                          <Checkbox checked={checked} onCheckedChange={() => togglePub(p.id)} />
+                          <div className="min-w-0">
+                            <div className="truncate font-medium">{p.name}</div>
+                            <div className="text-[10px] text-muted-foreground truncate">{p.city}</div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-wrap items-center gap-5 pt-1">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <Checkbox checked={pinned} onCheckedChange={(v) => setPinned(!!v)} />
@@ -171,7 +271,9 @@ export function HQNewsComposer() {
               </Button>
               <Button onClick={send} disabled={!canSend} className="gap-2">
                 <Send className="h-4 w-4" />
-                {tt("An alle Filialen senden", "Send to all branches")}
+                {audience === "all"
+                  ? tt("An alle Filialen senden", "Send to all branches")
+                  : tt(`An ${selectedPubs.size} Filiale(n) senden`, `Send to ${selectedPubs.size} branch(es)`)}
               </Button>
             </div>
           </CardContent>
@@ -206,6 +308,20 @@ export function HQNewsComposer() {
                     {n.requiresAck && (
                       <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-200 gap-1">
                         <AlertTriangle className="h-3 w-3" /> {tt("Bestätigung nötig", "Ack required")}
+                      </Badge>
+                    )}
+                    {!n.pubIds || n.pubIds.length === 0 ? (
+                      <Badge variant="outline" className="gap-1 text-muted-foreground">
+                        <Users2 className="h-3 w-3" /> {tt("Alle Filialen", "All branches")}
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="gap-1 bg-blue-500/10 text-blue-700 border-blue-200"
+                        title={n.pubIds.map((id) => PUBS.find((p) => p.id === id)?.name ?? id).join(", ")}
+                      >
+                        <Building2 className="h-3 w-3" />
+                        {tt(`${n.pubIds.length} Filiale(n)`, `${n.pubIds.length} branch(es)`)}
                       </Badge>
                     )}
                   </div>
