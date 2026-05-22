@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
@@ -21,18 +20,17 @@ import {
 
 const STATUS_FLOW: PromoOrderStatus[] = ["new", "accepted", "shipped", "delivered", "cancelled"];
 
-export function PromoFulfillment() {
+/** Liste der eingehenden Werbemittel-Bestellungen — wird in der Facility-Inbox eingeblendet. */
+export function PromoOrdersList() {
   const tt = useT();
   const [orders, setOrders] = useState<PromoOrder[]>([]);
-  const [products, setProducts] = useState<PromoProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<"open" | "all" | PromoOrderStatus>("open");
 
   const reload = async () => {
     try {
-      const [o, p] = await Promise.all([listOrders(), listProducts({ includeInactive: true })]);
+      const o = await listOrders();
       setOrders(o);
-      setProducts(p);
     } catch (e) {
       console.error(e);
       toast.error(tt("Laden fehlgeschlagen", "Failed to load"));
@@ -55,57 +53,48 @@ export function PromoFulfillment() {
   }), [orders]);
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <Card className="shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 gap-2 flex-wrap">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2">
-            <Package className="h-5 w-5" /> {tt("Werbemittel-Shop", "Promo materials shop")}
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            {tt("Eingehende Bestellungen aus den Bars · Bearbeitung & Versand durch Facility", "Incoming orders from bars · fulfilled by Facility")}
+          <CardTitle className="text-base flex items-center gap-2">
+            <Package className="h-4 w-4 text-primary" />
+            {tt("Werbemittel-Bestellungen", "Promo material orders")}
+          </CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            {tt("Eingehende Bestellungen aus den Bars — Bearbeitung & Versand durch Facility.", "Incoming orders from bars — fulfilled by Facility.")}
           </p>
         </div>
-        <div className="flex items-center gap-3 text-sm">
-          <Badge variant="secondary">{counts.open} {tt("offen", "open")}</Badge>
+        <div className="flex items-center gap-2 text-xs">
+          <Badge variant="outline">{counts.open} {tt("offen", "open")}</Badge>
           <Badge variant="outline">{counts.total} {tt("gesamt", "total")}</Badge>
         </div>
-      </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex flex-wrap gap-1.5">
+          {(["open", "all", ...STATUS_FLOW] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                statusFilter === s ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted border-border text-muted-foreground"
+              }`}
+            >
+              {s === "open" ? tt("Offen", "Open") : s === "all" ? tt("Alle", "All") : tt(PROMO_STATUS_LABEL[s].de, PROMO_STATUS_LABEL[s].en)}
+            </button>
+          ))}
+        </div>
 
-      <Tabs defaultValue="orders">
-        <TabsList>
-          <TabsTrigger value="orders">{tt("Bestellungen", "Orders")}</TabsTrigger>
-          <TabsTrigger value="catalog">{tt("Sortiment pflegen", "Manage catalog")}</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="orders" className="mt-4 space-y-3">
-          <div className="flex flex-wrap gap-1.5">
-            {(["open", "all", ...STATUS_FLOW] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                  statusFilter === s ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted border-border text-muted-foreground"
-                }`}
-              >
-                {s === "open" ? tt("Offen", "Open") : s === "all" ? tt("Alle", "All") : tt(PROMO_STATUS_LABEL[s].de, PROMO_STATUS_LABEL[s].en)}
-              </button>
-            ))}
+        {loading ? (
+          <div className="flex items-center justify-center py-6 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" />{tt("Lädt…", "Loading…")}</div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-6 border border-dashed rounded-md">
+            {tt("Keine Bestellungen in dieser Ansicht.", "No orders in this view.")}
           </div>
-
-          {loading ? (
-            <div className="flex items-center justify-center py-10 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" />{tt("Lädt…", "Loading…")}</div>
-          ) : filteredOrders.length === 0 ? (
-            <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">{tt("Keine Bestellungen in dieser Ansicht.", "No orders in this view.")}</CardContent></Card>
-          ) : (
-            filteredOrders.map((o) => <OrderRow key={o.id} order={o} onChanged={reload} />)
-          )}
-        </TabsContent>
-
-        <TabsContent value="catalog" className="mt-4">
-          <CatalogEditor products={products} onChanged={reload} />
-        </TabsContent>
-      </Tabs>
-    </div>
+        ) : (
+          filteredOrders.map((o) => <OrderRow key={o.id} order={o} onChanged={reload} />)
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -138,69 +127,85 @@ function OrderRow({ order, onChanged }: { order: PromoOrder; onChanged: () => vo
   };
 
   return (
-    <Card className="shadow-sm">
-      <CardContent className="p-4 space-y-3">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <div className="text-sm font-semibold">
-              {pub?.name ?? order.pub_id} · #{order.id.slice(0, 6).toUpperCase()}
-            </div>
-            <div className="text-[11px] text-muted-foreground">
-              {new Date(order.created_at).toLocaleString()} · {tt("von", "by")} {order.ordered_by_name}
-              {order.requested_for && <> · {tt("benötigt bis", "needed by")} {order.requested_for}</>}
-            </div>
+    <div className="rounded-lg border bg-card p-3 space-y-3">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <div className="text-sm font-semibold">
+            {pub?.name ?? order.pub_id} · #{order.id.slice(0, 6).toUpperCase()}
           </div>
-          <Badge variant="outline" className={status.tone}>{tt(status.de, status.en)}</Badge>
-        </div>
-
-        <div className="space-y-1 text-sm border-t pt-2">
-          {(order.items ?? []).map((it) => (
-            <div key={it.id} className="flex justify-between">
-              <span className="text-muted-foreground">{it.product_name_snapshot}</span>
-              <span className="tabular-nums font-medium">{it.quantity} {it.unit_snapshot}</span>
-            </div>
-          ))}
-        </div>
-
-        {order.note && (
-          <div className="text-[11px] bg-muted/40 rounded-md p-2 border">
-            <span className="font-medium">{tt("Notiz Bar:", "Bar note:")}</span> {order.note}
+          <div className="text-[11px] text-muted-foreground">
+            {new Date(order.created_at).toLocaleString()} · {tt("von", "by")} {order.ordered_by_name}
+            {order.requested_for && <> · {tt("benötigt bis", "needed by")} {order.requested_for}</>}
           </div>
+        </div>
+        <Badge variant="outline" className={status.tone}>{tt(status.de, status.en)}</Badge>
+      </div>
+
+      <div className="space-y-1 text-sm border-t pt-2">
+        {(order.items ?? []).map((it) => (
+          <div key={it.id} className="flex justify-between">
+            <span className="text-muted-foreground">{it.product_name_snapshot}</span>
+            <span className="tabular-nums font-medium">{it.quantity} {it.unit_snapshot}</span>
+          </div>
+        ))}
+      </div>
+
+      {order.note && (
+        <div className="text-[11px] bg-muted/40 rounded-md p-2 border">
+          <span className="font-medium">{tt("Notiz Bar:", "Bar note:")}</span> {order.note}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <Input placeholder={tt("Versanddienst (DHL, …)", "Carrier (DHL, …)")} value={carrier} onChange={(e) => setCarrier(e.target.value)} className="h-8" />
+        <Input placeholder={tt("Sendungsnummer", "Tracking number")} value={tracking} onChange={(e) => setTracking(e.target.value)} className="h-8" />
+        <Input placeholder={tt("Interne Notiz", "Internal note")} value={internalNote} onChange={(e) => setInternalNote(e.target.value)} className="h-8" />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {order.status === "new" && (
+          <Button size="sm" disabled={busy} onClick={() => setStatus("accepted")}><CheckCircle2 className="h-3.5 w-3.5 mr-1" />{tt("Annehmen", "Accept")}</Button>
         )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <Input placeholder={tt("Versanddienst (DHL, …)", "Carrier (DHL, …)")} value={carrier} onChange={(e) => setCarrier(e.target.value)} className="h-8" />
-          <Input placeholder={tt("Sendungsnummer", "Tracking number")} value={tracking} onChange={(e) => setTracking(e.target.value)} className="h-8" />
-          <Input placeholder={tt("Interne Notiz", "Internal note")} value={internalNote} onChange={(e) => setInternalNote(e.target.value)} className="h-8" />
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {order.status === "new" && (
-            <Button size="sm" disabled={busy} onClick={() => setStatus("accepted")}><CheckCircle2 className="h-3.5 w-3.5 mr-1" />{tt("Annehmen", "Accept")}</Button>
-          )}
-          {(order.status === "new" || order.status === "accepted") && (
-            <Button size="sm" disabled={busy} onClick={() => setStatus("shipped")}><Truck className="h-3.5 w-3.5 mr-1" />{tt("Versendet", "Shipped")}</Button>
-          )}
-          {order.status === "shipped" && (
-            <Button size="sm" disabled={busy} onClick={() => setStatus("delivered")}><Package className="h-3.5 w-3.5 mr-1" />{tt("Als geliefert markieren", "Mark delivered")}</Button>
-          )}
-          {order.status !== "delivered" && order.status !== "cancelled" && (
-            <Button size="sm" variant="ghost" disabled={busy} onClick={() => setStatus("cancelled")} className="text-destructive"><XCircle className="h-3.5 w-3.5 mr-1" />{tt("Stornieren", "Cancel")}</Button>
-          )}
-          {order.handled_by && (
-            <span className="text-[11px] text-muted-foreground self-center ml-auto">
-              {tt("bearbeitet von", "handled by")} {order.handled_by}
-            </span>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        {(order.status === "new" || order.status === "accepted") && (
+          <Button size="sm" disabled={busy} onClick={() => setStatus("shipped")}><Truck className="h-3.5 w-3.5 mr-1" />{tt("Versendet", "Shipped")}</Button>
+        )}
+        {order.status === "shipped" && (
+          <Button size="sm" disabled={busy} onClick={() => setStatus("delivered")}><Package className="h-3.5 w-3.5 mr-1" />{tt("Als geliefert markieren", "Mark delivered")}</Button>
+        )}
+        {order.status !== "delivered" && order.status !== "cancelled" && (
+          <Button size="sm" variant="ghost" disabled={busy} onClick={() => setStatus("cancelled")} className="text-destructive"><XCircle className="h-3.5 w-3.5 mr-1" />{tt("Stornieren", "Cancel")}</Button>
+        )}
+        {order.handled_by && (
+          <span className="text-[11px] text-muted-foreground self-center ml-auto">
+            {tt("bearbeitet von", "handled by")} {order.handled_by}
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 
-function CatalogEditor({ products, onChanged }: { products: PromoProduct[]; onChanged: () => void }) {
+/** Sortiment des Werbemittel-Shops verwalten — wird unter Data Settings angezeigt. */
+export function PromoCatalogManager() {
   const tt = useT();
+  const [products, setProducts] = useState<PromoProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Partial<PromoProduct> | null>(null);
+
+  const reload = async () => {
+    try {
+      setLoading(true);
+      const p = await listProducts({ includeInactive: true });
+      setProducts(p);
+    } catch (e) {
+      console.error(e);
+      toast.error(tt("Laden fehlgeschlagen", "Failed to load"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { reload(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-3">
@@ -213,35 +218,47 @@ function CatalogEditor({ products, onChanged }: { products: PromoProduct[]; onCh
             <ProductDialog
               initial={editing}
               onClose={() => setEditing(null)}
-              onSaved={() => { setEditing(null); onChanged(); }}
+              onSaved={() => { setEditing(null); reload(); }}
             />
           )}
         </Dialog>
       </div>
 
       <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-base">{tt("Alle Produkte", "All products")} ({products.length})</CardTitle></CardHeader>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Package className="h-4 w-4 text-primary" />
+            {tt("Werbemittel-Sortiment", "Promo catalog")} ({products.length})
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            {tt("Was die Bars im Werbemittel-Shop bestellen können.", "What bars can order in the promo shop.")}
+          </p>
+        </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y">
-            {products.map((p) => (
-              <div key={p.id} className={`flex items-center gap-3 px-4 py-3 ${!p.active ? "opacity-50" : ""}`}>
-                <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center text-xl">{p.icon ?? "📦"}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium">{p.name_de}</div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {tt(PROMO_CATEGORY_LABEL[p.category].de, PROMO_CATEGORY_LABEL[p.category].en)} · Min {p.min_order_qty} {p.unit}
+          {loading ? (
+            <div className="flex items-center justify-center py-6 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" />{tt("Lädt…", "Loading…")}</div>
+          ) : (
+            <div className="divide-y">
+              {products.map((p) => (
+                <div key={p.id} className={`flex items-center gap-3 px-4 py-3 ${!p.active ? "opacity-50" : ""}`}>
+                  <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center text-xl">{p.icon ?? "📦"}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium">{p.name_de}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {tt(PROMO_CATEGORY_LABEL[p.category].de, PROMO_CATEGORY_LABEL[p.category].en)} · Min {p.min_order_qty} {p.unit}
+                    </div>
                   </div>
+                  {!p.active && <Badge variant="outline">{tt("inaktiv", "inactive")}</Badge>}
+                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(p)}><Pencil className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={async () => {
+                    if (!confirm(tt("Wirklich löschen?", "Really delete?"))) return;
+                    try { await deleteProduct(p.id); toast.success(tt("Gelöscht", "Deleted")); reload(); }
+                    catch (e) { console.error(e); toast.error(tt("Löschen fehlgeschlagen", "Delete failed")); }
+                  }}><Trash2 className="h-4 w-4" /></Button>
                 </div>
-                {!p.active && <Badge variant="outline">{tt("inaktiv", "inactive")}</Badge>}
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(p)}><Pencil className="h-4 w-4" /></Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={async () => {
-                  if (!confirm(tt("Wirklich löschen?", "Really delete?"))) return;
-                  try { await deleteProduct(p.id); toast.success(tt("Gelöscht", "Deleted")); onChanged(); }
-                  catch (e) { console.error(e); toast.error(tt("Löschen fehlgeschlagen", "Delete failed")); }
-                }}><Trash2 className="h-4 w-4" /></Button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
