@@ -28,18 +28,43 @@ const SICK_PERIOD_FACTOR: Record<DateRange, number> = {
   thisMonth: 1,
 };
 
-export function HROverview() {
+export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
   const tt = useT();
+  const rangeLabels = useRangeLabels();
   const [tab, setTab] = useState("shifts");
   const [vacations, setVacations] = useState(VACATION_REQUESTS);
+  const periodLabel = rangeLabels[range];
+  const shiftFactor = SHIFT_PERIOD_FACTOR[range];
+  const sickFactor = SICK_PERIOD_FACTOR[range];
+
+  const scaledShifts = useMemo(
+    () =>
+      SHIFT_SUMMARY.map((s) => ({
+        ...s,
+        weekTargetHours: Math.round(s.weekTargetHours * shiftFactor),
+        weekActualHours: Math.round(s.weekActualHours * shiftFactor),
+        openShifts: Math.max(0, Math.round(s.openShifts * shiftFactor)),
+      })),
+    [shiftFactor]
+  );
+  const scaledSick = useMemo(
+    () =>
+      SICK_STATS.map((s) => {
+        const sickDaysMonth = Math.max(0, Math.round(s.sickDaysMonth * sickFactor));
+        const monthWorkdays = s.staffCount * 22 * sickFactor;
+        const ratePct = monthWorkdays > 0 ? +((sickDaysMonth / monthWorkdays) * 100).toFixed(1) : 0;
+        return { ...s, sickDaysMonth, ratePct };
+      }),
+    [sickFactor]
+  );
 
   const totals = useMemo(() => {
-    const target = SHIFT_SUMMARY.reduce((s, x) => s + x.weekTargetHours, 0);
-    const actual = SHIFT_SUMMARY.reduce((s, x) => s + x.weekActualHours, 0);
-    const openShifts = SHIFT_SUMMARY.reduce((s, x) => s + x.openShifts, 0);
-    const staff = SHIFT_SUMMARY.reduce((s, x) => s + x.staffCount, 0);
-    return { target, actual, openShifts, staff, util: Math.round((actual / target) * 100) };
-  }, []);
+    const target = scaledShifts.reduce((s, x) => s + x.weekTargetHours, 0);
+    const actual = scaledShifts.reduce((s, x) => s + x.weekActualHours, 0);
+    const openShifts = scaledShifts.reduce((s, x) => s + x.openShifts, 0);
+    const staff = scaledShifts.reduce((s, x) => s + x.staffCount, 0);
+    return { target, actual, openShifts, staff, util: target > 0 ? Math.round((actual / target) * 100) : 0 };
+  }, [scaledShifts]);
 
   const pending = vacations.filter((v) => v.status === "pending");
   const decided = vacations.filter((v) => v.status !== "pending");
