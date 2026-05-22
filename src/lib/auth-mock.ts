@@ -115,9 +115,9 @@ export const TAB_OWNER: Record<string, Role> = {
   feedback:    "ops_admin",
   "hq-news":   "ops_admin",
   inbox:       "ops_admin", // multi-owner (per category); default lead = ops
-  shop:        "facility_admin",
   settings:    "it_admin",
 };
+
 
 /** Roles that may publish HQ News & Briefings (Composer write). */
 export const NEWS_PUBLISHER_ROLES: Role[] = ["hq_admin", "ops_admin"];

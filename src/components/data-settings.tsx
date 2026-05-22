@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Building2, Save, RotateCcw, Loader2, Euro, Users as UsersIcon, Clock } from "lucide-react";
+import { Building2, Save, RotateCcw, Loader2, Euro, Users as UsersIcon, Clock, Package, Plug } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +10,12 @@ import { Slider } from "@/components/ui/slider";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PUBS } from "@/lib/pubs-mock";
 import { supabase } from "@/integrations/supabase/client";
+import { PromoCatalogManager } from "@/components/hq/promo-fulfillment";
+import { PIHRIntegration } from "@/components/hq/pi-hr-integration";
+
 
 type PubSettings = {
   pub_id: string;
@@ -180,7 +184,24 @@ export function DataSettings() {
   const selectedPub = PUBS.find((p) => p.id === selectedPubId)!;
 
   return (
+    <Tabs defaultValue="pubs" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="pubs" className="gap-1.5"><Building2 className="h-3.5 w-3.5" />{t("nav.pubs")}</TabsTrigger>
+        <TabsTrigger value="promo-catalog" className="gap-1.5"><Package className="h-3.5 w-3.5" />Werbemittel-Sortiment</TabsTrigger>
+        <TabsTrigger value="pi-hr" className="gap-1.5"><Plug className="h-3.5 w-3.5" />HR-System (P&amp;I)</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="promo-catalog" className="mt-2">
+        <PromoCatalogManager />
+      </TabsContent>
+
+      <TabsContent value="pi-hr" className="mt-2">
+        <PIHRIntegration />
+      </TabsContent>
+
+      <TabsContent value="pubs" className="mt-2">
     <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+
       {/* Pub list */}
       <Card className="shadow-sm h-fit">
         <CardHeader className="pb-3">
@@ -418,6 +439,10 @@ export function DataSettings() {
           </>
         )}
       </div>
-    </div>
+      </div>
+      </TabsContent>
+    </Tabs>
+
   );
 }
+
