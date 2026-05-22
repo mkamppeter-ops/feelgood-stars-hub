@@ -18,6 +18,7 @@ import {
 } from "@/lib/hr-mock";
 import { PUBS } from "@/lib/pubs-mock";
 import { useRangeLabels, type DateRange } from "@/components/date-range-picker";
+import { PubScheduleDialog } from "@/components/hq/pub-schedule-dialog";
 
 // Scale factors relative to the base mock data.
 // Shifts base = 1 week; sick stats base = 1 month.
@@ -53,6 +54,7 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
   const rangeLabels = useRangeLabels();
   const [tab, setTab] = useState("employees");
   const [vacations, setVacations] = useState(VACATION_REQUESTS);
+  const [scheduleFor, setScheduleFor] = useState<string | null>(null);
   const periodLabel = rangeLabels[range];
   const shiftFactor = SHIFT_PERIOD_FACTOR[range];
   const sickFactor = SICK_PERIOD_FACTOR[range];
@@ -169,6 +171,7 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
               <CardTitle className="text-base">{tt("Dienstplan-Übersicht", "Schedule overview")}</CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
                 {tt("Stunden pro Filiale · Soll vs. Ist", "Hours per branch · target vs. actual")} · <span className="font-medium text-foreground">{periodLabel}</span>
+                <span className="ml-2 text-muted-foreground/70">· {tt("Zeile klicken für Wochen-Dienstplan", "Click a row to open the weekly schedule")}</span>
               </p>
             </CardHeader>
             <CardContent>
@@ -189,8 +192,14 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
                     const util = Math.round((s.weekActualHours / s.weekTargetHours) * 100);
                     const utilTone = util >= 95 ? "text-emerald-600" : util >= 85 ? "text-foreground" : "text-amber-600";
                     return (
-                      <TableRow key={s.pubId}>
-                        <TableCell className="font-medium">{getPubName(s.pubId)}</TableCell>
+                      <TableRow
+                        key={s.pubId}
+                        onClick={() => setScheduleFor(s.pubId)}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <TableCell className="font-medium">
+                          <span className="underline-offset-2 hover:underline">{getPubName(s.pubId)}</span>
+                        </TableCell>
                         <TableCell className="text-right tabular-nums">{s.staffCount}</TableCell>
                         <TableCell className="text-right tabular-nums hidden sm:table-cell text-muted-foreground">{s.weekTargetHours}</TableCell>
                         <TableCell className="text-right tabular-nums">{s.weekActualHours}</TableCell>
@@ -362,6 +371,12 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <PubScheduleDialog
+        pubId={scheduleFor}
+        open={scheduleFor !== null}
+        onOpenChange={(o) => !o && setScheduleFor(null)}
+      />
     </div>
   );
 }
