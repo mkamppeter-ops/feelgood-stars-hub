@@ -2,16 +2,68 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type ShiftSlot = "early" | "late" | "night";
 
-export const SHIFT_SLOT_META: Record<
-  ShiftSlot,
-  { label: string; defaultStart: string; defaultEnd: string; tone: string }
-> = {
-  early: { label: "Früh",  defaultStart: "10:00", defaultEnd: "17:00", tone: "bg-amber-500/15 text-amber-700 border-amber-300" },
-  late:  { label: "Spät",  defaultStart: "17:00", defaultEnd: "24:00", tone: "bg-sky-500/15 text-sky-700 border-sky-300" },
-  night: { label: "Nacht", defaultStart: "22:00", defaultEnd: "04:00", tone: "bg-violet-500/15 text-violet-700 border-violet-300" },
+export const SHIFT_SLOT_META: Record<ShiftSlot, { label: string; tone: string }> = {
+  early: { label: "Früh",  tone: "bg-amber-500/15 text-amber-700 border-amber-300" },
+  late:  { label: "Spät",  tone: "bg-sky-500/15 text-sky-700 border-sky-300" },
+  night: { label: "Nacht", tone: "bg-violet-500/15 text-violet-700 border-violet-300" },
 };
 
 export const SHIFT_SLOTS: ShiftSlot[] = ["early", "late", "night"];
+
+// ---------- Pub opening hours → slot defaults ----------
+export type PubHours = { opening: number; closing: number };
+
+export const DEFAULT_PUB_HOURS: PubHours = { opening: 17, closing: 24 };
+
+export async function getPubHours(pubId: string): Promise<PubHours> {
+  const { data, error } = await supabase
+    .from("pub_settings")
+    .select("opening_hour, closing_hour, month")
+    .eq("pub_id", pubId)
+    .order("month", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return DEFAULT_PUB_HOURS;
+  return { opening: data.opening_hour ?? 17, closing: data.closing_hour ?? 24 };
+}
+
+const fmtHour = (h: number) => `${String(((h % 24) + 24) % 24).padStart(2, "0")}:00`;
+
+/** Compute per-slot default start/end times from the pub's opening hours. */
+export function slotDefaults(hours: PubHours): Record<ShiftSlot, { start: string; end: string }> {
+  const open = hours.opening;
+  const closeRaw = hours.closing;
+  // Normalize: if closing <= opening, treat as next day (e.g. open 17, close 4 → 28)
+  const close = closeRaw <= open ? closeRaw + 24 : closeRaw;
+  const dur = close - open;
+  const mid = open + Math.ceil(dur / 2);
+  return {
+    early: { start: fmtHour(open), end: fmtHour(mid) },
+    late:  { start: fmtHour(mid),  end: fmtHour(close) },
+    night: dur > 6
+      ? { start: fmtHour(Math.max(open, close - 4)), end: fmtHour(close) }
+      : { start: fmtHour(open), end: fmtHour(close) },
+  };
+}
+
+export function formatPubHours(hours: PubHours): string {
+  return `${fmtHour(hours.opening)} – ${fmtHour(hours.closing)} Uhr`;
+}
+
+/** Returns true if start/end fall within (or exactly match) the pub's opening window. */
+export function isWithinPubHours(start: string, end: string, hours: PubHours): boolean {
+  const toMin = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  };
+  const openMin = hours.opening * 60;
+  const closeMin = (hours.closing <= hours.opening ? hours.closing + 24 : hours.closing) * 60;
+  let s = toMin(start);
+  let e = toMin(end);
+  if (e <= s) e += 24 * 60; // overnight shift
+  return s >= openMin && e <= closeMin;
+}
 
 export const STAFF_ROLES = ["Bar", "Service", "Küche", "Floor"] as const;
 export type StaffRole = (typeof STAFF_ROLES)[number];
