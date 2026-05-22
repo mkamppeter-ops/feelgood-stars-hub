@@ -27,25 +27,72 @@ const INITIAL: Ticket[] = [
   { id: "T-097", title: "Lieferung Reinigungsmittel", desc: "Eingegangen und eingeräumt.", category: "logistics", status: "done", priority: "low", author: "Sarah L.", pubId: "whistling-kettle", ago: "vor 5 Tagen" },
 ];
 
+const STORAGE_KEY = "pubgo.tickets";
+
+function loadInitial(): Ticket[] {
+  if (typeof window === "undefined") return INITIAL;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return INITIAL;
+    const parsed = JSON.parse(raw) as Ticket[];
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL;
+  } catch {
+    return INITIAL;
+  }
+}
+
 let state: Ticket[] = INITIAL;
+let hydrated = false;
 const listeners = new Set<() => void>();
 
+function ensureHydrated() {
+  if (hydrated || typeof window === "undefined") return;
+  hydrated = true;
+  state = loadInitial();
+}
+
+function persist() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    /* ignore quota */
+  }
+}
+
 function emit() {
+  persist();
   listeners.forEach((l) => l());
 }
 
 export const ticketsStore = {
-  get: () => state,
+  get: () => {
+    ensureHydrated();
+    return state;
+  },
+  getServerSnapshot: () => INITIAL,
   subscribe: (l: () => void) => {
+    ensureHydrated();
     listeners.add(l);
-    return () => listeners.delete(l);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key && e.key !== STORAGE_KEY) return;
+      state = loadInitial();
+      l();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => {
+      listeners.delete(l);
+      window.removeEventListener("storage", onStorage);
+    };
   },
   add: (t: Omit<Ticket, "id" | "ago" | "status"> & { status?: TicketStatus }) => {
+    ensureHydrated();
     const id = `T-${String(Math.floor(Math.random() * 900) + 100)}`;
     state = [{ ...t, id, status: t.status ?? "open", ago: "gerade" }, ...state];
     emit();
   },
   setStatus: (id: string, status: TicketStatus) => {
+    ensureHydrated();
     state = state.map((t) => (t.id === id ? { ...t, status } : t));
     emit();
   },
@@ -55,6 +102,6 @@ export function useTickets(): Ticket[] {
   return useSyncExternalStore(
     ticketsStore.subscribe,
     ticketsStore.get,
-    ticketsStore.get,
+    ticketsStore.getServerSnapshot,
   );
 }
