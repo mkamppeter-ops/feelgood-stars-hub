@@ -18,6 +18,7 @@ import { formatDistanceToNow } from "date-fns";
 import { de as deLocale, enUS } from "date-fns/locale";
 import { NEWS_CATEGORY_META, type NewsCategory } from "@/lib/hq-news-mock";
 import { useHQNews, hqNewsStore } from "@/lib/hq-news-store";
+import { PUBS } from "@/lib/pubs-mock";
 
 
 const CATEGORIES: NewsCategory[] = ["urgent", "marketing", "product", "event", "policy", "ops"];
