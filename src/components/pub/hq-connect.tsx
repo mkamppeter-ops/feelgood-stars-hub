@@ -30,6 +30,7 @@ const CAT_ICON: Record<Category, React.ComponentType<{ className?: string }>> = 
 export function HQConnect() {
   const tt = useT();
   const tickets = useTickets();
+  const session = useSession();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<{ title: string; desc: string; category: Category; priority: Priority }>({
     title: "", desc: "", category: "it", priority: "med",
