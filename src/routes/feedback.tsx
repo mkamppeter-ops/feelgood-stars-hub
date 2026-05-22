@@ -13,8 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { PUBS } from "@/lib/pubs-mock";
 
-const LOCATIONS = ["Pub Berlin", "Pub München", "Pub Hamburg"] as const;
+const LOCATIONS = PUBS.map((p) => ({ id: p.id, name: p.name }));
 
 export const Route = createFileRoute("/feedback")({
   component: Index,
@@ -246,7 +247,7 @@ function Index() {
             </SelectTrigger>
             <SelectContent>
               {LOCATIONS.map((loc) => (
-                <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
