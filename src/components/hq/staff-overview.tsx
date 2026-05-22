@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,14 +12,19 @@ import { CalendarDays, ChevronLeft, ChevronRight, AlertCircle } from "lucide-rea
 import { PUBS } from "@/lib/pubs-mock";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  addDaysISO, isoWeekNumber, listAllShifts, SHIFT_SLOT_META, SHIFT_SLOTS,
+  addDaysISO, isoWeekNumber, listAllShifts, SHIFT_SLOT_TONE, SHIFT_SLOTS,
   shiftHours, toISODate, weekDays, weekStartISO,
   type ShiftAssignment, type ShiftSlot, type StaffMember,
 } from "@/lib/staff-schedule";
 
-const WEEKDAY_LABEL = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const WEEKDAY_LABEL_DE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const WEEKDAY_LABEL_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export function StaffOverview() {
+  const { t, i18n } = useTranslation();
+  const isEN = (i18n.resolvedLanguage || "de").toLowerCase().startsWith("en");
+  const weekdayLabels = isEN ? WEEKDAY_LABEL_EN : WEEKDAY_LABEL_DE;
+
   const [weekStart, setWeekStart] = useState(() => weekStartISO());
   const [shifts, setShifts] = useState<ShiftAssignment[]>([]);
   const [staffMap, setStaffMap] = useState<Record<string, StaffMember>>({});
@@ -41,7 +47,7 @@ export function StaffOverview() {
       setStaffMap(map);
       setShifts(sh);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Fehler beim Laden");
+      toast.error(err instanceof Error ? err.message : t("staff.editor.loadError"));
     } finally {
       setLoading(false);
     }
@@ -73,17 +79,19 @@ export function StaffOverview() {
             <div>
               <CardTitle className="text-base flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
-                Personalplan · Übersicht
+                {t("staff.overviewTitle")}
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
-                KW {week} · Geplante Schichten aller Pubs · Lead: Felix &amp; Paul
+                {t("staff.weekShort")} {week} · {t("staff.overviewSub")}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setWeekStart(addDaysISO(weekStart, -7))}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setWeekStart(weekStartISO())}>Heute</Button>
+              <Button variant="outline" size="sm" onClick={() => setWeekStart(weekStartISO())}>
+                {t("staff.today")}
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setWeekStart(addDaysISO(weekStart, 7))}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -94,11 +102,11 @@ export function StaffOverview() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label="Schichten" value={totalShifts.toString()} />
-        <Kpi label="Stunden" value={`${totalHours.toFixed(1)} h`} />
-        <Kpi label="Pubs geplant" value={`${PUBS.length - pubsWithoutPlan.length} / ${PUBS.length}`} />
+        <Kpi label={t("staff.shiftsUnit", { count: totalShifts })} value={totalShifts.toString()} />
+        <Kpi label={t("staff.hoursTotal")} value={`${totalHours.toFixed(1)} ${t("staff.hoursUnit")}`} />
+        <Kpi label={t("staff.pubsPlanned")} value={`${PUBS.length - pubsWithoutPlan.length} / ${PUBS.length}`} />
         <Kpi
-          label="Ohne Plan"
+          label={t("staff.withoutPlan")}
           value={pubsWithoutPlan.length.toString()}
           tone={pubsWithoutPlan.length > 0 ? "amber" : undefined}
         />
@@ -109,7 +117,7 @@ export function StaffOverview() {
           <CardContent className="p-3 flex items-start gap-2 text-xs">
             <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
             <div>
-              <span className="font-semibold text-amber-800">Pubs ohne Schichtplan in KW {week}:</span>{" "}
+              <span className="font-semibold text-amber-800">{t("staff.pubsWithoutPlanIn", { week })}</span>{" "}
               <span className="text-amber-900">{pubsWithoutPlan.map((p) => p.name).join(", ")}</span>
             </div>
           </CardContent>
@@ -128,13 +136,13 @@ export function StaffOverview() {
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="text-left font-medium px-3 py-2 sticky left-0 bg-muted/40 min-w-[180px]">Pub</th>
+                  <th className="text-left font-medium px-3 py-2 sticky left-0 bg-muted/40 min-w-[180px]">{t("staff.pub")}</th>
                   {days.map((d, i) => {
                     const date = new Date(d + "T00:00:00");
                     const isToday = d === toISODate(new Date());
                     return (
                       <th key={d} className={`text-left font-medium px-2 py-2 min-w-[100px] ${isToday ? "text-primary" : ""}`}>
-                        <div>{WEEKDAY_LABEL[i]}</div>
+                        <div>{weekdayLabels[i]}</div>
                         <div className="text-[10px] text-muted-foreground normal-case">
                           {date.getDate()}.{date.getMonth() + 1}.
                         </div>
@@ -170,8 +178,8 @@ export function StaffOverview() {
                             >
                               {empty ? "—" : (
                                 <>
-                                  <div className="font-semibold tabular-nums">{c.count} Sch.</div>
-                                  <div className="tabular-nums text-[10px] opacity-80">{c.hours.toFixed(1)} h</div>
+                                  <div className="font-semibold tabular-nums">{c.count} {t("staff.cellShifts")}</div>
+                                  <div className="tabular-nums text-[10px] opacity-80">{c.hours.toFixed(1)} {t("staff.hoursUnit")}</div>
                                 </>
                               )}
                             </button>
@@ -179,7 +187,7 @@ export function StaffOverview() {
                         );
                       })}
                       <td className="px-3 py-2 text-right tabular-nums text-xs font-medium border-l">
-                        {pubTotal.toFixed(1)} h
+                        {pubTotal.toFixed(1)} {t("staff.hoursUnit")}
                       </td>
                     </tr>
                   );
@@ -194,6 +202,7 @@ export function StaffOverview() {
         <DrilldownDialog
           pubId={drilldown.pubId}
           date={drilldown.date}
+          isEN={isEN}
           shifts={shifts.filter((s) => s.pub_id === drilldown.pubId && s.date === drilldown.date)}
           staffMap={staffMap}
           onClose={() => setDrilldown(null)}
@@ -204,14 +213,16 @@ export function StaffOverview() {
 }
 
 function DrilldownDialog({
-  pubId, date, shifts, staffMap, onClose,
+  pubId, date, isEN, shifts, staffMap, onClose,
 }: {
   pubId: string;
   date: string;
+  isEN: boolean;
   shifts: ShiftAssignment[];
   staffMap: Record<string, StaffMember>;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const pub = PUBS.find((p) => p.id === pubId);
   const d = new Date(date + "T00:00:00");
   const grouped: Record<ShiftSlot, ShiftAssignment[]> = { early: [], late: [], night: [] };
@@ -222,17 +233,16 @@ function DrilldownDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {pub?.name} · {d.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}
+            {pub?.name} · {d.toLocaleDateString(isEN ? "en-US" : "de-DE", { weekday: "long", day: "numeric", month: "long" })}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           {SHIFT_SLOTS.map((slot) => {
             const list = grouped[slot];
             if (list.length === 0) return null;
-            const meta = SHIFT_SLOT_META[slot];
             return (
               <div key={slot} className="space-y-1">
-                <Badge variant="outline" className={meta.tone}>{meta.label}</Badge>
+                <Badge variant="outline" className={SHIFT_SLOT_TONE[slot]}>{t(`staff.slots.${slot}`)}</Badge>
                 <div className="space-y-1 pl-1">
                   {list.map((s) => {
                     const m = staffMap[s.staff_id];
@@ -240,7 +250,7 @@ function DrilldownDialog({
                       <div key={s.id} className="flex justify-between text-sm border rounded px-2 py-1">
                         <div>
                           <span className="font-medium">{m ? `${m.first_name} ${m.last_name}` : "—"}</span>
-                          {m && <span className="text-muted-foreground text-xs ml-2">{m.role}</span>}
+                          {m && <span className="text-muted-foreground text-xs ml-2">{t(`staff.roles.${m.role}`, m.role)}</span>}
                         </div>
                         <div className="text-xs tabular-nums text-muted-foreground">
                           {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
@@ -253,7 +263,7 @@ function DrilldownDialog({
             );
           })}
           {shifts.length === 0 && (
-            <div className="text-sm text-muted-foreground">Keine Schichten an diesem Tag.</div>
+            <div className="text-sm text-muted-foreground">{t("staff.noShifts")}</div>
           )}
         </div>
       </DialogContent>
