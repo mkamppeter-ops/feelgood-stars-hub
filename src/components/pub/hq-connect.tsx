@@ -13,7 +13,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Laptop, Users, Wrench, Truck, MoreHorizontal, AlertCircle } from "lucide-react";
+import { Plus, Laptop, Wrench, Truck, MoreHorizontal, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/lib/use-t";
 import { useSession } from "@/lib/auth-mock";
@@ -25,7 +25,7 @@ import {
 } from "@/lib/tickets-store";
 
 const CAT_ICON: Record<Category, React.ComponentType<{ className?: string }>> = {
-  it: Laptop, hr: Users, facility: Wrench, logistics: Truck,
+  it: Laptop, facility: Wrench, logistics: Truck,
 };
 
 export function HQConnect() {
@@ -44,7 +44,7 @@ export function HQConnect() {
   ];
 
   const catLabel = (c: Category) => ({
-    it: "IT", hr: "HR", facility: tt("Facility", "Facility"), logistics: tt("Logistik", "Logistics"),
+    it: "IT", facility: tt("Facility", "Facility"), logistics: tt("Operations", "Operations"),
   }[c]);
 
   const prioTone = (p: Priority) => ({
@@ -106,9 +106,8 @@ export function HQConnect() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="it">IT</SelectItem>
-                      <SelectItem value="hr">HR</SelectItem>
                       <SelectItem value="facility">{tt("Facility", "Facility")}</SelectItem>
-                      <SelectItem value="logistics">{tt("Logistik", "Logistics")}</SelectItem>
+                      <SelectItem value="logistics">{tt("Operations", "Operations")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

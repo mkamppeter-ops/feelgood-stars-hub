@@ -1,0 +1,309 @@
+import { useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import { UserCog, CalendarRange, Plane, Thermometer, AlertTriangle, Check, X } from "lucide-react";
+import { useT } from "@/lib/use-t";
+import {
+  SHIFT_SUMMARY, VACATION_REQUESTS, SICK_LEAVES, SICK_STATS, getPubName,
+  type VacationStatus,
+} from "@/lib/hr-mock";
+
+export function HROverview() {
+  const tt = useT();
+  const [tab, setTab] = useState("shifts");
+  const [vacations, setVacations] = useState(VACATION_REQUESTS);
+
+  const totals = useMemo(() => {
+    const target = SHIFT_SUMMARY.reduce((s, x) => s + x.weekTargetHours, 0);
+    const actual = SHIFT_SUMMARY.reduce((s, x) => s + x.weekActualHours, 0);
+    const openShifts = SHIFT_SUMMARY.reduce((s, x) => s + x.openShifts, 0);
+    const staff = SHIFT_SUMMARY.reduce((s, x) => s + x.staffCount, 0);
+    return { target, actual, openShifts, staff, util: Math.round((actual / target) * 100) };
+  }, []);
+
+  const pending = vacations.filter((v) => v.status === "pending");
+  const decided = vacations.filter((v) => v.status !== "pending");
+  const activeSick = SICK_LEAVES.filter((s) => s.active);
+
+  const decide = (id: string, status: VacationStatus) =>
+    setVacations((prev) => prev.map((v) => (v.id === id ? { ...v, status } : v)));
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+          <UserCog className="h-5 w-5" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">{tt("HR-Übersicht", "HR Overview")}</h2>
+          <p className="text-xs text-muted-foreground">
+            {tt("Dienstpläne, Urlaub & Krankmeldungen über alle Filialen", "Schedules, vacation & sick leave across all branches")}
+          </p>
+        </div>
+      </div>
+
+      {/* KPI strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiTile label={tt("Mitarbeiter gesamt", "Total staff")} value={String(totals.staff)} />
+        <KpiTile
+          label={tt("Wochenauslastung", "Weekly utilization")}
+          value={`${totals.util}%`}
+          tone={totals.util >= 95 ? "emerald" : totals.util >= 85 ? "amber" : "red"}
+        />
+        <KpiTile
+          label={tt("Offene Schichten", "Open shifts")}
+          value={String(totals.openShifts)}
+          tone={totals.openShifts === 0 ? "emerald" : totals.openShifts > 8 ? "red" : "amber"}
+        />
+        <KpiTile
+          label={tt("Offene Urlaubsanträge", "Pending requests")}
+          value={String(pending.length)}
+          tone={pending.length > 0 ? "amber" : "emerald"}
+        />
+      </div>
+
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="shifts" className="gap-1.5">
+            <CalendarRange className="h-3.5 w-3.5" />
+            {tt("Dienstpläne", "Schedules")}
+          </TabsTrigger>
+          <TabsTrigger value="vacation" className="gap-1.5">
+            <Plane className="h-3.5 w-3.5" />
+            {tt("Urlaub", "Vacation")}
+            {pending.length > 0 && (
+              <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">
+                {pending.length}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="sick" className="gap-1.5">
+            <Thermometer className="h-3.5 w-3.5" />
+            {tt("Krankheit", "Sick leave")}
+            {activeSick.length > 0 && (
+              <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-amber-500 text-white text-[10px] font-medium">
+                {activeSick.length}
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Schedule overview */}
+        <TabsContent value="shifts" className="mt-0">
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">{tt("Dienstplan-Übersicht", "Schedule overview")}</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                {tt("Wochenstunden pro Filiale · Soll vs. Ist", "Weekly hours per branch · target vs. actual")}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{tt("Pub", "Pub")}</TableHead>
+                    <TableHead className="text-right">{tt("Mitarbeiter", "Staff")}</TableHead>
+                    <TableHead className="text-right hidden sm:table-cell">{tt("Soll (h)", "Target (h)")}</TableHead>
+                    <TableHead className="text-right">{tt("Ist (h)", "Actual (h)")}</TableHead>
+                    <TableHead className="text-right">{tt("Auslastung", "Utilization")}</TableHead>
+                    <TableHead className="text-right">{tt("Offen", "Open")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {SHIFT_SUMMARY.map((s) => {
+                    const util = Math.round((s.weekActualHours / s.weekTargetHours) * 100);
+                    const utilTone = util >= 95 ? "text-emerald-600" : util >= 85 ? "text-foreground" : "text-amber-600";
+                    return (
+                      <TableRow key={s.pubId}>
+                        <TableCell className="font-medium">{getPubName(s.pubId)}</TableCell>
+                        <TableCell className="text-right tabular-nums">{s.staffCount}</TableCell>
+                        <TableCell className="text-right tabular-nums hidden sm:table-cell text-muted-foreground">{s.weekTargetHours}</TableCell>
+                        <TableCell className="text-right tabular-nums">{s.weekActualHours}</TableCell>
+                        <TableCell className={`text-right tabular-nums font-semibold ${utilTone}`}>{util}%</TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {s.openShifts > 0 ? (
+                            <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200 tabular-nums">
+                              {s.openShifts}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Vacation */}
+        <TabsContent value="vacation" className="mt-0 space-y-4">
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                {tt("Offene Urlaubsanträge", "Pending vacation requests")}
+                <Badge variant="secondary" className="font-normal">{pending.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {pending.length === 0 && (
+                <div className="text-sm text-muted-foreground text-center py-6 border border-dashed rounded-md">
+                  {tt("Keine offenen Anträge", "No pending requests")}
+                </div>
+              )}
+              {pending.map((v) => (
+                <div key={v.id} className="flex flex-wrap items-center gap-3 p-3 rounded-lg border bg-card">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium">{v.employee}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {getPubName(v.pubId)} · {v.from} – {v.to} · {v.days} {tt("Tage", "days")}
+                    </div>
+                    {(v.reasonDe || v.reasonEn) && (
+                      <div className="text-[11px] text-muted-foreground italic mt-0.5">
+                        {tt(v.reasonDe ?? "", v.reasonEn ?? "")}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" onClick={() => decide(v.id, "approved")} className="bg-emerald-500 hover:bg-emerald-600 text-white h-8">
+                      <Check className="h-3.5 w-3.5 mr-1" />{tt("Genehmigen", "Approve")}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => decide(v.id, "rejected")} className="h-8">
+                      <X className="h-3.5 w-3.5 mr-1" />{tt("Ablehnen", "Reject")}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">{tt("Bearbeitet", "Decided")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{tt("Mitarbeiter", "Employee")}</TableHead>
+                    <TableHead>{tt("Pub", "Pub")}</TableHead>
+                    <TableHead>{tt("Zeitraum", "Period")}</TableHead>
+                    <TableHead className="text-right">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {decided.map((v) => (
+                    <TableRow key={v.id}>
+                      <TableCell className="font-medium">{v.employee}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{getPubName(v.pubId)}</TableCell>
+                      <TableCell className="text-xs">{v.from} – {v.to} <span className="text-muted-foreground">({v.days}t)</span></TableCell>
+                      <TableCell className="text-right">
+                        {v.status === "approved" ? (
+                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200">
+                            {tt("Genehmigt", "Approved")}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200">
+                            {tt("Abgelehnt", "Rejected")}
+                          </Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Sick leave */}
+        <TabsContent value="sick" className="mt-0 space-y-4">
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                {tt("Aktuell krank", "Currently out sick")}
+                <Badge variant="secondary" className="font-normal">{activeSick.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {activeSick.length === 0 && (
+                <div className="text-sm text-muted-foreground text-center py-6 border border-dashed rounded-md">
+                  {tt("Niemand krank gemeldet", "No active sick leave")}
+                </div>
+              )}
+              {activeSick.map((s) => (
+                <div key={s.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-card">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium">{s.employee}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {getPubName(s.pubId)} · {tt("seit", "since")} {s.from} · {s.days} {tt("Tag(e)", "day(s)")}
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-200">
+                    {tt("aktiv", "active")}
+                  </Badge>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">{tt("Krankheitsquote pro Filiale (Monat)", "Sick leave rate per branch (month)")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{tt("Pub", "Pub")}</TableHead>
+                    <TableHead className="text-right">{tt("Krankheitstage", "Sick days")}</TableHead>
+                    <TableHead className="text-right">{tt("Quote", "Rate")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[...SICK_STATS].sort((a, b) => b.ratePct - a.ratePct).map((s) => {
+                    const high = s.ratePct >= 5;
+                    return (
+                      <TableRow key={s.pubId}>
+                        <TableCell className="font-medium flex items-center gap-2">
+                          {getPubName(s.pubId)}
+                          {high && <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">{s.sickDaysMonth}</TableCell>
+                        <TableCell className={`text-right tabular-nums font-semibold ${high ? "text-amber-600" : "text-foreground"}`}>
+                          {s.ratePct}%
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function KpiTile({ label, value, tone }: { label: string; value: string; tone?: "emerald" | "amber" | "red" }) {
+  const toneCls =
+    tone === "emerald" ? "text-emerald-600" :
+    tone === "amber" ? "text-amber-600" :
+    tone === "red" ? "text-red-600" : "text-foreground";
+  return (
+    <Card className="shadow-sm">
+      <CardContent className="p-4">
+        <div className="text-xs text-muted-foreground">{label}</div>
+        <div className={`mt-1 text-2xl font-semibold tabular-nums ${toneCls}`}>{value}</div>
+      </CardContent>
+    </Card>
+  );
+}

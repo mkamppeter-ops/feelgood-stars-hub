@@ -9,10 +9,11 @@ export type Role =
   | "facility_admin"
   | "ops_admin";
 
-/** Sub-admins in HQ each own one ticket category. */
-export const ROLE_TICKET_CATEGORY: Partial<Record<Role, "it" | "hr" | "facility" | "logistics">> = {
+/** Sub-admins in HQ each own one ticket category.
+ *  HR is intentionally NOT here — HR-Admin manages schedules/vacation/sick leave,
+ *  not tickets. Operational HR-like topics go to ops_admin (logistics). */
+export const ROLE_TICKET_CATEGORY: Partial<Record<Role, "it" | "facility" | "logistics">> = {
   it_admin: "it",
-  hr_admin: "hr",
   facility_admin: "facility",
   ops_admin: "logistics",
 };

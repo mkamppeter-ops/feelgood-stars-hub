@@ -11,7 +11,7 @@ import {
 
 import {
   Trophy, TrendingUp, Users, Star, Gauge, Phone, LayoutDashboard,
-  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone, Gift, Activity, Megaphone,
+  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone, Gift, Activity, Megaphone, UserCog,
 } from "lucide-react";
 import { Marketing } from "@/components/marketing";
 import { PUBS, computeScore, getAppReach } from "@/lib/pubs-mock";
@@ -29,6 +29,7 @@ import { RequireRole, LogoutButton } from "@/components/auth-guard";
 import { DataSettings } from "@/components/data-settings";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { TicketInbox } from "@/components/hq/ticket-inbox";
+import { HROverview } from "@/components/hq/hr-overview";
 import { Inbox } from "lucide-react";
 import { useSession, ROLE_TICKET_CATEGORY, type Role } from "@/lib/auth-mock";
 import { useTickets } from "@/lib/tickets-store";
@@ -59,9 +60,13 @@ function HQPage() {
   const myTicketCount = (isSuper ? tickets : tickets.filter((t) => t.category === myCat))
     .filter((t) => t.status !== "done").length;
   const isSubAdmin = !!myCat;
+  const isHR = session?.role === "hr_admin";
+  const isOps = session?.role === "ops_admin";
+  const showHRTab = isSuper || isHR;
+  const defaultTab = isHR ? "hr" : isOps ? "feedback" : isSubAdmin ? "inbox" : "overview";
   const [range, setRange] = useState<DateRange>("last7");
   const [pulseKey, setPulseKey] = useState(0);
-  const [activeTab, setActiveTab] = useState(isSubAdmin ? "inbox" : "overview");
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const factor = RANGE_FACTOR[range];
 
   const kpis = useMemo(() => {
@@ -104,18 +109,19 @@ function HQPage() {
           </div>
         </div>
         <nav className="flex-1 p-3 space-y-1 text-sm">
-          {[
-            { icon: LayoutDashboard, label: t("nav.overview"), tab: "overview" },
-            { icon: Inbox, label: t("nav.inbox", "Inbox"), tab: "inbox", badge: myTicketCount },
-            { icon: Building2, label: t("nav.pubs"), tab: "pubs" },
-            { icon: Activity, label: t("nav.activeOps"), tab: "active-ops" },
-            { icon: TrendingUp, label: t("nav.salesOps"), tab: "sales" },
-            { icon: Building2, label: t("nav.sortiment"), tab: "sortiment" },
-            { icon: CalendarCheck, label: t("nav.events"), tab: "events" },
-            { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback" },
-            { icon: Megaphone, label: t("nav.marketing", "Marketing"), tab: "marketing" },
-            { icon: Settings, label: t("nav.dataSettings"), tab: "settings" },
-          ].map(({ icon: Icon, label, tab, badge }) => {
+          {([
+            { icon: LayoutDashboard, label: t("nav.overview"), tab: "overview", show: !isHR, badge: undefined as number | undefined },
+            { icon: Inbox, label: t("nav.inbox", "Inbox"), tab: "inbox", badge: myTicketCount, show: !isHR },
+            { icon: UserCog, label: t("nav.hr", "HR"), tab: "hr", show: showHRTab, badge: undefined as number | undefined },
+            { icon: Building2, label: t("nav.pubs"), tab: "pubs", show: !isHR, badge: undefined as number | undefined },
+            { icon: Activity, label: t("nav.activeOps"), tab: "active-ops", show: !isHR, badge: undefined as number | undefined },
+            { icon: TrendingUp, label: t("nav.salesOps"), tab: "sales", show: !isHR, badge: undefined as number | undefined },
+            { icon: Building2, label: t("nav.sortiment"), tab: "sortiment", show: !isHR, badge: undefined as number | undefined },
+            { icon: CalendarCheck, label: t("nav.events"), tab: "events", show: !isHR, badge: undefined as number | undefined },
+            { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback", show: !isHR, badge: undefined as number | undefined },
+            { icon: Megaphone, label: t("nav.marketing", "Marketing"), tab: "marketing", show: !isHR, badge: undefined as number | undefined },
+            { icon: Settings, label: t("nav.dataSettings"), tab: "settings", show: !isHR, badge: undefined as number | undefined },
+          ]).filter((i) => i.show).map(({ icon: Icon, label, tab, badge }) => {
             const active = activeTab === tab;
             return (
               <button
@@ -193,11 +199,19 @@ function HQPage() {
               <TabsTrigger value="sales">{t("nav.sales")}</TabsTrigger>
               <TabsTrigger value="sortiment">{t("nav.sortiment")}</TabsTrigger>
               <TabsTrigger value="events">{t("nav.events")}</TabsTrigger>
+              <TabsTrigger value="hr" className="gap-1.5">
+                <UserCog className="h-3.5 w-3.5" />
+                {t("nav.hr", "HR")}
+              </TabsTrigger>
               <TabsTrigger value="feedback" className="gap-2">
                 {t("nav.liveFeedback")}
                 <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="hr" className="mt-0">
+              <HROverview />
+            </TabsContent>
 
             <TabsContent value="inbox" className="mt-0">
               <TicketInbox />
