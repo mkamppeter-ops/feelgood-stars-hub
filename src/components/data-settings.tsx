@@ -439,8 +439,10 @@ export function DataSettings() {
           </>
         )}
       </div>
+      </div>
       </TabsContent>
     </Tabs>
+
   );
 }
 
