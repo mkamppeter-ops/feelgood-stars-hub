@@ -26,6 +26,7 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
   const [weekStart, setWeekStart] = useState(() => weekStartISO());
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [shifts, setShifts] = useState<ShiftAssignment[]>([]);
+  const [hours, setHours] = useState<PubHours>(DEFAULT_PUB_HOURS);
   const [loading, setLoading] = useState(true);
   const [editor, setEditor] = useState<{
     staff: StaffMember; date: string; slot: ShiftSlot; existing?: ShiftAssignment;
