@@ -4,9 +4,9 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { AlertTriangle, CalendarRange, Users } from "lucide-react";
+import { AlertTriangle, CalendarRange, Users, Phone, MessageCircle, Crown } from "lucide-react";
 import { useT } from "@/lib/use-t";
-import { EMPLOYEES, SHIFT_SUMMARY, getPubName } from "@/lib/hr-mock";
+import { EMPLOYEES, SHIFT_SUMMARY, getPubName, getBarManager, waLink, telLink } from "@/lib/hr-mock";
 
 type ShiftBlock = {
   start: string; // HH:MM
