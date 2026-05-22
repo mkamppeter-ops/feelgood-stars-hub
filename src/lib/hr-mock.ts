@@ -54,6 +54,10 @@ export interface Employee {
   vacationUsedDays: number;
   sickDaysYear: number;
   avgWorkedHoursWeek: number; // tatsächlich gearbeitet im Schnitt / Woche
+  /** E.164 phone number for call / WhatsApp deep links */
+  phone: string;
+  /** true if this employee is the bar manager of the pub */
+  isManager?: boolean;
 }
 
 // Schicht-Übersicht je Pub
@@ -127,6 +131,10 @@ export const EMPLOYEES: Employee[] = (() => {
       const vacationUsed = Math.round(r(2) * vacationTotal * 0.7);
       const sickDays = Math.round(r(3) * 9);
       const avgWorked = +(contract + (balance / 4)).toFixed(1);
+      // Generate DE mobile-style phone: +49 15X XXXXXXX
+      const prefix = 150 + Math.floor(r(4) * 10); // 150..159
+      const tail = String(Math.floor(r(5) * 9000000 + 1000000));
+      const phone = `+49${prefix}${tail}`;
       list.push({
         id: `emp-${pi}-${i}`,
         pubId: pub.id,
@@ -139,7 +147,15 @@ export const EMPLOYEES: Employee[] = (() => {
         vacationUsedDays: vacationUsed,
         sickDaysYear: sickDays,
         avgWorkedHoursWeek: avgWorked,
+        phone,
       });
+    }
+    // Mark the first Shift Lead in this pub as bar manager; fallback first employee
+    const pubList = list.filter((e) => e.pubId === pub.id);
+    const manager = pubList.find((e) => e.role === "Shift Lead") ?? pubList[0];
+    if (manager) {
+      manager.isManager = true;
+      manager.role = "Bar Manager";
     }
   });
   return list;
@@ -148,4 +164,19 @@ export const EMPLOYEES: Employee[] = (() => {
 
 export function getPubName(pubId: string): string {
   return PUBS.find((p) => p.id === pubId)?.name ?? pubId;
+}
+
+export function getBarManager(pubId: string): Employee | undefined {
+  return EMPLOYEES.find((e) => e.pubId === pubId && e.isManager);
+}
+
+/** WhatsApp click-to-chat link for a phone in E.164 (no +) */
+export function waLink(phone: string, message?: string): string {
+  const num = phone.replace(/[^\d]/g, "");
+  const q = message ? `?text=${encodeURIComponent(message)}` : "";
+  return `https://wa.me/${num}${q}`;
+}
+
+export function telLink(phone: string): string {
+  return `tel:${phone.replace(/\s+/g, "")}`;
 }
