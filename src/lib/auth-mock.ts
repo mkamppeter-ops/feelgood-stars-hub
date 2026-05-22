@@ -5,13 +5,11 @@ export type Role =
   | "pub_manager"
   | "bar_staff"
   | "it_admin"
-  | "hr_admin"
   | "facility_admin"
   | "ops_admin";
 
 /** Sub-admins in HQ each own one ticket category.
- *  HR is intentionally NOT here — HR-Admin manages schedules/vacation/sick leave,
- *  not tickets. Operational HR-like topics go to ops_admin (logistics). */
+ *  ops_admin = Operations (Felix & Paul) handles logistics-style topics. */
 export const ROLE_TICKET_CATEGORY: Partial<Record<Role, "it" | "facility" | "logistics">> = {
   it_admin: "it",
   facility_admin: "facility",
@@ -21,14 +19,29 @@ export type Session = { role: Role; loggedInAt: number; pubId?: string };
 
 const KEY = "pubgo.session";
 
+/** Migrate legacy "hr_admin" sessions to "ops_admin" silently. */
+function migrate(parsed: { role?: string } & Record<string, unknown>): Session | null {
+  if (!parsed?.role) return null;
+  const role = parsed.role === "hr_admin" ? "ops_admin" : (parsed.role as Role);
+  return {
+    role,
+    loggedInAt: typeof parsed.loggedInAt === "number" ? parsed.loggedInAt : Date.now(),
+    pubId: typeof parsed.pubId === "string" ? parsed.pubId : undefined,
+  };
+}
+
 export function getSession(): Session | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Session;
-    if (!parsed?.role) return null;
-    return parsed;
+    const parsed = JSON.parse(raw);
+    const session = migrate(parsed);
+    if (session && session.role !== parsed.role) {
+      // persist the migration
+      window.localStorage.setItem(KEY, JSON.stringify(session));
+    }
+    return session;
   } catch {
     return null;
   }
@@ -68,12 +81,48 @@ export const ROLE_LABEL: Record<Role, string> = {
   pub_manager: "Pub Manager",
   bar_staff: "Bar Staff",
   it_admin: "IT Admin",
-  hr_admin: "HR Admin",
   facility_admin: "Facility Admin",
-  ops_admin: "Logistik Admin",
+  ops_admin: "Operations",
 };
 
-const HQ_ROLES: Role[] = ["hq_admin", "it_admin", "hr_admin", "facility_admin", "ops_admin"];
+/** Real person(s) behind each role — used in login screen & topbar avatar. */
+export const ROLE_PERSON: Record<Role, { name: string; subtitle: string; initials: string }> = {
+  hq_admin:       { name: "Louis Kamppeter",       subtitle: "Marketing & Active Ops",  initials: "LK" },
+  ops_admin:      { name: "Felix & Paul",          subtitle: "Operations",              initials: "OP" },
+  facility_admin: { name: "Tomasz Kaplanski",      subtitle: "Facility",                initials: "TK" },
+  it_admin:       { name: "Supervista IA",         subtitle: "IT",                      initials: "IT" },
+  pub_manager:    { name: "Pub Manager",           subtitle: "Pub-Manager Demo",        initials: "PM" },
+  bar_staff:      { name: "Bar Staff",             subtitle: "Bar-Staff Demo",          initials: "BS" },
+};
+
+/** Each HQ role lands on its own tab by default — but sees all tabs. */
+export const ROLE_DEFAULT_TAB: Partial<Record<Role, string>> = {
+  hq_admin:       "marketing",
+  ops_admin:      "hr",
+  facility_admin: "inbox",
+  it_admin:       "inbox",
+};
+
+/** Owner label per tab — shown as subtle "Owner: …" pill next to the page title. */
+export const TAB_OWNER: Record<string, Role> = {
+  overview:    "hq_admin",
+  marketing:   "hq_admin",
+  "active-ops":"hq_admin",
+  pubs:        "hq_admin",
+  hr:          "ops_admin",
+  sortiment:   "ops_admin",
+  sales:       "ops_admin",
+  feedback:    "ops_admin",
+  events:      "ops_admin",
+  "hq-news":   "ops_admin",
+  inbox:       "ops_admin", // multi-owner (per category); default lead = ops
+  settings:    "it_admin",
+};
+
+/** Roles that may publish HQ News & Briefings (Composer write). */
+export const NEWS_PUBLISHER_ROLES: Role[] = ["hq_admin", "ops_admin"];
+
+const HQ_ROLES: Role[] = ["hq_admin", "it_admin", "facility_admin", "ops_admin"];
 export function isHqRole(role: Role): boolean {
   return HQ_ROLES.includes(role);
 }

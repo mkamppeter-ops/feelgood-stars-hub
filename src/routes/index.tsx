@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Building2, Beer, User, Eye, EyeOff, Lock, Mail, Laptop, Users as UsersIcon, Wrench, Truck } from "lucide-react";
+import { Beer, User, Eye, EyeOff, Lock, Mail, Megaphone, Wrench, Laptop, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { setSession, getSession, defaultRouteForRole, type Role } from "@/lib/auth-mock";
+import { setSession, getSession, defaultRouteForRole, ROLE_PERSON, type Role } from "@/lib/auth-mock";
 import { PUBS } from "@/lib/pubs-mock";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -20,6 +20,19 @@ export const Route = createFileRoute("/")({
     ],
   }),
 });
+
+type PersonLogin = {
+  role: Role;
+  icon: React.ComponentType<{ className?: string }>;
+  tone: string;
+};
+
+const HQ_PEOPLE: PersonLogin[] = [
+  { role: "hq_admin",       icon: Megaphone,     tone: "text-violet-600" },
+  { role: "ops_admin",      icon: ClipboardList, tone: "text-primary"    },
+  { role: "facility_admin", icon: Wrench,        tone: "text-amber-600"  },
+  { role: "it_admin",       icon: Laptop,        tone: "text-blue-600"   },
+];
 
 function LoginPage() {
   const { t } = useTranslation();
@@ -39,7 +52,7 @@ function LoginPage() {
   }
 
   function loginAs(role: Role) {
-    const pubId = role === "hq_admin" ? undefined : PUBS[2].id;
+    const pubId = role === "pub_manager" || role === "bar_staff" ? PUBS[2].id : undefined;
     setSession(role, pubId);
     navigate({ to: defaultRouteForRole(role) });
   }
@@ -131,37 +144,43 @@ function LoginPage() {
             </div>
           </div>
 
+          {/* HQ-Team Persons */}
           <div className="space-y-2">
-            <Button type="button" variant="outline" className="w-full justify-start gap-3 h-11" onClick={() => loginAs("hq_admin")}>
-              <Building2 className="h-4 w-4 text-primary" />
-              <span className="flex-1 text-left">{t("login.loginAs", { role: t("roles.hq_admin") })}</span>
-              <span className="text-xs text-muted-foreground">/hq</span>
-            </Button>
-            <Button type="button" variant="outline" className="w-full justify-start gap-3 h-11" onClick={() => loginAs("pub_manager")}>
-              <Beer className="h-4 w-4 text-primary" />
-              <span className="flex-1 text-left">{t("login.loginAs", { role: t("roles.pub_manager") })}</span>
-              <span className="text-xs text-muted-foreground">/pub</span>
-            </Button>
-            <Button type="button" variant="outline" className="w-full justify-start gap-3 h-11" onClick={() => loginAs("bar_staff")}>
-              <User className="h-4 w-4 text-primary" />
-              <span className="flex-1 text-left">{t("login.loginAs", { role: t("roles.bar_staff") })}</span>
-              <span className="text-xs text-muted-foreground">/pub</span>
-            </Button>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 pb-1">
+              {t("login.hqTeam", "HQ Team")}
+            </div>
+            {HQ_PEOPLE.map(({ role, icon: Icon, tone }) => {
+              const person = ROLE_PERSON[role];
+              return (
+                <Button
+                  key={role}
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start gap-3 h-12"
+                  onClick={() => loginAs(role)}
+                >
+                  <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+                    <Icon className={`h-4 w-4 ${tone}`} />
+                  </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <div className="text-sm font-medium truncate">{person.name}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">{person.subtitle}</div>
+                  </div>
+                  <span className="text-xs text-muted-foreground">/hq</span>
+                </Button>
+              );
+            })}
 
             <div className="pt-2 mt-2 border-t">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 pb-1.5">HQ Sub-Admins</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 pb-1.5">
+                {t("login.pubDemo", "Filial-Demo")}
+              </div>
               <div className="grid grid-cols-2 gap-2">
-                <Button type="button" variant="ghost" size="sm" className="justify-start gap-2 h-9" onClick={() => loginAs("it_admin")}>
-                  <Laptop className="h-3.5 w-3.5 text-primary" /><span className="text-xs">IT</span>
+                <Button type="button" variant="ghost" size="sm" className="justify-start gap-2 h-9" onClick={() => loginAs("pub_manager")}>
+                  <Beer className="h-3.5 w-3.5 text-primary" /><span className="text-xs">{t("roles.pub_manager")}</span>
                 </Button>
-                <Button type="button" variant="ghost" size="sm" className="justify-start gap-2 h-9" onClick={() => loginAs("hr_admin")}>
-                  <UsersIcon className="h-3.5 w-3.5 text-primary" /><span className="text-xs">HR</span>
-                </Button>
-                <Button type="button" variant="ghost" size="sm" className="justify-start gap-2 h-9" onClick={() => loginAs("facility_admin")}>
-                  <Wrench className="h-3.5 w-3.5 text-primary" /><span className="text-xs">Facility</span>
-                </Button>
-                <Button type="button" variant="ghost" size="sm" className="justify-start gap-2 h-9" onClick={() => loginAs("ops_admin")}>
-                  <Truck className="h-3.5 w-3.5 text-primary" /><span className="text-xs">Logistik</span>
+                <Button type="button" variant="ghost" size="sm" className="justify-start gap-2 h-9" onClick={() => loginAs("bar_staff")}>
+                  <User className="h-3.5 w-3.5 text-primary" /><span className="text-xs">{t("roles.bar_staff")}</span>
                 </Button>
               </div>
             </div>

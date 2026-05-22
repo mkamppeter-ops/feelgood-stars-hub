@@ -19,6 +19,7 @@ import { de as deLocale, enUS } from "date-fns/locale";
 import { NEWS_CATEGORY_META, type NewsCategory } from "@/lib/hq-news-mock";
 import { useHQNews, hqNewsStore } from "@/lib/hq-news-store";
 import { PUBS } from "@/lib/pubs-mock";
+import { useSession, ROLE_PERSON, NEWS_PUBLISHER_ROLES } from "@/lib/auth-mock";
 
 
 const CATEGORIES: NewsCategory[] = ["urgent", "marketing", "product", "event", "policy", "ops"];
@@ -28,6 +29,9 @@ export function HQNewsComposer() {
   const { i18n } = useTranslation();
   const locale = i18n.language?.startsWith("de") ? deLocale : enUS;
   const news = useHQNews();
+  const session = useSession();
+  const canPublish = !!session && NEWS_PUBLISHER_ROLES.includes(session.role);
+  const me = session ? ROLE_PERSON[session.role] : null;
 
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState<NewsCategory>("ops");
@@ -37,8 +41,8 @@ export function HQNewsComposer() {
   const [excerptEn, setExcerptEn] = useState("");
   const [pinned, setPinned] = useState(false);
   const [requiresAck, setRequiresAck] = useState(false);
-  const [author, setAuthor] = useState("Marlene Roth");
-  const [authorRole, setAuthorRole] = useState("Head of Operations");
+  const [author, setAuthor] = useState(me?.name ?? "HQ");
+  const [authorRole, setAuthorRole] = useState(me?.subtitle ?? "HQ");
   const [audience, setAudience] = useState<"all" | "select">("all");
   const [selectedPubs, setSelectedPubs] = useState<Set<string>>(new Set());
 
@@ -106,13 +110,28 @@ export function HQNewsComposer() {
             </p>
           </div>
         </div>
-        <Button onClick={() => setOpen((v) => !v)} className="gap-2">
-          {open ? "—" : <Plus className="h-4 w-4" />}
-          {open ? tt("Schließen", "Close") : tt("Neue Nachricht", "New post")}
-        </Button>
+        {canPublish ? (
+          <Button onClick={() => setOpen((v) => !v)} className="gap-2">
+            {open ? "—" : <Plus className="h-4 w-4" />}
+            {open ? tt("Schließen", "Close") : tt("Neue Nachricht", "New post")}
+          </Button>
+        ) : (
+          <Badge variant="outline" className="text-xs gap-1">
+            {tt("Nur Lesezugriff", "Read-only")}
+          </Badge>
+        )}
       </div>
 
-      {open && (
+      {!canPublish && (
+        <div className="rounded-md border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+          {tt(
+            "Nur Marketing (Louis) und Operations (Felix & Paul) können Nachrichten veröffentlichen.",
+            "Only Marketing (Louis) and Operations (Felix & Paul) can publish posts.",
+          )}
+        </div>
+      )}
+
+      {canPublish && open && (
         <Card className="shadow-sm border-primary/40">
           <CardHeader>
             <CardTitle className="text-base">
@@ -333,15 +352,17 @@ export function HQNewsComposer() {
                     {n.author} · {n.authorRole} · {formatDistanceToNow(new Date(n.publishedAt), { addSuffix: true, locale })}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-red-600"
-                  onClick={() => hqNewsStore.remove(n.id)}
-                  title={tt("Löschen", "Delete")}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {canPublish && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                    onClick={() => hqNewsStore.remove(n.id)}
+                    title={tt("Löschen", "Delete")}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             );
           })}

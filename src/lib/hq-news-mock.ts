@@ -69,8 +69,8 @@ export const HQ_NEWS: HQNewsItem[] = [
       "From Friday 5pm the new HH concept applies with 2-for-1 on all signature cocktails. Brief staff and replace chalkboard stands.",
     bodyDe:
       "Alle Tafeln und QR-Codes liegen in der Lieferung an. Ablauf: Kunde bestellt, Bestätigung am POS via Button 'HH-2for1'. Kein Rabatt auf Spirituosen pur.",
-    author: "Marlene Roth",
-    authorRole: "Head of Operations",
+    author: "Louis Kamppeter",
+    authorRole: "Marketing & Active Ops",
     publishedAt: dayAgo(0),
     pinned: true,
     requiresAck: true,
@@ -88,8 +88,8 @@ export const HQ_NEWS: HQNewsItem[] = [
       "Ab nächster Lieferung im Sortiment. UVP 5,90 €. Rezeptkarten für Spritz-Variante folgen.",
     excerptEn:
       "Available with the next delivery. RRP €5.90. Recipe cards for the spritz variant follow.",
-    author: "Jonas Keller",
-    authorRole: "Category Manager",
+    author: "Felix Hartmann",
+    authorRole: "Operations",
     publishedAt: dayAgo(1),
   },
   {
@@ -100,8 +100,8 @@ export const HQ_NEWS: HQNewsItem[] = [
     excerptDe:
       "Reels-Vorlagen im Marketing Hub. Bitte 1× pro Woche posten und HQ verlinken.",
     excerptEn: "Reels templates in the Marketing Hub. Post once per week and tag HQ.",
-    author: "Sara Lindner",
-    authorRole: "Brand & Social",
+    author: "Louis Kamppeter",
+    authorRole: "Marketing & Active Ops",
     publishedAt: dayAgo(2),
   },
   {
@@ -113,8 +113,8 @@ export const HQ_NEWS: HQNewsItem[] = [
       "Filialen ohne Anmeldung verlieren ihren Slot. Bitte bis 18:00 im Event-Tool bestätigen.",
     excerptEn:
       "Branches without sign-up lose their slot. Confirm in the event tool by 6pm.",
-    author: "Tom Becker",
-    authorRole: "Events",
+    author: "Paul Karwinkel",
+    authorRole: "Operations",
     publishedAt: dayAgo(2),
   },
   {
@@ -126,8 +126,8 @@ export const HQ_NEWS: HQNewsItem[] = [
       "Neue Version 3.2 in der Academy. Bitte vor Freitag durchgehen und unterschreiben.",
     excerptEn:
       "New version 3.2 in the Academy. Review and sign before Friday.",
-    author: "Dr. Anke Vogel",
-    authorRole: "Compliance",
+    author: "Tomasz Kaplanski",
+    authorRole: "Facility",
     publishedAt: dayAgo(4),
     requiresAck: true,
   },
@@ -140,8 +140,8 @@ export const HQ_NEWS: HQNewsItem[] = [
       "Bis Ende des Monats bitte 'Crisp Mediterranean' als Standard verwenden. Preisbindung bleibt gleich.",
     excerptEn:
       "Until end of month please use 'Crisp Mediterranean' as default. Pricing unchanged.",
-    author: "Felix Wagner",
-    authorRole: "Logistik",
+    author: "Paul Karwinkel",
+    authorRole: "Operations",
     publishedAt: dayAgo(5),
   },
   {
@@ -152,8 +152,8 @@ export const HQ_NEWS: HQNewsItem[] = [
     excerptDe:
       "Druckdateien & Briefing im Marketing Hub. Auslieferung kommende Woche.",
     excerptEn: "Print files and briefing in the Marketing Hub. Delivery next week.",
-    author: "Sara Lindner",
-    authorRole: "Brand & Social",
+    author: "Louis Kamppeter",
+    authorRole: "Marketing & Active Ops",
     publishedAt: dayAgo(7),
   },
   {
@@ -165,8 +165,8 @@ export const HQ_NEWS: HQNewsItem[] = [
       "Akustische Acts bis 22:00 ohne Sondergenehmigung möglich. Beschallung bis 78 dB.",
     excerptEn:
       "Acoustic acts allowed until 10pm without special permit. Max 78 dB.",
-    author: "Dr. Anke Vogel",
-    authorRole: "Compliance",
+    author: "Tomasz Kaplanski",
+    authorRole: "Facility",
     publishedAt: dayAgo(9),
   },
 ];
