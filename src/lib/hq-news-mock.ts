@@ -15,6 +15,8 @@ export interface HQNewsItem {
   pinned?: boolean;
   requiresAck?: boolean;
   attachments?: { label: string; url: string }[];
+  /** Empfänger-Filialen. undefined oder leeres Array = an alle Filialen. */
+  pubIds?: string[];
 }
 
 export const NEWS_CATEGORY_META: Record<
