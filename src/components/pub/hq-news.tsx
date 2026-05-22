@@ -44,26 +44,28 @@ export function HQNews() {
     setRead(loadSet(READ_KEY));
   }, []);
 
+  const allNews = useHQNews();
+
   const pinnedItem = useMemo(
-    () => [...HQ_NEWS].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt)).find((n) => n.pinned),
-    []
+    () => [...allNews].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt)).find((n) => n.pinned),
+    [allNews]
   );
 
   const feed = useMemo(() => {
-    return HQ_NEWS
+    return allNews
       .filter((n) => n.id !== pinnedItem?.id)
       .filter((n) => filter === "all" || n.category === filter)
       .sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt));
-  }, [filter, pinnedItem?.id]);
+  }, [allNews, filter, pinnedItem?.id]);
 
   const counts = useMemo(() => {
     const c: Record<NewsCategory | "all", number> = {
-      all: HQ_NEWS.length,
+      all: allNews.length,
       urgent: 0, marketing: 0, product: 0, event: 0, policy: 0, ops: 0,
     };
-    HQ_NEWS.forEach((n) => { c[n.category] += 1; });
+    allNews.forEach((n) => { c[n.category] += 1; });
     return c;
-  }, []);
+  }, [allNews]);
 
   const ackPinned = () => {
     if (!pinnedItem) return;
