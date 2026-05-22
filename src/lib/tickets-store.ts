@@ -102,6 +102,6 @@ export function useTickets(): Ticket[] {
   return useSyncExternalStore(
     ticketsStore.subscribe,
     ticketsStore.get,
-    ticketsStore.get,
+    ticketsStore.getServerSnapshot,
   );
 }
