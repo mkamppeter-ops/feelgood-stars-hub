@@ -11,7 +11,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   Trophy, Gauge, Star, TrendingUp, MapPin, ArrowUp, Sparkles, Globe, Smartphone,
-  LayoutDashboard, Ticket, GraduationCap, Megaphone, Users, Newspaper,
+  LayoutDashboard, Ticket, GraduationCap, Megaphone, Users, Newspaper, Package,
 } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
@@ -21,6 +21,7 @@ import { SalesOps } from "@/components/sales-ops";
 import { HQConnect } from "@/components/pub/hq-connect";
 import { Academy } from "@/components/pub/academy";
 import { MarketingHub } from "@/components/pub/marketing-hub";
+import { PromoShop } from "@/components/pub/promo-shop";
 import { TeamHR } from "@/components/pub/team-hr";
 import { HQNews } from "@/components/pub/hq-news";
 import { useT } from "@/lib/use-t";
@@ -142,6 +143,7 @@ function PubLocalView() {
             <TabsTrigger value="hq"><Ticket className="h-4 w-4 mr-1.5" />{tt("HQ Connect", "HQ Connect")}</TabsTrigger>
             <TabsTrigger value="academy"><GraduationCap className="h-4 w-4 mr-1.5" />{tt("Academy", "Academy")}</TabsTrigger>
             <TabsTrigger value="marketing"><Megaphone className="h-4 w-4 mr-1.5" />{tt("Marketing Hub", "Marketing Hub")}</TabsTrigger>
+            <TabsTrigger value="werbemittel"><Package className="h-4 w-4 mr-1.5" />{tt("Werbemittel-Shop", "Promo Shop")}</TabsTrigger>
             <TabsTrigger value="hr"><Users className="h-4 w-4 mr-1.5" />{tt("Team & HR", "Team & HR")}</TabsTrigger>
           </TabsList>
 
@@ -345,6 +347,7 @@ function PubLocalView() {
           <TabsContent value="hq" className="mt-0"><HQConnect /></TabsContent>
           <TabsContent value="academy" className="mt-0"><Academy /></TabsContent>
           <TabsContent value="marketing" className="mt-0"><MarketingHub /></TabsContent>
+          <TabsContent value="werbemittel" className="mt-0"><PromoShop pubId={effectivePubId} pubName={pub.name} /></TabsContent>
           <TabsContent value="hr" className="mt-0"><TeamHR /></TabsContent>
         </Tabs>
       </main>
