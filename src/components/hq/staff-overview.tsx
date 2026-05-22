@@ -130,6 +130,57 @@ export function StaffOverview() {
         </Card>
       )}
 
+      {/* Personalakten */}
+      <Card>
+        <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle className="text-base">Personalakten</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Stammdaten, Vertrag, Steuer/Bank — Quelle für den P&amp;I-Lohnexport an Supervista.
+            </p>
+          </div>
+          <Button size="sm" onClick={openNew}>
+            <UserPlus className="h-4 w-4 mr-1.5" /> Neuer Mitarbeiter
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="max-h-[280px] overflow-y-auto divide-y">
+            {Object.values(staffMap).length === 0 && !loading && (
+              <div className="px-4 py-6 text-sm text-muted-foreground text-center">
+                Noch keine Mitarbeiter angelegt. Klicke auf „Neuer Mitarbeiter" um zu starten.
+              </div>
+            )}
+            {Object.values(staffMap)
+              .sort((a, b) => a.last_name.localeCompare(b.last_name))
+              .map((s) => {
+                const pub = PUBS.find((p) => p.id === s.pub_id);
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => openEdit(s.id)}
+                    className="w-full px-4 py-2 flex items-center justify-between hover:bg-muted/40 text-left text-sm"
+                  >
+                    <div>
+                      <div className="font-medium">
+                        {s.last_name}, {s.first_name}
+                        {!s.active && (
+                          <Badge variant="outline" className="ml-2 text-[10px]">inaktiv</Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {s.role} · {pub?.name ?? s.pub_id}
+                        {s.pi_external_id ? ` · #${s.pi_external_id}` : ""}
+                      </div>
+                    </div>
+                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                );
+              })}
+          </div>
+        </CardContent>
+      </Card>
+
+
       <Card>
         <CardContent className="p-0 overflow-x-auto">
           {loading ? (
