@@ -54,6 +54,10 @@ export interface Employee {
   vacationUsedDays: number;
   sickDaysYear: number;
   avgWorkedHoursWeek: number; // tatsächlich gearbeitet im Schnitt / Woche
+  /** E.164 phone number for call / WhatsApp deep links */
+  phone: string;
+  /** true if this employee is the bar manager of the pub */
+  isManager?: boolean;
 }
 
 // Schicht-Übersicht je Pub
