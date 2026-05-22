@@ -1,0 +1,60 @@
+import { useSyncExternalStore } from "react";
+
+export type TicketStatus = "open" | "progress" | "done";
+export type TicketCategory = "it" | "hr" | "facility" | "logistics";
+export type TicketPriority = "low" | "med" | "high";
+
+export interface Ticket {
+  id: string;
+  title: string;
+  desc: string;
+  category: TicketCategory;
+  status: TicketStatus;
+  priority: TicketPriority;
+  author: string;
+  pub?: string;
+  ago: string;
+}
+
+const INITIAL: Ticket[] = [
+  { id: "T-104", title: "Kasse Terminal 2 hängt sich auf", desc: "Beim Stornieren friert das Display ein.", category: "it", status: "open", priority: "high", author: "Lisa M.", pub: "München Zentrum", ago: "vor 2h" },
+  { id: "T-103", title: "Neue Schürzen fehlen", desc: "3 Mitarbeiter ohne saubere Schürzen für Wochenende.", category: "hr", status: "open", priority: "med", author: "Tom B.", pub: "München Zentrum", ago: "vor 5h" },
+  { id: "T-102", title: "Zapfanlage tropft", desc: "Hahn 4 zieht nach. Sammelschale läuft schnell voll.", category: "facility", status: "progress", priority: "high", author: "Markus K.", pub: "Berlin Mitte", ago: "gestern" },
+  { id: "T-101", title: "Biernachschub Augustiner", desc: "Bestellung für Mi noch nicht bestätigt.", category: "logistics", status: "progress", priority: "med", author: "Sarah L.", pub: "Hamburg Hafen", ago: "gestern" },
+  { id: "T-100", title: "WLAN Gäste-Netz instabil", desc: "Mehrfach Beschwerden am Wochenende.", category: "it", status: "progress", priority: "low", author: "Lisa M.", pub: "München Zentrum", ago: "vor 2 Tagen" },
+  { id: "T-099", title: "Stuhl Tisch 7 wackelt", desc: "Schraube nachziehen oder austauschen.", category: "facility", status: "done", priority: "low", author: "Tom B.", pub: "München Zentrum", ago: "vor 3 Tagen" },
+  { id: "T-098", title: "Onboarding neuer Aushilfskraft", desc: "Unterlagen fehlen noch im System.", category: "hr", status: "done", priority: "med", author: "Markus K.", pub: "Berlin Mitte", ago: "vor 4 Tagen" },
+  { id: "T-097", title: "Lieferung Reinigungsmittel", desc: "Eingegangen und eingeräumt.", category: "logistics", status: "done", priority: "low", author: "Sarah L.", pub: "Hamburg Hafen", ago: "vor 5 Tagen" },
+];
+
+let state: Ticket[] = INITIAL;
+const listeners = new Set<() => void>();
+
+function emit() {
+  listeners.forEach((l) => l());
+}
+
+export const ticketsStore = {
+  get: () => state,
+  subscribe: (l: () => void) => {
+    listeners.add(l);
+    return () => listeners.delete(l);
+  },
+  add: (t: Omit<Ticket, "id" | "ago" | "status"> & { status?: TicketStatus }) => {
+    const id = `T-${String(Math.floor(Math.random() * 900) + 100)}`;
+    state = [{ ...t, id, status: t.status ?? "open", ago: "gerade" }, ...state];
+    emit();
+  },
+  setStatus: (id: string, status: TicketStatus) => {
+    state = state.map((t) => (t.id === id ? { ...t, status } : t));
+    emit();
+  },
+};
+
+export function useTickets(): Ticket[] {
+  return useSyncExternalStore(
+    ticketsStore.subscribe,
+    ticketsStore.get,
+    ticketsStore.get,
+  );
+}
