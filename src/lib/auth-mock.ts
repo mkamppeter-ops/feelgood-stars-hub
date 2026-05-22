@@ -105,15 +105,14 @@ export const ROLE_DEFAULT_TAB: Partial<Record<Role, string>> = {
 
 /** Owner label per tab — shown as subtle "Owner: …" pill next to the page title. */
 export const TAB_OWNER: Record<string, Role> = {
-  overview:    "hq_admin",
+  // overview & pubs sind geteilte Übersichten — kein einzelner Lead
   marketing:   "hq_admin",
   "active-ops":"hq_admin",
-  pubs:        "hq_admin",
+  events:      "hq_admin",
   hr:          "ops_admin",
   sortiment:   "ops_admin",
   sales:       "ops_admin",
   feedback:    "ops_admin",
-  events:      "hq_admin",
   "hq-news":   "ops_admin",
   inbox:       "ops_admin", // multi-owner (per category); default lead = ops
   settings:    "it_admin",
