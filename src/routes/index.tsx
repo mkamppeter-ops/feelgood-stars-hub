@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Building2, Beer, User, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Building2, Beer, User, Eye, EyeOff, Lock, Mail, Laptop, Users as UsersIcon, Wrench, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
