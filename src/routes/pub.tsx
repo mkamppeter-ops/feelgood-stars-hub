@@ -11,7 +11,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   Trophy, Gauge, Star, TrendingUp, MapPin, ArrowUp, Sparkles, Globe, Smartphone,
-  LayoutDashboard, Ticket, GraduationCap, Users, Newspaper, Package, CalendarCheck,
+  LayoutDashboard, Ticket, GraduationCap, Users, Newspaper, Package, CalendarCheck, CalendarDays,
 } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
@@ -23,6 +23,7 @@ import { Academy } from "@/components/pub/academy";
 import { PubEvents } from "@/components/pub/pub-events";
 import { PromoShop } from "@/components/pub/promo-shop";
 import { TeamHR } from "@/components/pub/team-hr";
+import { StaffSchedule } from "@/components/pub/staff-schedule";
 import { HQNews } from "@/components/pub/hq-news";
 import { useT } from "@/lib/use-t";
 
@@ -144,6 +145,7 @@ function PubLocalView() {
             <TabsTrigger value="academy"><GraduationCap className="h-4 w-4 mr-1.5" />{tt("Academy", "Academy")}</TabsTrigger>
             <TabsTrigger value="events"><CalendarCheck className="h-4 w-4 mr-1.5" />{tt("Events", "Events")}</TabsTrigger>
             <TabsTrigger value="werbemittel"><Package className="h-4 w-4 mr-1.5" />{tt("Werbemittel-Shop", "Promo Shop")}</TabsTrigger>
+            <TabsTrigger value="staff"><CalendarDays className="h-4 w-4 mr-1.5" />{tt("Personalplan", "Schedule")}</TabsTrigger>
             <TabsTrigger value="hr"><Users className="h-4 w-4 mr-1.5" />{tt("Team & HR", "Team & HR")}</TabsTrigger>
           </TabsList>
 
@@ -348,6 +350,7 @@ function PubLocalView() {
           <TabsContent value="academy" className="mt-0"><Academy /></TabsContent>
           <TabsContent value="events" className="mt-0"><PubEvents pubName={pub.name} /></TabsContent>
           <TabsContent value="werbemittel" className="mt-0"><PromoShop pubId={effectivePubId} pubName={pub.name} /></TabsContent>
+          <TabsContent value="staff" className="mt-0"><StaffSchedule pubId={effectivePubId} pubName={pub.name} /></TabsContent>
           <TabsContent value="hr" className="mt-0"><TeamHR /></TabsContent>
         </Tabs>
       </main>

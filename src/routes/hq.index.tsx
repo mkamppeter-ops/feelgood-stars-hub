@@ -11,7 +11,7 @@ import {
 
 import {
   Trophy, TrendingUp, Users, Star, Gauge, Phone, LayoutDashboard,
-  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone, Gift, Activity, Megaphone, UserCog,
+  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone, Gift, Activity, Megaphone, UserCog, CalendarDays,
 } from "lucide-react";
 import { Marketing } from "@/components/marketing";
 import { PUBS, computeScore, getAppReach } from "@/lib/pubs-mock";
@@ -30,6 +30,7 @@ import { DataSettings } from "@/components/data-settings";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { TicketInbox } from "@/components/hq/ticket-inbox";
 import { HROverview } from "@/components/hq/hr-overview";
+import { StaffOverview } from "@/components/hq/staff-overview";
 import { HQNewsComposer } from "@/components/hq/hq-news-composer";
 import { Inbox } from "lucide-react";
 import { useSession, ROLE_TICKET_CATEGORY, ROLE_PERSON, ROLE_DEFAULT_TAB, TAB_OWNER, type Role } from "@/lib/auth-mock";
@@ -114,6 +115,7 @@ function HQPage() {
             { icon: LayoutDashboard, label: t("nav.overview"), tab: "overview", badge: undefined as number | undefined },
             { icon: Inbox, label: t("nav.inbox", "Inbox"), tab: "inbox", badge: myTicketCount },
             { icon: UserCog, label: t("nav.hr", "HR"), tab: "hr", badge: undefined as number | undefined },
+            { icon: CalendarDays, label: t("nav.staff", "Personalplan"), tab: "staff", badge: undefined as number | undefined },
             { icon: Building2, label: t("nav.pubs"), tab: "pubs", badge: undefined as number | undefined },
             { icon: Activity, label: t("nav.activeOps"), tab: "active-ops", badge: undefined as number | undefined },
             { icon: TrendingUp, label: t("nav.salesOps"), tab: "sales", badge: undefined as number | undefined },
@@ -222,6 +224,7 @@ function HQPage() {
                 { value: "sortiment", label: t("nav.sortiment"), icon: null },
                 { value: "events", label: t("nav.events"), icon: null },
                 { value: "hr", label: t("nav.hr", "HR"), icon: UserCog },
+                { value: "staff", label: t("nav.staff", "Personalplan"), icon: CalendarDays },
                 { value: "marketing", label: t("nav.marketing", "Marketing"), icon: Megaphone },
                 { value: "hq-news", label: t("nav.hqNews", "HQ News"), icon: Megaphone },
 
@@ -261,6 +264,11 @@ function HQPage() {
             <TabsContent value="hr" className="mt-0">
               <HROverview range={range} />
             </TabsContent>
+
+            <TabsContent value="staff" className="mt-0">
+              <StaffOverview />
+            </TabsContent>
+
 
             <TabsContent value="inbox" className="mt-0">
               <TicketInbox />

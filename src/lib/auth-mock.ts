@@ -110,6 +110,7 @@ export const TAB_OWNER: Record<string, Role> = {
   "active-ops":"hq_admin",
   events:      "hq_admin",
   hr:          "ops_admin",
+  staff:       "ops_admin", // Personalplan — Lead Felix & Paul
   sortiment:   "ops_admin",
   sales:       "ops_admin",
   feedback:    "ops_admin",
