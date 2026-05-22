@@ -11,7 +11,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   Trophy, Gauge, Star, TrendingUp, MapPin, ArrowUp, Sparkles, Globe, Smartphone,
-  LayoutDashboard, Ticket, GraduationCap, Megaphone, Users,
+  LayoutDashboard, Ticket, GraduationCap, Megaphone, Users, Newspaper,
 } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
@@ -22,6 +22,7 @@ import { HQConnect } from "@/components/pub/hq-connect";
 import { Academy } from "@/components/pub/academy";
 import { MarketingHub } from "@/components/pub/marketing-hub";
 import { TeamHR } from "@/components/pub/team-hr";
+import { HQNews } from "@/components/pub/hq-news";
 import { useT } from "@/lib/use-t";
 
 import { RequireRole, LogoutButton } from "@/components/auth-guard";
@@ -137,6 +138,7 @@ function PubLocalView() {
         <Tabs value={outerTab} onValueChange={setOuterTab} className="space-y-6">
           <TabsList className="flex flex-wrap h-auto p-1">
             <TabsTrigger value="dashboard"><LayoutDashboard className="h-4 w-4 mr-1.5" />{tt("Dashboard", "Dashboard")}</TabsTrigger>
+            <TabsTrigger value="news"><Newspaper className="h-4 w-4 mr-1.5" />{tt("HQ News & Briefings", "HQ News & Briefings")}</TabsTrigger>
             <TabsTrigger value="hq"><Ticket className="h-4 w-4 mr-1.5" />{tt("HQ Connect", "HQ Connect")}</TabsTrigger>
             <TabsTrigger value="academy"><GraduationCap className="h-4 w-4 mr-1.5" />{tt("Academy", "Academy")}</TabsTrigger>
             <TabsTrigger value="marketing"><Megaphone className="h-4 w-4 mr-1.5" />{tt("Marketing Hub", "Marketing Hub")}</TabsTrigger>
@@ -339,6 +341,7 @@ function PubLocalView() {
         )}
           </TabsContent>
 
+          <TabsContent value="news" className="mt-0"><HQNews /></TabsContent>
           <TabsContent value="hq" className="mt-0"><HQConnect /></TabsContent>
           <TabsContent value="academy" className="mt-0"><Academy /></TabsContent>
           <TabsContent value="marketing" className="mt-0"><MarketingHub /></TabsContent>
