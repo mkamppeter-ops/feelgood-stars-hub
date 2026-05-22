@@ -380,3 +380,203 @@ function KpiTile({ label, value, tone }: { label: string; value: string; tone?: 
     </Card>
   );
 }
+
+const EMP_LABEL: Record<EmploymentType, { de: string; en: string }> = {
+  fulltime: { de: "Vollzeit", en: "Full-time" },
+  parttime: { de: "Teilzeit", en: "Part-time" },
+  minijob: { de: "Minijob", en: "Mini-job" },
+  student: { de: "Werkstudent", en: "Student" },
+};
+
+function EmployeeRoster({
+  range,
+  periodLabel,
+  shiftFactor,
+}: {
+  range: DateRange;
+  periodLabel: string;
+  shiftFactor: number;
+}) {
+  const tt = useT();
+  const [query, setQuery] = useState("");
+  const [pubFilter, setPubFilter] = useState<string>("all");
+  const [empFilter, setEmpFilter] = useState<string>("all");
+
+  const rows = useMemo(() => {
+    return EMPLOYEES
+      .filter((e) => pubFilter === "all" || e.pubId === pubFilter)
+      .filter((e) => empFilter === "all" || e.employment === empFilter)
+      .filter((e) =>
+        query.trim() === ""
+          ? true
+          : e.name.toLowerCase().includes(query.toLowerCase()) ||
+            e.role.toLowerCase().includes(query.toLowerCase())
+      )
+      .map((e) => {
+        const target = +(e.contractHoursWeek * shiftFactor).toFixed(1);
+        const actual = +(e.avgWorkedHoursWeek * shiftFactor).toFixed(1);
+        const diff = +(actual - target).toFixed(1);
+        return { ...e, periodTarget: target, periodActual: actual, periodDiff: diff };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [query, pubFilter, empFilter, shiftFactor]);
+
+  const totals = useMemo(() => {
+    const target = rows.reduce((s, r) => s + r.periodTarget, 0);
+    const actual = rows.reduce((s, r) => s + r.periodActual, 0);
+    const balance = rows.reduce((s, r) => s + r.balanceHours, 0);
+    return { target: +target.toFixed(0), actual: +actual.toFixed(0), balance: +balance.toFixed(1) };
+  }, [rows]);
+
+  return (
+    <Card className="shadow-sm">
+      <CardHeader className="space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle className="text-base">{tt("Mitarbeiter-Übersicht", "Employee overview")}</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              {tt("Arbeitszeiten, Über-/Minusstunden, Urlaub & Krankheit", "Working time, overtime/minus, vacation & sick days")}
+              {" · "}
+              <span className="font-medium text-foreground">{periodLabel}</span>
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={tt("Suche…", "Search…")}
+                className="h-8 pl-7 w-[180px]"
+              />
+            </div>
+            <Select value={pubFilter} onValueChange={setPubFilter}>
+              <SelectTrigger className="h-8 w-[170px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{tt("Alle Filialen", "All branches")}</SelectItem>
+                {PUBS.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={empFilter} onValueChange={setEmpFilter}>
+              <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{tt("Alle Verträge", "All contracts")}</SelectItem>
+                {(Object.keys(EMP_LABEL) as EmploymentType[]).map((k) => (
+                  <SelectItem key={k} value={k}>{tt(EMP_LABEL[k].de, EMP_LABEL[k].en)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        {/* Totals strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <SumTile label={tt("Personen", "People")} value={String(rows.length)} />
+          <SumTile label={tt("Soll im Zeitraum", "Target in period")} value={`${totals.target} h`} />
+          <SumTile label={tt("Ist im Zeitraum", "Actual in period")} value={`${totals.actual} h`} />
+          <SumTile
+            label={tt("Stundenkonto gesamt", "Hours balance total")}
+            value={`${totals.balance > 0 ? "+" : ""}${totals.balance} h`}
+            tone={totals.balance >= 0 ? "emerald" : "red"}
+          />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{tt("Mitarbeiter", "Employee")}</TableHead>
+                <TableHead className="hidden md:table-cell">{tt("Filiale", "Branch")}</TableHead>
+                <TableHead className="hidden lg:table-cell">{tt("Vertrag", "Contract")}</TableHead>
+                <TableHead className="text-right">{tt("Soll (h)", "Target (h)")}</TableHead>
+                <TableHead className="text-right">{tt("Ist (h)", "Actual (h)")}</TableHead>
+                <TableHead className="text-right">{tt("Diff", "Diff")}</TableHead>
+                <TableHead className="text-right">{tt("Stundenkonto", "Balance")}</TableHead>
+                <TableHead className="text-right hidden sm:table-cell">{tt("Urlaub", "Vacation")}</TableHead>
+                <TableHead className="text-right hidden sm:table-cell">{tt("Krank (J.)", "Sick (yr)")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8 text-sm">
+                    {tt("Keine Mitarbeiter gefunden", "No employees found")}
+                  </TableCell>
+                </TableRow>
+              )}
+              {rows.map((r) => {
+                const diffPos = r.periodDiff >= 0;
+                const balPos = r.balanceHours >= 0;
+                const vacLeft = r.vacationTotalDays - r.vacationUsedDays;
+                return (
+                  <TableRow key={r.id}>
+                    <TableCell>
+                      <div className="font-medium">{r.name}</div>
+                      <div className="text-[11px] text-muted-foreground">{r.role}</div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                      {getPubName(r.pubId)}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <Badge variant="outline" className="font-normal text-[11px]">
+                        {tt(EMP_LABEL[r.employment].de, EMP_LABEL[r.employment].en)} · {r.contractHoursWeek}h
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">{r.periodTarget}</TableCell>
+                    <TableCell className="text-right tabular-nums">{r.periodActual}</TableCell>
+                    <TableCell className={`text-right tabular-nums font-medium ${diffPos ? "text-emerald-600" : "text-amber-600"}`}>
+                      <span className="inline-flex items-center gap-0.5 justify-end">
+                        {diffPos ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                        {diffPos ? "+" : ""}{r.periodDiff}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Badge
+                        variant="outline"
+                        className={`tabular-nums font-medium ${
+                          balPos
+                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-200"
+                            : "bg-red-500/10 text-red-600 border-red-200"
+                        }`}
+                      >
+                        {balPos ? "+" : ""}{r.balanceHours} h
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums hidden sm:table-cell text-xs">
+                      <span className="text-foreground">{r.vacationUsedDays}</span>
+                      <span className="text-muted-foreground">/{r.vacationTotalDays}</span>
+                      <div className="text-[10px] text-muted-foreground">{vacLeft} {tt("offen", "left")}</div>
+                    </TableCell>
+                    <TableCell className={`text-right tabular-nums hidden sm:table-cell ${r.sickDaysYear >= 6 ? "text-amber-600 font-medium" : "text-muted-foreground"}`}>
+                      {r.sickDaysYear}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+        <p className="text-[11px] text-muted-foreground mt-3">
+          {tt(
+            "Hinweis: Soll/Ist im Zeitraum sind aus den vertraglichen Wochenstunden hochgerechnet. Das Stundenkonto ist der aktuelle Saldo (kumuliert), unabhängig vom Filter.",
+            "Note: Target/Actual in period are extrapolated from contractual weekly hours. The hours balance is the current cumulative saldo, independent of the filter."
+          )}
+          {" "}
+          <span className="opacity-70">({range})</span>
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SumTile({ label, value, tone }: { label: string; value: string; tone?: "emerald" | "red" }) {
+  const toneCls = tone === "emerald" ? "text-emerald-600" : tone === "red" ? "text-red-600" : "text-foreground";
+  return (
+    <div className="rounded-md border bg-card px-3 py-2">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className={`text-sm font-semibold tabular-nums ${toneCls}`}>{value}</div>
+    </div>
+  );
+}
