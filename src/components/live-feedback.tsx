@@ -129,15 +129,6 @@ function resolveGoogleStatus(item: FeedbackItem, customerLatest: Map<string, Goo
 
 export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
   const tt = useT();
-  const [source, setSource] = useState<"all" | "app" | "google">("all");
-  const [rating, setRating] = useState<"all" | "low" | "high">("all");
-  const [pubId, setPubId] = useState<string>(lockedPubId ?? "all");
-  const [done, setDone] = useState<Set<string>>(new Set());
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-
-  // Local state für Reward-Flows
-export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
-  const tt = useT();
   const lang: "de" | "en" = tt("de", "en") as "de" | "en";
   const [source, setSource] = useState<"all" | "app" | "google">("all");
   const [rating, setRating] = useState<"all" | "low" | "high">("all");
@@ -145,6 +136,11 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
   const [done, setDone] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [liveItems, setLiveItems] = useState<FeedbackItem[]>([]);
+
+  // Local state für Reward-Flows
+  const [rewards, setRewards] = useState<Record<string, ApologyReward>>({});
+  // Pro Feedback: aktueller Google-Status (überschreibt mock-default)
+  const [googleStatus, setGoogleStatus] = useState<Record<string, GoogleStatus>>({});
 
   // Pull real customer-submitted feedbacks + subscribe to new ones
   useEffect(() => {
