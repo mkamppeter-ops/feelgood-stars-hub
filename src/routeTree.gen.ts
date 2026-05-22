@@ -16,6 +16,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HqIndexRouteImport } from './routes/hq.index'
 import { Route as HqPubIdRouteImport } from './routes/hq.$pubId'
+import { Route as ApiPublicTimemotoWebhookRouteImport } from './routes/api/public/timemoto-webhook'
 
 const PubRoute = PubRouteImport.update({
   id: '/pub',
@@ -52,6 +53,12 @@ const HqPubIdRoute = HqPubIdRouteImport.update({
   path: '/hq/$pubId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTimemotoWebhookRoute =
+  ApiPublicTimemotoWebhookRouteImport.update({
+    id: '/api/public/timemoto-webhook',
+    path: '/api/public/timemoto-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/pub': typeof PubRoute
   '/hq/$pubId': typeof HqPubIdRoute
   '/hq/': typeof HqIndexRoute
+  '/api/public/timemoto-webhook': typeof ApiPublicTimemotoWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +78,7 @@ export interface FileRoutesByTo {
   '/pub': typeof PubRoute
   '/hq/$pubId': typeof HqPubIdRoute
   '/hq': typeof HqIndexRoute
+  '/api/public/timemoto-webhook': typeof ApiPublicTimemotoWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +89,7 @@ export interface FileRoutesById {
   '/pub': typeof PubRoute
   '/hq/$pubId': typeof HqPubIdRoute
   '/hq/': typeof HqIndexRoute
+  '/api/public/timemoto-webhook': typeof ApiPublicTimemotoWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,8 +101,17 @@ export interface FileRouteTypes {
     | '/pub'
     | '/hq/$pubId'
     | '/hq/'
+    | '/api/public/timemoto-webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/feedback' | '/login' | '/pub' | '/hq/$pubId' | '/hq'
+  to:
+    | '/'
+    | '/admin'
+    | '/feedback'
+    | '/login'
+    | '/pub'
+    | '/hq/$pubId'
+    | '/hq'
+    | '/api/public/timemoto-webhook'
   id:
     | '__root__'
     | '/'
@@ -102,6 +121,7 @@ export interface FileRouteTypes {
     | '/pub'
     | '/hq/$pubId'
     | '/hq/'
+    | '/api/public/timemoto-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -112,6 +132,7 @@ export interface RootRouteChildren {
   PubRoute: typeof PubRoute
   HqPubIdRoute: typeof HqPubIdRoute
   HqIndexRoute: typeof HqIndexRoute
+  ApiPublicTimemotoWebhookRoute: typeof ApiPublicTimemotoWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -165,6 +186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HqPubIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/timemoto-webhook': {
+      id: '/api/public/timemoto-webhook'
+      path: '/api/public/timemoto-webhook'
+      fullPath: '/api/public/timemoto-webhook'
+      preLoaderRoute: typeof ApiPublicTimemotoWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -176,6 +204,7 @@ const rootRouteChildren: RootRouteChildren = {
   PubRoute: PubRoute,
   HqPubIdRoute: HqPubIdRoute,
   HqIndexRoute: HqIndexRoute,
+  ApiPublicTimemotoWebhookRoute: ApiPublicTimemotoWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
