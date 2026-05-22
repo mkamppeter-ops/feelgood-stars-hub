@@ -213,43 +213,44 @@ function HQPage() {
         <main className="flex-1 p-6 overflow-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList>
-              <TabsTrigger value="overview">{t("nav.overview")}</TabsTrigger>
-              <TabsTrigger value="inbox" className="gap-2">
-                <Inbox className="h-3.5 w-3.5" />
-                {t("nav.inbox", "Inbox")}
-                {myTicketCount > 0 && (
-                  <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">
-                    {myTicketCount}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="pubs" className="gap-1.5">
-                <Building2 className="h-3.5 w-3.5" />
-                {t("nav.pubs")}
-              </TabsTrigger>
-              <TabsTrigger value="active-ops" className="gap-1.5">
-                <Activity className="h-3.5 w-3.5" />
-                {t("nav.activeOps")}
-              </TabsTrigger>
-              <TabsTrigger value="sales">{t("nav.sales")}</TabsTrigger>
-              <TabsTrigger value="sortiment">{t("nav.sortiment")}</TabsTrigger>
-              <TabsTrigger value="events">{t("nav.events")}</TabsTrigger>
-              <TabsTrigger value="hr" className="gap-1.5">
-                <UserCog className="h-3.5 w-3.5" />
-                {t("nav.hr", "HR")}
-              </TabsTrigger>
-              <TabsTrigger value="marketing" className="gap-1.5">
-                <Megaphone className="h-3.5 w-3.5" />
-                {t("nav.marketing", "Marketing")}
-              </TabsTrigger>
-              <TabsTrigger value="hq-news" className="gap-1.5">
-                <Megaphone className="h-3.5 w-3.5" />
-                {t("nav.hqNews", "HQ News")}
-              </TabsTrigger>
-              <TabsTrigger value="feedback" className="gap-2">
-                {t("nav.liveFeedback")}
-                <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
-              </TabsTrigger>
+              {([
+                { value: "overview", label: t("nav.overview"), icon: null },
+                { value: "inbox", label: t("nav.inbox", "Inbox"), icon: Inbox, badge: myTicketCount },
+                { value: "pubs", label: t("nav.pubs"), icon: Building2 },
+                { value: "active-ops", label: t("nav.activeOps"), icon: Activity },
+                { value: "sales", label: t("nav.sales"), icon: null },
+                { value: "sortiment", label: t("nav.sortiment"), icon: null },
+                { value: "events", label: t("nav.events"), icon: null },
+                { value: "hr", label: t("nav.hr", "HR"), icon: UserCog },
+                { value: "marketing", label: t("nav.marketing", "Marketing"), icon: Megaphone },
+                { value: "hq-news", label: t("nav.hqNews", "HQ News"), icon: Megaphone },
+                { value: "feedback", label: t("nav.liveFeedback"), icon: null, badge: 3, badgeAlways: true },
+              ] as const).map((it) => {
+                const Icon = it.icon;
+                const owner = TAB_OWNER[it.value];
+                const isMine = !!role && owner === role;
+                return (
+                  <TabsTrigger
+                    key={it.value}
+                    value={it.value}
+                    className={`gap-1.5 ${isMine ? "ring-1 ring-primary/40 bg-primary/5 data-[state=active]:ring-primary" : ""}`}
+                    title={isMine ? t("hq.owner.yours", "Dein Bereich") : owner ? `${t("hq.owner.label", "Lead")}: ${ROLE_PERSON[owner].name}` : undefined}
+                  >
+                    {Icon && <Icon className="h-3.5 w-3.5" />}
+                    {it.label}
+                    {isMine && person && (
+                      <span className="inline-flex items-center justify-center h-4 px-1 rounded bg-primary/20 text-primary text-[9px] font-semibold tracking-wider">
+                        {person.initials}
+                      </span>
+                    )}
+                    {"badge" in it && typeof it.badge === "number" && (("badgeAlways" in it && it.badgeAlways) || it.badge > 0) && (
+                      <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">
+                        {it.badge}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
 
             <TabsContent value="hq-news" className="mt-0">

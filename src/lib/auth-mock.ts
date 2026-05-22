@@ -113,7 +113,7 @@ export const TAB_OWNER: Record<string, Role> = {
   sortiment:   "ops_admin",
   sales:       "ops_admin",
   feedback:    "ops_admin",
-  events:      "ops_admin",
+  events:      "hq_admin",
   "hq-news":   "ops_admin",
   inbox:       "ops_admin", // multi-owner (per category); default lead = ops
   settings:    "it_admin",
