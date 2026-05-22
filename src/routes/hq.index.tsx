@@ -199,11 +199,19 @@ function HQPage() {
               <TabsTrigger value="sales">{t("nav.sales")}</TabsTrigger>
               <TabsTrigger value="sortiment">{t("nav.sortiment")}</TabsTrigger>
               <TabsTrigger value="events">{t("nav.events")}</TabsTrigger>
+              <TabsTrigger value="hr" className="gap-1.5">
+                <UserCog className="h-3.5 w-3.5" />
+                {t("nav.hr", "HR")}
+              </TabsTrigger>
               <TabsTrigger value="feedback" className="gap-2">
                 {t("nav.liveFeedback")}
                 <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="hr" className="mt-0">
+              <HROverview />
+            </TabsContent>
 
             <TabsContent value="inbox" className="mt-0">
               <TicketInbox />
