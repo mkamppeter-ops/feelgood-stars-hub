@@ -126,7 +126,12 @@ function HQPage() {
                 }`}
               >
                 <Icon className="h-4 w-4" />
-                {label}
+                <span className="flex-1 text-left">{label}</span>
+                {typeof badge === "number" && badge > 0 && (
+                  <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">
+                    {badge}
+                  </span>
+                )}
               </button>
             );
           })}
