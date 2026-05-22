@@ -1,80 +1,92 @@
-# QA-Check vor Team-Sharing
+## Ziel
 
-Dev-Server läuft sauber (HTTP 200, keine aktuellen Build-Fehler). Die zwei realen Probleme sind ein **Hydration-Bug** und **Übersetzungslücken** in den neuesten Features (Personalplan, Teile von Data Settings).
+Pub&Go verwaltet alle Mitarbeiterstammdaten **selbst in Pub Ops**. Einmal im Monat (und bei Neueinstellungen/Änderungen) erzeugen wir einen **P&I-kompatiblen Export**, den die Supervista-Lohnbuchhaltung direkt einliest. Keine dritte HR-Software, keine Doppelpflege.
 
----
+## Architektur
 
-## 🔴 1. Hydration-Mismatch beim Sprach-Switcher
+```text
+   ┌──────────────────────────────────────────┐
+   │   Pub Ops (Single Source of Truth)      │
+   │   • Personalakte (Stammdaten + Vertrag) │
+   │   • Dokumente (Vertrag, Bescheinigungen)│
+   │   • Schichten + Ist-Stunden             │
+   └──────────────┬───────────────────────────┘
+                  │
+       ┌──────────┴──────────┐
+       ▼                     ▼
+  Stammdaten-Export     Monats-Stunden-Export
+  (bei Neueinst./       (zum Monatsende,
+   Änderung)             P&I-Format)
+       │                     │
+       ▼                     ▼
+   ┌──────────────────────────────┐
+   │ Supervista Lohnbuchhaltung   │
+   │ (P&I LogaHR, Mandant Pub&Go) │
+   └──────────────────────────────┘
+```
 
-**Beobachtet** (Runtime-Errors): `+ title="Sprache"` / `- title="Language"` und `+ DE` / `- EN` direkt nach dem Login-Bildschirm.
+## Was zu bauen ist
 
-**Ursache:** `i18next-browser-languagedetector` liest auf dem Client aus `localStorage` (`pubgo.lang`), beim SSR-Rendering existiert aber kein `localStorage` → Server rendert immer `fallbackLng: "de"`. Hat der Nutzer EN gespeichert, springt der Client nach Hydration auf EN um → React-Hydration-Mismatch.
+### 1. DB-Erweiterung `staff_members`
+Neue Felder für die Personalakte (Pflicht für P&I-Export):
+`personnel_number`, `email`, `phone`, `birth_date`, `address_street/zip/city/country`, `iban`, `bic`, `tax_id`, `social_security_number`, `health_insurance`, `tax_class`, `children_allowance`, `religion`, `contract_type` (Vollzeit/Teilzeit/Minijob/Werkstudent/Aushilfe), `weekly_hours`, `hourly_wage`, `start_date`, `end_date`, `notes`.
 
-**Fix:**
-- `LanguageSwitcher` zeigt sprachabhängige Texte erst nach Mount (`useEffect` + `mounted`-State), oder
-- `suppressHydrationWarning` auf dem sprachabhängigen Wrapper + Klartext-Render erst nach Mount für `title`, `DE/EN`-Label und `SelectValue`.
+### 2. Neue Tabelle `staff_documents` + Storage-Bucket
+Für Vertrags-PDFs, Gesundheitszeugnis (§43 IfSG), Belehrungen. Privater Bucket, nur HR-Rolle liest.
 
-Empfehlung: Variante mit `mounted`-State – sauberer, kein Warning-Unterdrücken nötig.
+### 3. Auth + Rollen (DSGVO-Pflicht)
+- Login-Seite (E-Mail + Passwort)
+- Tabelle `user_roles` (`hr_admin`, `pub_manager`, `viewer`) + `has_role`-Funktion
+- Pub-Manager sieht nur Name/Telefon/Schicht — **keine** IBAN, Steuerklasse, Religion
+- HR-Admin (1–2 Personen): Vollzugriff
 
----
+### 4. UI-Erweiterung im HR-Tab
+- **Personalakte-Drawer** pro MA: alle Stammdatenfelder + Dokumenten-Upload
+- **Neueinstellungs-Wizard**: Pflichtfelder-Formular, erzeugt am Ende den Stammdaten-Export für P&I
+- **"Lohn-Export Supervista"** (ersetzt P&I-Connector-Tab): Monatsauswahl → Vorschau-Tabelle → CSV-Download im P&I-Format
 
-## 🟠 2. Personalplan komplett auf Deutsch (keine EN-Variante)
+### 5. P&I-Exporte (zwei Formate)
 
-`src/components/pub/staff-schedule.tsx`, `src/components/hq/staff-overview.tsx` und `src/lib/staff-schedule.ts` nutzen **keine** `useT()`-/`useTranslation()`-Helper. Betroffene Strings:
+**A) Stammdaten-Export** (bei Neueinstellung/Änderung)
+Eine Zeile pro Mitarbeiter mit allen abrechnungsrelevanten Feldern (Personalnr., Name, Adresse, Geburtsdatum, IBAN, Steuer-ID, SV-Nr, KK, Steuerklasse, Kinder, Religion, Vertragsart, Std/Woche, Stundenlohn, Eintritt/Austritt).
 
-**Pub-Ansicht (staff-schedule.tsx):**
-- Header: `Personalplan · {pub}`, `KW {n} · ... aktive Mitarbeiter · Öffnungszeiten: ...`, Button `Heute`, `Mitarbeiter`
-- Empty State: `Noch keine Mitarbeiter gepflegt. Über „Mitarbeiter" anlegen oder später aus P&I synchronisieren.`
-- Tabelle: `Mitarbeiter`, `Stunden gesamt`, `Wochensumme: ... Std.`
-- Editor-Dialog: `Schicht bearbeiten/hinzufügen`, `Slot`, `Von`, `Bis`, `Notiz (optional)`, `Achtung: Schicht liegt außerhalb der Öffnungszeiten ...`, `Löschen`, `Abbrechen`, `Speichern`
-- Toasts: `Schicht gespeichert/entfernt`, `Fehler beim Laden/Speichern/Löschen`, `Bitte Vor- und Nachname angeben`, `Mitarbeiter hinzugefügt`
-- Staff-Manager: `Mitarbeiter verwalten`, `Mitarbeiterstammdaten werden später automatisch aus P&I LogaHR übernommen ...`, `Vorname/Nachname/Rolle`, `Aktiv`, `Deaktiviert`, `Schließen`
+**B) Monats-Stunden-Export** (zum Monatsende)
+Eine Zeile pro MA × Tag × Schichtart mit: Personalnr., Datum, Std, Zuschlagsschlüssel (Nacht/Sonntag/Feiertag), Kostenstelle (Pub).
 
-**HQ-Übersicht (staff-overview.tsx):**
-- `Personalplan · Übersicht`, `Geplante Schichten aller Pubs · Lead: Felix & Paul`
-- KPIs: `Schichten`, `Stunden`, `Pubs geplant`, `Ohne Plan`
-- Warning: `Pubs ohne Schichtplan in KW {n}:`
-- Zellen: `Sch.` (Schichten-Suffix), `Keine Schichten an diesem Tag.`
-- Drilldown-Datum: `toLocaleDateString("de-DE", ...)` → muss `lang`-abhängig sein
+**Format**: CSV (Semikolon, Windows-1252, deutsches Zahlenformat) — Standard für P&I-Imports. Das **genaue Spalten-Layout** muss in einem 15-Min-Termin mit Supervistas Lohnbuchhaltung abgestimmt werden (jeder P&I-Mandant hat oft eine eigene Import-Maske). Bis dahin bauen wir das **gängige P&I-LogaHR-Standardformat**; Anpassung später per Mapping-Config ohne Code-Änderung.
 
-**Lib (staff-schedule.ts):**
-- `SHIFT_SLOT_META.label`: `Früh / Spät / Nacht` → in i18n-Keys verschieben (Konsumenten holen Labels über `t()`)
-- `STAFF_ROLES = ["Bar", "Service", "Küche", "Floor"]` → Werte bleiben in DB, aber UI-Anzeige übersetzen
+### 6. Migration der 20 bestehenden MA
+Import-Maske: CSV aus P&I exportieren → in Pub Ops hochladen → Felder mappen → bestätigen.
 
-**Vorgehen:**
-- Neue i18n-Sektion `staff:` in `src/lib/i18n.ts` (DE + EN) mit allen Strings
-- `SHIFT_SLOT_META` ohne `label`; Labels per Hook `t("staff.slots.early")` etc.
-- Inline-`tt("Mitarbeiter", "Staff")`-Pattern wie in den anderen neuen Komponenten
+## Zugriff & DSGVO
 
----
+- Personalakten enthalten besondere Daten (IBAN, Religion, Gesundheitszeugnis) → Rollen-Trennung Pflicht
+- Audit-Log: wer hat wann welches Feld geändert (kleine `staff_audit_log`-Tabelle)
+- Aufbewahrung: lohnrelevante Daten 10 Jahre, sonst 3 Jahre nach Austritt (Archiv-Flag, nicht in Phase 1)
+- AV-Vertrag mit Supervista intern klären (zwischen den Konzern-Töchtern; meist via Konzern-Rahmenvertrag abgedeckt)
 
-## 🟡 3. Data Settings — drei kleine Lücken
+## Reihenfolge der Umsetzung
 
-`src/components/data-settings.tsx`:
-- **L190**: `Werbemittel-Sortiment` (Tab-Label, hardcoded DE)
-- **L191**: `HR-System (P&I)` (Tab-Label, hardcoded DE)
-- **L404-412**: Ziel-Auslastung-Card nutzt die DE-Strings inline, obwohl die Keys `settings.occupancyTitle`/`occupancySub`/`setHours` **bereits existieren** – nur das Mapping fehlt.
+1. **DB-Migration** (staff_members-Felder, staff_documents, user_roles, has_role, Storage-Bucket, RLS) — Grundlage
+2. **Auth + Login + Rollen-UI** — Pflicht bevor echte Personaldaten rein dürfen
+3. **Personalakte-UI + Dokumenten-Upload** — Pflege wird möglich
+4. **Neueinstellungs-Wizard + Stammdaten-Export (P&I-Format)**
+5. **Monats-Stunden-Export (P&I-Format)** — ersetzt alten Mock-Tab
+6. **Import-Maske für die 20 Bestands-MA**
+7. **Audit-Log + Feinschliff Rollen-Sichtbarkeit**
 
-**Fix:** Auf `t("settings.*")` umstellen + zwei neue Keys (`settings.tabPromo`, `settings.tabPI`).
+Schritte 1+2 müssen zusammen produktiv gehen. Danach kann jede Stufe einzeln getestet und mit Supervista abgestimmt werden.
 
----
+## Offen / vor Schritt 4 zu klären mit Supervista-Lohnbuchhaltung
 
-## ✅ Nicht-Probleme (geprüft, alles OK)
+- **Genaues P&I-Importformat**: gibt es eine vorhandene Import-Vorlage (Spalten, Trennzeichen, Codepage)?
+- **Zuschlagsschlüssel**: welche Kennziffern nutzt Supervista für Nacht-/Sonntags-/Feiertagszuschlag?
+- **Kostenstellen-Schema**: pro Pub eine eigene Kostenstelle? Welche Nummernlogik?
+- **Personalnummern-Vergabe**: vergibt Supervista zentral, oder dürfen wir einen Pub&Go-Nummernkreis nutzen?
 
-- Build-Status: Dev-Server antwortet 200; die Log-Einträge `data-settings.tsx 442:6` sind 25 min alt und stammen von einer früheren Zwischenversion.
-- `data-settings.tsx` JSX-Tags balanciert (manuell durchgezählt).
-- Auth-Mock-Migration `hr_admin → ops_admin` ist drin (silent).
-- Andere neue Komponenten (`promo-shop`, `promo-fulfillment`, `pi-hr-integration`, `pub-events`) nutzen konsequent `useT()`.
-- `Dialog`-Komponenten ohne `Description` werfen nur Radix-A11y-Warnings (kein Bug, optional).
+Diese vier Antworten brauchen wir, **bevor** der echte Export scharf geschaltet wird. UI und Datenmodell können wir aber sofort starten.
 
----
+## Bestätigung von dir
 
-## Umsetzungsumfang nach Freigabe
-
-1. Hydration-Fix im `LanguageSwitcher` (~10 Zeilen)
-2. i18n-Block `staff:` in `i18n.ts` (DE + EN, ~30 Keys)
-3. `staff-schedule.tsx` + `staff-overview.tsx` auf `useT()` / `useTranslation()` umstellen
-4. `staff-schedule.ts`: `SHIFT_SLOT_META.label` entfernen → Labels in Komponenten via `t()`
-5. Data Settings: 2 Tab-Labels + Auslastung-Card auf `t()` umstellen
-
-Keine DB-Migrationen, keine Logik-Änderungen, rein UI/i18n.
+- Reihenfolge 1–7 ok, oder willst du eine Stufe vorziehen?
+- Soll ich vor Schritt 1 ein kurzes **Fragen-Sheet für die Lohnbuchhaltung** vorbereiten (die 4 offenen Punkte oben als 1-Seiter), damit du es ihnen weiterleiten kannst?
