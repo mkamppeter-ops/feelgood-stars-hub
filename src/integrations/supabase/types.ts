@@ -210,6 +210,7 @@ export type Database = {
         Row: {
           active_users_target: number
           closing_hour: number
+          cost_center_code: string | null
           created_at: string
           month: string
           occupancy_targets: Json
@@ -224,6 +225,7 @@ export type Database = {
         Insert: {
           active_users_target?: number
           closing_hour?: number
+          cost_center_code?: string | null
           created_at?: string
           month?: string
           occupancy_targets?: Json
@@ -238,6 +240,7 @@ export type Database = {
         Update: {
           active_users_target?: number
           closing_hour?: number
+          cost_center_code?: string | null
           created_at?: string
           month?: string
           occupancy_targets?: Json
@@ -301,36 +304,108 @@ export type Database = {
       staff_members: {
         Row: {
           active: boolean
+          address_city: string | null
+          address_country: string | null
+          address_street: string | null
+          address_zip: string | null
+          bic: string | null
+          birth_date: string | null
+          birth_place: string | null
+          children_allowance: number | null
+          contract_type: Database["public"]["Enums"]["contract_type"] | null
           created_at: string
+          email: string | null
+          end_date: string | null
           first_name: string
+          health_insurance: string | null
+          hourly_wage: number | null
+          iban: string | null
           id: string
           last_name: string
+          nationality: string | null
+          notes: string | null
+          personnel_number: string | null
+          phone: string | null
           pi_external_id: string | null
           pub_id: string
+          religion: string | null
           role: string
+          social_security_number: string | null
+          start_date: string | null
+          tax_class: number | null
+          tax_id: string | null
           updated_at: string
+          weekly_hours: number | null
         }
         Insert: {
           active?: boolean
+          address_city?: string | null
+          address_country?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          bic?: string | null
+          birth_date?: string | null
+          birth_place?: string | null
+          children_allowance?: number | null
+          contract_type?: Database["public"]["Enums"]["contract_type"] | null
           created_at?: string
+          email?: string | null
+          end_date?: string | null
           first_name: string
+          health_insurance?: string | null
+          hourly_wage?: number | null
+          iban?: string | null
           id?: string
           last_name: string
+          nationality?: string | null
+          notes?: string | null
+          personnel_number?: string | null
+          phone?: string | null
           pi_external_id?: string | null
           pub_id: string
+          religion?: string | null
           role?: string
+          social_security_number?: string | null
+          start_date?: string | null
+          tax_class?: number | null
+          tax_id?: string | null
           updated_at?: string
+          weekly_hours?: number | null
         }
         Update: {
           active?: boolean
+          address_city?: string | null
+          address_country?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          bic?: string | null
+          birth_date?: string | null
+          birth_place?: string | null
+          children_allowance?: number | null
+          contract_type?: Database["public"]["Enums"]["contract_type"] | null
           created_at?: string
+          email?: string | null
+          end_date?: string | null
           first_name?: string
+          health_insurance?: string | null
+          hourly_wage?: number | null
+          iban?: string | null
           id?: string
           last_name?: string
+          nationality?: string | null
+          notes?: string | null
+          personnel_number?: string | null
+          phone?: string | null
           pi_external_id?: string | null
           pub_id?: string
+          religion?: string | null
           role?: string
+          social_security_number?: string | null
+          start_date?: string | null
+          tax_class?: number | null
+          tax_id?: string | null
           updated_at?: string
+          weekly_hours?: number | null
         }
         Relationships: []
       }
@@ -342,7 +417,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      contract_type:
+        | "vollzeit"
+        | "teilzeit"
+        | "minijob"
+        | "werkstudent"
+        | "aushilfe"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -469,6 +549,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      contract_type: [
+        "vollzeit",
+        "teilzeit",
+        "minijob",
+        "werkstudent",
+        "aushilfe",
+      ],
+    },
   },
 } as const

@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { CalendarDays, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, AlertCircle, UserPlus, Pencil } from "lucide-react";
+import { PersonalakteSheet } from "@/components/hq/staff-personalakte";
 import { PUBS } from "@/lib/pubs-mock";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -30,6 +31,11 @@ export function StaffOverview() {
   const [staffMap, setStaffMap] = useState<Record<string, StaffMember>>({});
   const [loading, setLoading] = useState(true);
   const [drilldown, setDrilldown] = useState<{ pubId: string; date: string } | null>(null);
+  const [editStaffId, setEditStaffId] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const openNew = () => { setEditStaffId(null); setSheetOpen(true); };
+  const openEdit = (id: string) => { setEditStaffId(id); setSheetOpen(true); };
 
   const days = useMemo(() => weekDays(weekStart), [weekStart]);
   const week = isoWeekNumber(weekStart);
@@ -124,6 +130,57 @@ export function StaffOverview() {
         </Card>
       )}
 
+      {/* Personalakten */}
+      <Card>
+        <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle className="text-base">Personalakten</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Stammdaten, Vertrag, Steuer/Bank — Quelle für den P&amp;I-Lohnexport an Supervista.
+            </p>
+          </div>
+          <Button size="sm" onClick={openNew}>
+            <UserPlus className="h-4 w-4 mr-1.5" /> Neuer Mitarbeiter
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="max-h-[280px] overflow-y-auto divide-y">
+            {Object.values(staffMap).length === 0 && !loading && (
+              <div className="px-4 py-6 text-sm text-muted-foreground text-center">
+                Noch keine Mitarbeiter angelegt. Klicke auf „Neuer Mitarbeiter" um zu starten.
+              </div>
+            )}
+            {Object.values(staffMap)
+              .sort((a, b) => a.last_name.localeCompare(b.last_name))
+              .map((s) => {
+                const pub = PUBS.find((p) => p.id === s.pub_id);
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => openEdit(s.id)}
+                    className="w-full px-4 py-2 flex items-center justify-between hover:bg-muted/40 text-left text-sm"
+                  >
+                    <div>
+                      <div className="font-medium">
+                        {s.last_name}, {s.first_name}
+                        {!s.active && (
+                          <Badge variant="outline" className="ml-2 text-[10px]">inaktiv</Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {s.role} · {pub?.name ?? s.pub_id}
+                        {s.pi_external_id ? ` · #${s.pi_external_id}` : ""}
+                      </div>
+                    </div>
+                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                );
+              })}
+          </div>
+        </CardContent>
+      </Card>
+
+
       <Card>
         <CardContent className="p-0 overflow-x-auto">
           {loading ? (
@@ -208,6 +265,13 @@ export function StaffOverview() {
           onClose={() => setDrilldown(null)}
         />
       )}
+
+      <PersonalakteSheet
+        staffId={editStaffId}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        onSaved={() => void reload()}
+      />
     </div>
   );
 }
