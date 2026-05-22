@@ -210,7 +210,7 @@ function HQPage() {
             </TabsList>
 
             <TabsContent value="hr" className="mt-0">
-              <HROverview />
+              <HROverview range={range} />
             </TabsContent>
 
             <TabsContent value="inbox" className="mt-0">
