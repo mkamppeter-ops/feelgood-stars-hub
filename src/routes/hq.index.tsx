@@ -205,11 +205,19 @@ function HQPage() {
                 <UserCog className="h-3.5 w-3.5" />
                 {t("nav.hr", "HR")}
               </TabsTrigger>
+              <TabsTrigger value="hq-news" className="gap-1.5">
+                <Megaphone className="h-3.5 w-3.5" />
+                {t("nav.hqNews", "HQ News")}
+              </TabsTrigger>
               <TabsTrigger value="feedback" className="gap-2">
                 {t("nav.liveFeedback")}
                 <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="hq-news" className="mt-0">
+              <HQNewsComposer />
+            </TabsContent>
 
             <TabsContent value="hr" className="mt-0">
               <HROverview range={range} />
