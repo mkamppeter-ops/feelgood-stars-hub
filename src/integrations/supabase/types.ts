@@ -56,6 +56,156 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string | null
+          product_name_snapshot: string
+          quantity: number
+          unit_snapshot: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id?: string | null
+          product_name_snapshot: string
+          quantity: number
+          unit_snapshot?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string | null
+          product_name_snapshot?: string
+          quantity?: number
+          unit_snapshot?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "promo_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "promo_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promo_orders: {
+        Row: {
+          created_at: string
+          delivered_at: string | null
+          handled_by: string | null
+          id: string
+          internal_note: string | null
+          note: string | null
+          ordered_by_name: string | null
+          ordered_by_role: string | null
+          pub_id: string
+          requested_for: string | null
+          shipped_at: string | null
+          status: string
+          tracking_carrier: string | null
+          tracking_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string | null
+          handled_by?: string | null
+          id?: string
+          internal_note?: string | null
+          note?: string | null
+          ordered_by_name?: string | null
+          ordered_by_role?: string | null
+          pub_id: string
+          requested_for?: string | null
+          shipped_at?: string | null
+          status?: string
+          tracking_carrier?: string | null
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string | null
+          handled_by?: string | null
+          id?: string
+          internal_note?: string | null
+          note?: string | null
+          ordered_by_name?: string | null
+          ordered_by_role?: string | null
+          pub_id?: string
+          requested_for?: string | null
+          shipped_at?: string | null
+          status?: string
+          tracking_carrier?: string | null
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      promo_products: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          image_url: string | null
+          min_order_qty: number
+          name_de: string
+          name_en: string
+          pack_size: number
+          sort_order: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          min_order_qty?: number
+          name_de: string
+          name_en: string
+          pack_size?: number
+          sort_order?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          min_order_qty?: number
+          name_de?: string
+          name_en?: string
+          pack_size?: number
+          sort_order?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pub_settings: {
         Row: {
           active_users_target: number

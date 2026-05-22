@@ -11,7 +11,7 @@ import {
 
 import {
   Trophy, TrendingUp, Users, Star, Gauge, Phone, LayoutDashboard,
-  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone, Gift, Activity, Megaphone, UserCog,
+  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone, Gift, Activity, Megaphone, UserCog, Package,
 } from "lucide-react";
 import { Marketing } from "@/components/marketing";
 import { PUBS, computeScore, getAppReach } from "@/lib/pubs-mock";
@@ -31,6 +31,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { TicketInbox } from "@/components/hq/ticket-inbox";
 import { HROverview } from "@/components/hq/hr-overview";
 import { HQNewsComposer } from "@/components/hq/hq-news-composer";
+import { PromoFulfillment } from "@/components/hq/promo-fulfillment";
 import { Inbox } from "lucide-react";
 import { useSession, ROLE_TICKET_CATEGORY, ROLE_PERSON, ROLE_DEFAULT_TAB, TAB_OWNER, type Role } from "@/lib/auth-mock";
 import { useTickets } from "@/lib/tickets-store";
@@ -121,6 +122,7 @@ function HQPage() {
             { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback", badge: undefined as number | undefined },
             { icon: Megaphone, label: t("nav.hqNews", "HQ News"), tab: "hq-news", badge: undefined as number | undefined },
             { icon: Megaphone, label: t("nav.marketing", "Marketing"), tab: "marketing", badge: undefined as number | undefined },
+            { icon: Package, label: t("nav.shop", "Werbemittel-Shop"), tab: "shop", badge: undefined as number | undefined },
             { icon: Settings, label: t("nav.dataSettings"), tab: "settings", badge: undefined as number | undefined },
           ]).map(({ icon: Icon, label, tab, badge }) => {
             const active = activeTab === tab;
@@ -221,6 +223,7 @@ function HQPage() {
                 { value: "events", label: t("nav.events"), icon: null },
                 { value: "hr", label: t("nav.hr", "HR"), icon: UserCog },
                 { value: "marketing", label: t("nav.marketing", "Marketing"), icon: Megaphone },
+                { value: "shop", label: t("nav.shop", "Werbemittel-Shop"), icon: Package },
                 { value: "hq-news", label: t("nav.hqNews", "HQ News"), icon: Megaphone },
                 { value: "feedback", label: t("nav.liveFeedback"), icon: null, badge: 3, badgeAlways: true },
               ] as const).map((it) => {
@@ -277,6 +280,10 @@ function HQPage() {
 
             <TabsContent value="marketing" className="mt-0">
               <Marketing />
+            </TabsContent>
+
+            <TabsContent value="shop" className="mt-0">
+              <PromoFulfillment />
             </TabsContent>
 
             <TabsContent value="overview" className="space-y-6 mt-0">
