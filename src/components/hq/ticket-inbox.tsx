@@ -10,6 +10,8 @@ import { useT } from "@/lib/use-t";
 import { useSession, ROLE_TICKET_CATEGORY, type Role } from "@/lib/auth-mock";
 import { useTickets, ticketsStore, type TicketCategory, type TicketStatus, type TicketPriority } from "@/lib/tickets-store";
 import { PUBS } from "@/lib/pubs-mock";
+import { PromoOrdersList } from "@/components/hq/promo-fulfillment";
+
 
 const CAT_ICON = { it: Laptop, facility: Wrench, logistics: Truck };
 
@@ -44,9 +46,13 @@ export function TicketInbox() {
 
   const open = visible.filter((t) => t.status === "open").length;
   const inProg = visible.filter((t) => t.status === "progress").length;
+  const showPromoOrders = isSuper || myCat === "facility";
 
   return (
-    <Card className="shadow-sm">
+    <div className="space-y-5">
+      {showPromoOrders && <PromoOrdersList />}
+      <Card className="shadow-sm">
+
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <div>
           <CardTitle className="text-base flex items-center gap-2">
