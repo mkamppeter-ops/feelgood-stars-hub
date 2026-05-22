@@ -24,7 +24,7 @@ export function TicketInbox() {
   const visible = isSuper ? tickets : tickets.filter((t) => t.category === myCat);
 
   const catLabel = (c: TicketCategory) =>
-    ({ it: "IT", hr: "HR", facility: tt("Facility", "Facility"), logistics: tt("Logistik", "Logistics") }[c]);
+    ({ it: "IT", facility: tt("Facility", "Facility"), logistics: tt("Operations", "Operations") }[c]);
 
   const statusLabel = (s: TicketStatus) =>
     ({ open: tt("Offen", "Open"), progress: tt("In Bearbeitung", "In progress"), done: tt("Gelöst", "Resolved") }[s]);
