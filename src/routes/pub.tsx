@@ -22,6 +22,7 @@ import { HQConnect } from "@/components/pub/hq-connect";
 import { Academy } from "@/components/pub/academy";
 import { MarketingHub } from "@/components/pub/marketing-hub";
 import { TeamHR } from "@/components/pub/team-hr";
+import { HQNews } from "@/components/pub/hq-news";
 import { useT } from "@/lib/use-t";
 
 import { RequireRole, LogoutButton } from "@/components/auth-guard";
