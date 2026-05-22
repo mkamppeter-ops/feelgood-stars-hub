@@ -11,12 +11,18 @@ import {
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   Trophy, Gauge, Star, TrendingUp, MapPin, ArrowUp, Sparkles, Globe, Smartphone,
+  LayoutDashboard, Ticket, GraduationCap, Megaphone, Users,
 } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
 import { FEEDBACK, CATEGORY_META, CATEGORY_ORDER, type FeedbackItem } from "@/lib/feedback-mock";
 import { DateRangePicker, RANGE_FACTOR, useRangeLabels, type DateRange } from "@/components/date-range-picker";
 import { SalesOps } from "@/components/sales-ops";
+import { HQConnect } from "@/components/pub/hq-connect";
+import { Academy } from "@/components/pub/academy";
+import { MarketingHub } from "@/components/pub/marketing-hub";
+import { TeamHR } from "@/components/pub/team-hr";
+import { useT } from "@/lib/use-t";
 
 import { RequireRole, LogoutButton } from "@/components/auth-guard";
 import { LanguageSwitcher } from "@/components/language-switcher";
