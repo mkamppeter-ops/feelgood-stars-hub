@@ -310,6 +310,20 @@ export function HQNewsComposer() {
                         <AlertTriangle className="h-3 w-3" /> {tt("Bestätigung nötig", "Ack required")}
                       </Badge>
                     )}
+                    {!n.pubIds || n.pubIds.length === 0 ? (
+                      <Badge variant="outline" className="gap-1 text-muted-foreground">
+                        <Users2 className="h-3 w-3" /> {tt("Alle Filialen", "All branches")}
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="gap-1 bg-blue-500/10 text-blue-700 border-blue-200"
+                        title={n.pubIds.map((id) => PUBS.find((p) => p.id === id)?.name ?? id).join(", ")}
+                      >
+                        <Building2 className="h-3 w-3" />
+                        {tt(`${n.pubIds.length} Filiale(n)`, `${n.pubIds.length} branch(es)`)}
+                      </Badge>
+                    )}
                   </div>
                   <div className="text-sm font-semibold">{tt(n.titleDe, n.titleEn)}</div>
                   <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
