@@ -2,16 +2,21 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { UserCog, CalendarRange, Plane, Thermometer, AlertTriangle, Check, X } from "lucide-react";
+import { UserCog, CalendarRange, Plane, Thermometer, AlertTriangle, Check, X, Users, Search, TrendingUp, TrendingDown } from "lucide-react";
 import { useT } from "@/lib/use-t";
 import {
-  SHIFT_SUMMARY, VACATION_REQUESTS, SICK_LEAVES, SICK_STATS, getPubName,
-  type VacationStatus,
+  SHIFT_SUMMARY, VACATION_REQUESTS, SICK_LEAVES, SICK_STATS, EMPLOYEES, getPubName,
+  type VacationStatus, type EmploymentType,
 } from "@/lib/hr-mock";
+import { PUBS } from "@/lib/pubs-mock";
 import { useRangeLabels, type DateRange } from "@/components/date-range-picker";
 
 // Scale factors relative to the base mock data.
