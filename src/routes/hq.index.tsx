@@ -106,6 +106,7 @@ function HQPage() {
         <nav className="flex-1 p-3 space-y-1 text-sm">
           {[
             { icon: LayoutDashboard, label: t("nav.overview"), tab: "overview" },
+            { icon: Inbox, label: t("nav.inbox", "Inbox"), tab: "inbox", badge: myTicketCount },
             { icon: Building2, label: t("nav.pubs"), tab: "pubs" },
             { icon: Activity, label: t("nav.activeOps"), tab: "active-ops" },
             { icon: TrendingUp, label: t("nav.salesOps"), tab: "sales" },
@@ -114,7 +115,7 @@ function HQPage() {
             { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback" },
             { icon: Megaphone, label: t("nav.marketing", "Marketing"), tab: "marketing" },
             { icon: Settings, label: t("nav.dataSettings"), tab: "settings" },
-          ].map(({ icon: Icon, label, tab }) => {
+          ].map(({ icon: Icon, label, tab, badge }) => {
             const active = activeTab === tab;
             return (
               <button
