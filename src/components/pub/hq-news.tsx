@@ -30,7 +30,7 @@ function saveSet(key: string, set: Set<string>) {
   localStorage.setItem(key, JSON.stringify(Array.from(set)));
 }
 
-export function HQNews() {
+export function HQNews({ pubId }: { pubId?: string } = {}) {
   const tt = useT();
   const { i18n } = useTranslation();
   const locale = i18n.language?.startsWith("de") ? deLocale : enUS;
@@ -46,26 +46,32 @@ export function HQNews() {
 
   const allNews = useHQNews();
 
+  // Nur Posts, die an alle ODER explizit an diese Filiale gerichtet sind.
+  const scoped = useMemo(
+    () => allNews.filter((n) => !n.pubIds || n.pubIds.length === 0 || (pubId ? n.pubIds.includes(pubId) : false)),
+    [allNews, pubId]
+  );
+
   const pinnedItem = useMemo(
-    () => [...allNews].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt)).find((n) => n.pinned),
-    [allNews]
+    () => [...scoped].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt)).find((n) => n.pinned),
+    [scoped]
   );
 
   const feed = useMemo(() => {
-    return allNews
+    return scoped
       .filter((n) => n.id !== pinnedItem?.id)
       .filter((n) => filter === "all" || n.category === filter)
       .sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt));
-  }, [allNews, filter, pinnedItem?.id]);
+  }, [scoped, filter, pinnedItem?.id]);
 
   const counts = useMemo(() => {
     const c: Record<NewsCategory | "all", number> = {
-      all: allNews.length,
+      all: scoped.length,
       urgent: 0, marketing: 0, product: 0, event: 0, policy: 0, ops: 0,
     };
-    allNews.forEach((n) => { c[n.category] += 1; });
+    scoped.forEach((n) => { c[n.category] += 1; });
     return c;
-  }, [allNews]);
+  }, [scoped]);
 
   const ackPinned = () => {
     if (!pinnedItem) return;
