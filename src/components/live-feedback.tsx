@@ -26,6 +26,76 @@ import {
   sendApologyReward, inviteGoogleReview, markGoogleReviewClicked, confirmGoogleReview,
 } from "@/lib/rewards.functions";
 import { useT } from "@/lib/use-t";
+import { supabase } from "@/integrations/supabase/client";
+
+type DbFeedbackRow = {
+  id: string;
+  created_at: string;
+  rating_drinks: number | null;
+  rating_atmosphere: number | null;
+  rating_service: number | null;
+  rating_cleanliness: number | null;
+  problem_tags: string[];
+  free_text: string | null;
+  location: string | null;
+};
+
+function relativeDate(iso: string, lang: "de" | "en"): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return lang === "de" ? "gerade eben" : "just now";
+  if (mins < 60) return lang === "de" ? `vor ${mins} Min.` : `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return lang === "de" ? `vor ${hours} Std.` : `${hours} h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return lang === "de" ? `vor ${days} Tagen` : `${days} d ago`;
+  return new Date(iso).toLocaleDateString(lang === "de" ? "de-DE" : "en-US");
+}
+
+function dbRowToFeedbackItem(row: DbFeedbackRow, lang: "de" | "en"): FeedbackItem | null {
+  const ratings = {
+    drinks: row.rating_drinks ?? 0,
+    atmosphere: row.rating_atmosphere ?? 0,
+    service: row.rating_service ?? 0,
+    cleanliness: row.rating_cleanliness ?? 0,
+  };
+  const scores = Object.values(ratings).filter((v) => v > 0);
+  if (scores.length === 0) return null;
+  const stars = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+
+  // location stored as pub.id; fall back to first pub if unknown
+  const pub = PUBS.find((p) => p.id === row.location) ?? PUBS[0];
+
+  const tagsByCategory: Record<CategoryKey, string[]> = {
+    drinks: [], atmosphere: [], service: [], cleanliness: [],
+  };
+  for (const t of row.problem_tags ?? []) {
+    for (const k of CATEGORY_ORDER) {
+      if (CATEGORY_META[k].tags.includes(t)) tagsByCategory[k].push(t);
+    }
+  }
+  const categories: Record<CategoryKey, CategoryRating> = {
+    drinks:      { score: ratings.drinks,      tags: tagsByCategory.drinks.length      ? tagsByCategory.drinks      : undefined },
+    atmosphere:  { score: ratings.atmosphere,  tags: tagsByCategory.atmosphere.length  ? tagsByCategory.atmosphere  : undefined },
+    service:     { score: ratings.service,     tags: tagsByCategory.service.length     ? tagsByCategory.service     : undefined },
+    cleanliness: { score: ratings.cleanliness, tags: tagsByCategory.cleanliness.length ? tagsByCategory.cleanliness : undefined },
+  };
+
+  return {
+    id: `db-${row.id}`,
+    pubId: pub.id,
+    source: "app",
+    stars,
+    author: lang === "de" ? "Gast (live)" : "Guest (live)",
+    customerId: `live-${row.id}`,
+    text: row.free_text ?? (lang === "de" ? "(kein Kommentar)" : "(no comment)"),
+    date: relativeDate(row.created_at, lang),
+    timestamp: new Date(row.created_at).getTime(),
+    categories,
+    tags: (row.problem_tags ?? []).slice(0, 4),
+    googleStatus: "none",
+  };
+}
 
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -59,29 +129,74 @@ function resolveGoogleStatus(item: FeedbackItem, customerLatest: Map<string, Goo
 
 export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
   const tt = useT();
+  const lang: "de" | "en" = tt("de", "en") as "de" | "en";
   const [source, setSource] = useState<"all" | "app" | "google">("all");
   const [rating, setRating] = useState<"all" | "low" | "high">("all");
   const [pubId, setPubId] = useState<string>(lockedPubId ?? "all");
   const [done, setDone] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [liveItems, setLiveItems] = useState<FeedbackItem[]>([]);
 
   // Local state für Reward-Flows
   const [rewards, setRewards] = useState<Record<string, ApologyReward>>({});
   // Pro Feedback: aktueller Google-Status (überschreibt mock-default)
   const [googleStatus, setGoogleStatus] = useState<Record<string, GoogleStatus>>({});
 
+  // Pull real customer-submitted feedbacks + subscribe to new ones
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from("feedbacks")
+        .select("id, created_at, rating_drinks, rating_atmosphere, rating_service, rating_cleanliness, problem_tags, free_text, location")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (!active || error || !data) return;
+      const mapped = (data as DbFeedbackRow[])
+        .map((row) => dbRowToFeedbackItem(row, lang))
+        .filter((x): x is FeedbackItem => x !== null);
+      setLiveItems(mapped);
+    })();
+
+    const channel = supabase
+      .channel("feedbacks-live")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "feedbacks" },
+        (payload) => {
+          const item = dbRowToFeedbackItem(payload.new as DbFeedbackRow, lang);
+          if (!item) return;
+          setLiveItems((prev) => [item, ...prev]);
+          toast.info(tt("Neues Gäste-Feedback eingegangen", "New guest feedback received"), {
+            description: PUBS.find((p) => p.id === item.pubId)?.name ?? "",
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  }, [lang, tt]);
+
+  const allFeedback = useMemo<FeedbackItem[]>(
+    () => [...liveItems, ...FEEDBACK],
+    [liveItems],
+  );
+
   const effectivePubId = lockedPubId ?? pubId;
 
   // Globale Sicht pro Kunde — höchster Status gewinnt (siehe STATUS_RANK).
   const customerLatest = useMemo(() => {
     const map = new Map<string, GoogleStatus>();
-    for (const f of FEEDBACK) {
+    for (const f of allFeedback) {
       const current = (googleStatus[f.id] ?? f.googleStatus ?? "none") as GoogleStatus;
       const prev = map.get(f.customerId) ?? "none";
       if (STATUS_RANK[current] > STATUS_RANK[prev]) map.set(f.customerId, current);
     }
     return map;
-  }, [googleStatus]);
+  }, [googleStatus, allFeedback]);
 
   // Auto-Trigger: 4–5⭐ App-Reviews automatisch zur Google-Einladung anstoßen
   useEffect(() => {
@@ -113,14 +228,14 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
   }, []);
 
   const filtered = useMemo(() => {
-    return FEEDBACK.filter((f) => {
+    return allFeedback.filter((f) => {
       if (source !== "all" && f.source !== source) return false;
       if (rating === "low" && f.stars > 2) return false;
       if (rating === "high" && f.stars < 4) return false;
       if (effectivePubId !== "all" && f.pubId !== effectivePubId) return false;
       return true;
     });
-  }, [source, rating, effectivePubId]);
+  }, [source, rating, effectivePubId, allFeedback]);
 
   const toggleDone = (id: string) =>
     setDone((prev) => {

@@ -12,17 +12,70 @@ import {
 import { Play, Pause, LogOut, Clock, Thermometer, Plane, CalendarDays, Tablet, Smartphone, Delete } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/lib/use-t";
+import { supabase } from "@/integrations/supabase/client";
 
 type ShiftState = "off" | "working" | "paused";
 type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
-const STAFF = [
-  { id: "u1", name: "Lisa M.",    initials: "LM", color: "bg-rose-500/20 text-rose-700",       pin: "1111" },
-  { id: "u2", name: "Tom B.",     initials: "TB", color: "bg-amber-500/20 text-amber-700",     pin: "2222" },
-  { id: "u3", name: "Sarah L.",   initials: "SL", color: "bg-emerald-500/20 text-emerald-700", pin: "3333" },
-  { id: "u4", name: "Markus K.",  initials: "MK", color: "bg-blue-500/20 text-blue-700",       pin: "4444" },
-  { id: "u5", name: "Du",         initials: "ME", color: "bg-primary/20 text-primary",         pin: "0000" },
+type StaffEntry = {
+  id: string;
+  name: string;
+  initials: string;
+  color: string;
+  pin: string;
+};
+
+const COLORS = [
+  "bg-rose-500/20 text-rose-700",
+  "bg-amber-500/20 text-amber-700",
+  "bg-emerald-500/20 text-emerald-700",
+  "bg-blue-500/20 text-blue-700",
+  "bg-violet-500/20 text-violet-700",
+  "bg-cyan-500/20 text-cyan-700",
+  "bg-fuchsia-500/20 text-fuchsia-700",
 ];
+
+const MOCK_STAFF: StaffEntry[] = [
+  { id: "u1", name: "Lisa M.",    initials: "LM", color: COLORS[0], pin: "1111" },
+  { id: "u2", name: "Tom B.",     initials: "TB", color: COLORS[1], pin: "2222" },
+  { id: "u3", name: "Sarah L.",   initials: "SL", color: COLORS[2], pin: "3333" },
+  { id: "u4", name: "Markus K.",  initials: "MK", color: COLORS[3], pin: "4444" },
+  { id: "u5", name: "Du",         initials: "ME", color: "bg-primary/20 text-primary", pin: "0000" },
+];
+
+function useStaff(pubId?: string): StaffEntry[] {
+  const [list, setList] = useState<StaffEntry[]>(MOCK_STAFF);
+  useEffect(() => {
+    if (!pubId) return;
+    let active = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from("staff_members")
+        .select("id, first_name, last_name, active")
+        .eq("pub_id", pubId)
+        .eq("active", true)
+        .order("first_name");
+      if (!active || error || !data || data.length === 0) return;
+      const mapped: StaffEntry[] = data.map((row, i) => {
+        const name = `${row.first_name} ${row.last_name.charAt(0)}.`;
+        const initials = `${row.first_name.charAt(0)}${row.last_name.charAt(0)}`.toUpperCase();
+        return {
+          id: row.id,
+          name,
+          initials,
+          color: COLORS[i % COLORS.length],
+          // Demo-PIN: last 4 digits of the row id; in real flows you'd store hashed PINs server-side
+          pin: row.id.replace(/\D/g, "").slice(-4).padStart(4, "0") || "0000",
+        };
+      });
+      // Always include "Du" so the personal phone view still works
+      const me = MOCK_STAFF.find((s) => s.id === "u5")!;
+      setList([...mapped, me]);
+    })();
+    return () => { active = false; };
+  }, [pubId]);
+  return list;
+}
 
 const REQUESTS_INIT = [
   { id: "r1", typeDe: "Urlaub", typeEn: "Vacation", range: "12.06. – 18.06.", status: "pending" as const },
@@ -37,11 +90,14 @@ interface TeamHRProps {
   closingHour?: number;
   /** Days the pub is closed. */
   closedDays?: DayKey[];
+  /** Pub id used to load real staff_members. */
+  pubId?: string;
 }
 
 const fmtHour = (h: number) => `${String(h % 24).padStart(2, "0")}`;
 
-export function TeamHR({ openingHour = 17, closingHour = 24, closedDays = ["mon"] }: TeamHRProps) {
+export function TeamHR({ openingHour = 17, closingHour = 24, closedDays = ["mon"], pubId }: TeamHRProps) {
+  const staff = useStaff(pubId);
   const tt = useT();
   const [deviceMode, setDeviceMode] = useState<"phone" | "tablet">("phone");
 
@@ -76,13 +132,13 @@ export function TeamHR({ openingHour = 17, closingHour = 24, closedDays = ["mon"
       </div>
 
       {deviceMode === "tablet" ? (
-        <TabletClockIn />
+        <TabletClockIn staff={staff} />
       ) : (
         <PhoneShiftWidget />
       )}
 
       {/* Roster */}
-      <RosterTable shifts={shifts} closedDays={closedDays} />
+      <RosterTable shifts={shifts} closedDays={closedDays} staff={staff} />
 
       {/* Absences — only personal view in phone mode */}
       {deviceMode === "phone" && <AbsencesPanel />}
@@ -166,13 +222,13 @@ function PhoneShiftWidget() {
 
 /* -------------------- Tablet mode: pick staff + PIN -------------------- */
 
-function TabletClockIn() {
+function TabletClockIn({ staff }: { staff: StaffEntry[] }) {
   const tt = useT();
   const [selected, setSelected] = useState<string | null>(null);
   const [pin, setPin] = useState("");
   const [clockedIn, setClockedIn] = useState<Record<string, number>>({});
 
-  const selectedStaff = STAFF.find((s) => s.id === selected);
+  const selectedStaff = staff.find((s) => s.id === selected);
 
   const submitPin = (next: string) => {
     if (!selectedStaff) return;
@@ -238,7 +294,7 @@ function TabletClockIn() {
           <p className="text-xs text-muted-foreground">{tt("Tippe deinen Namen, dann PIN eingeben.", "Tap your name, then enter PIN.")}</p>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-          {STAFF.map((s) => {
+          {staff.map((s) => {
             const since = clockedIn[s.id];
             return (
               <button
@@ -268,7 +324,7 @@ function TabletClockIn() {
 
 /* -------------------- Roster derived from opening hours -------------------- */
 
-function RosterTable({ shifts, closedDays }: { shifts: { key: string; de: string; en: string; time: string }[]; closedDays: DayKey[] }) {
+function RosterTable({ shifts, closedDays, staff }: { shifts: { key: string; de: string; en: string; time: string }[]; closedDays: DayKey[]; staff: StaffEntry[] }) {
   const tt = useT();
   const days: { key: DayKey; deLabel: string; enLabel: string }[] = [
     { key: "mon", deLabel: "Mo", enLabel: "Mon" },
@@ -282,11 +338,12 @@ function RosterTable({ shifts, closedDays }: { shifts: { key: string; de: string
 
   // Pseudo-randomized but stable roster: hash day+shift -> pick 1-3 staff
   const pickStaff = (day: DayKey, shiftKey: string): string[] => {
+    if (staff.length === 0) return [];
     const seed = (day + shiftKey).split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-    const count = (seed % 3) + 1;
+    const count = Math.min(staff.length, (seed % 3) + 1);
     const ids: string[] = [];
     for (let i = 0; i < count; i++) {
-      ids.push(STAFF[(seed + i * 3) % STAFF.length].id);
+      ids.push(staff[(seed + i * 3) % staff.length].id);
     }
     return [...new Set(ids)];
   };
@@ -334,7 +391,7 @@ function RosterTable({ shifts, closedDays }: { shifts: { key: string; de: string
                       <td key={d.key} className={`p-2 border-l align-top ${ids.includes("u5") ? "bg-primary/5" : ""}`}>
                         <div className="flex flex-wrap gap-1 justify-center">
                           {ids.map((id) => {
-                            const s = STAFF.find((x) => x.id === id)!;
+                            const s = staff.find((x) => x.id === id)!;
                             return (
                               <span key={id} title={s.name} className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-semibold ${s.color} ${id === "u5" ? "ring-2 ring-primary" : ""}`}>
                                 {s.initials}
