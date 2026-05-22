@@ -145,6 +145,7 @@ function PubLocalView() {
             <TabsTrigger value="academy"><GraduationCap className="h-4 w-4 mr-1.5" />{tt("Academy", "Academy")}</TabsTrigger>
             <TabsTrigger value="events"><CalendarCheck className="h-4 w-4 mr-1.5" />{tt("Events", "Events")}</TabsTrigger>
             <TabsTrigger value="werbemittel"><Package className="h-4 w-4 mr-1.5" />{tt("Werbemittel-Shop", "Promo Shop")}</TabsTrigger>
+            <TabsTrigger value="staff"><CalendarDays className="h-4 w-4 mr-1.5" />{tt("Personalplan", "Schedule")}</TabsTrigger>
             <TabsTrigger value="hr"><Users className="h-4 w-4 mr-1.5" />{tt("Team & HR", "Team & HR")}</TabsTrigger>
           </TabsList>
 
