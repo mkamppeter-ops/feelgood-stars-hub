@@ -28,6 +28,10 @@ import { ActiveOps } from "@/components/active-ops";
 import { RequireRole, LogoutButton } from "@/components/auth-guard";
 import { DataSettings } from "@/components/data-settings";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { TicketInbox } from "@/components/hq/ticket-inbox";
+import { Inbox } from "lucide-react";
+import { useSession, ROLE_TICKET_CATEGORY, type Role } from "@/lib/auth-mock";
+import { useTickets } from "@/lib/tickets-store";
 
 export const Route = createFileRoute("/hq/")({
   head: () => ({
