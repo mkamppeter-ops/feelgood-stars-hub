@@ -96,7 +96,8 @@ interface TeamHRProps {
 
 const fmtHour = (h: number) => `${String(h % 24).padStart(2, "0")}`;
 
-export function TeamHR({ openingHour = 17, closingHour = 24, closedDays = ["mon"] }: TeamHRProps) {
+export function TeamHR({ openingHour = 17, closingHour = 24, closedDays = ["mon"], pubId }: TeamHRProps) {
+  const staff = useStaff(pubId);
   const tt = useT();
   const [deviceMode, setDeviceMode] = useState<"phone" | "tablet">("phone");
 
@@ -131,13 +132,13 @@ export function TeamHR({ openingHour = 17, closingHour = 24, closedDays = ["mon"
       </div>
 
       {deviceMode === "tablet" ? (
-        <TabletClockIn />
+        <TabletClockIn staff={staff} />
       ) : (
         <PhoneShiftWidget />
       )}
 
       {/* Roster */}
-      <RosterTable shifts={shifts} closedDays={closedDays} />
+      <RosterTable shifts={shifts} closedDays={closedDays} staff={staff} />
 
       {/* Absences — only personal view in phone mode */}
       {deviceMode === "phone" && <AbsencesPanel />}
