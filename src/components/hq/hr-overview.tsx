@@ -51,7 +51,7 @@ const SICK_PERIOD_FACTOR: Record<DateRange, number> = {
 export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
   const tt = useT();
   const rangeLabels = useRangeLabels();
-  const [tab, setTab] = useState("shifts");
+  const [tab, setTab] = useState("employees");
   const [vacations, setVacations] = useState(VACATION_REQUESTS);
   const periodLabel = rangeLabels[range];
   const shiftFactor = SHIFT_PERIOD_FACTOR[range];
