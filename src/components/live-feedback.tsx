@@ -26,6 +26,76 @@ import {
   sendApologyReward, inviteGoogleReview, markGoogleReviewClicked, confirmGoogleReview,
 } from "@/lib/rewards.functions";
 import { useT } from "@/lib/use-t";
+import { supabase } from "@/integrations/supabase/client";
+
+type DbFeedbackRow = {
+  id: string;
+  created_at: string;
+  rating_drinks: number | null;
+  rating_atmosphere: number | null;
+  rating_service: number | null;
+  rating_cleanliness: number | null;
+  problem_tags: string[];
+  free_text: string | null;
+  location: string | null;
+};
+
+function relativeDate(iso: string, lang: "de" | "en"): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return lang === "de" ? "gerade eben" : "just now";
+  if (mins < 60) return lang === "de" ? `vor ${mins} Min.` : `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return lang === "de" ? `vor ${hours} Std.` : `${hours} h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return lang === "de" ? `vor ${days} Tagen` : `${days} d ago`;
+  return new Date(iso).toLocaleDateString(lang === "de" ? "de-DE" : "en-US");
+}
+
+function dbRowToFeedbackItem(row: DbFeedbackRow, lang: "de" | "en"): FeedbackItem | null {
+  const ratings = {
+    drinks: row.rating_drinks ?? 0,
+    atmosphere: row.rating_atmosphere ?? 0,
+    service: row.rating_service ?? 0,
+    cleanliness: row.rating_cleanliness ?? 0,
+  };
+  const scores = Object.values(ratings).filter((v) => v > 0);
+  if (scores.length === 0) return null;
+  const stars = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+
+  // location stored as pub.id; fall back to first pub if unknown
+  const pub = PUBS.find((p) => p.id === row.location) ?? PUBS[0];
+
+  const tagsByCategory: Record<CategoryKey, string[]> = {
+    drinks: [], atmosphere: [], service: [], cleanliness: [],
+  };
+  for (const t of row.problem_tags ?? []) {
+    for (const k of CATEGORY_ORDER) {
+      if (CATEGORY_META[k].tags.includes(t)) tagsByCategory[k].push(t);
+    }
+  }
+  const categories: Record<CategoryKey, CategoryRating> = {
+    drinks:      { score: ratings.drinks,      tags: tagsByCategory.drinks.length      ? tagsByCategory.drinks      : undefined },
+    atmosphere:  { score: ratings.atmosphere,  tags: tagsByCategory.atmosphere.length  ? tagsByCategory.atmosphere  : undefined },
+    service:     { score: ratings.service,     tags: tagsByCategory.service.length     ? tagsByCategory.service     : undefined },
+    cleanliness: { score: ratings.cleanliness, tags: tagsByCategory.cleanliness.length ? tagsByCategory.cleanliness : undefined },
+  };
+
+  return {
+    id: `db-${row.id}`,
+    pubId: pub.id,
+    source: "app",
+    stars,
+    author: lang === "de" ? "Gast (live)" : "Guest (live)",
+    customerId: `live-${row.id}`,
+    text: row.free_text ?? (lang === "de" ? "(kein Kommentar)" : "(no comment)"),
+    date: relativeDate(row.created_at, lang),
+    timestamp: new Date(row.created_at).getTime(),
+    categories,
+    tags: (row.problem_tags ?? []).slice(0, 4),
+    googleStatus: "none",
+  };
+}
 
 
 function WhatsAppIcon({ className }: { className?: string }) {
