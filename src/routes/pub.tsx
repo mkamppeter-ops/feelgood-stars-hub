@@ -337,6 +337,13 @@ function PubLocalView() {
             </Tabs>
           </>
         )}
+          </TabsContent>
+
+          <TabsContent value="hq" className="mt-0"><HQConnect /></TabsContent>
+          <TabsContent value="academy" className="mt-0"><Academy /></TabsContent>
+          <TabsContent value="marketing" className="mt-0"><MarketingHub /></TabsContent>
+          <TabsContent value="hr" className="mt-0"><TeamHR /></TabsContent>
+        </Tabs>
       </main>
     </div>
   );
