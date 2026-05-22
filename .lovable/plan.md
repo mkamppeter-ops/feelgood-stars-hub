@@ -1,92 +1,90 @@
 ## Ziel
-
-Pub&Go verwaltet alle Mitarbeiterstammdaten **selbst in Pub Ops**. Einmal im Monat (und bei Neueinstellungen/Änderungen) erzeugen wir einen **P&I-kompatiblen Export**, den die Supervista-Lohnbuchhaltung direkt einliest. Keine dritte HR-Software, keine Doppelpflege.
+Fingerprint-basierter Stempel-Login am Pub-PC mit **zentraler Template-Speicherung** in Pub Ops (Cloud-DB). Vorteile: MA einmal anlernen → funktioniert in jedem Pub, PC-Tausch unkritisch, HQ hat volle Übersicht.
 
 ## Architektur
 
 ```text
-   ┌──────────────────────────────────────────┐
-   │   Pub Ops (Single Source of Truth)      │
-   │   • Personalakte (Stammdaten + Vertrag) │
-   │   • Dokumente (Vertrag, Bescheinigungen)│
-   │   • Schichten + Ist-Stunden             │
-   └──────────────┬───────────────────────────┘
-                  │
-       ┌──────────┴──────────┐
-       ▼                     ▼
-  Stammdaten-Export     Monats-Stunden-Export
-  (bei Neueinst./       (zum Monatsende,
-   Änderung)             P&I-Format)
-       │                     │
-       ▼                     ▼
-   ┌──────────────────────────────┐
-   │ Supervista Lohnbuchhaltung   │
-   │ (P&I LogaHR, Mandant Pub&Go) │
-   └──────────────────────────────┘
+[USB Fingerprint Reader: SecuGen Hamster Pro 20]
+            │ USB
+[Windows Pub-PC]
+  ├─ Pub Ops Web (Browser, /pub?mode=staff)
+  └─ Companion-App (Tray, localhost:47000)
+            │ HTTPS
+[Pub Ops Backend (Lovable Cloud)]
+  ├─ staff_biometrics (Templates, verschlüsselt)
+  └─ stamp_events
 ```
 
-## Was zu bauen ist
+## Ablauf
 
-### 1. DB-Erweiterung `staff_members`
-Neue Felder für die Personalakte (Pflicht für P&I-Export):
-`personnel_number`, `email`, `phone`, `birth_date`, `address_street/zip/city/country`, `iban`, `bic`, `tax_id`, `social_security_number`, `health_insurance`, `tax_class`, `children_allowance`, `religion`, `contract_type` (Vollzeit/Teilzeit/Minijob/Werkstudent/Aushilfe), `weekly_hours`, `hourly_wage`, `start_date`, `end_date`, `notes`.
+**Enrollment (HQ, einmalig pro MA):**
+1. Admin öffnet Personalakte → "Fingerabdruck registrieren"
+2. Companion liest Finger 3× → erzeugt Template (proprietäres SecuGen-Format, ~400 Byte)
+3. Template wird **AES-verschlüsselt** → an Pub Ops gesendet → in `staff_biometrics` gespeichert (pro MA bis zu 2 Finger)
 
-### 2. Neue Tabelle `staff_documents` + Storage-Bucket
-Für Vertrags-PDFs, Gesundheitszeugnis (§43 IfSG), Belehrungen. Privater Bucket, nur HR-Rolle liest.
+**Stempeln (täglich, in beliebigem Pub):**
+1. MA tippt am Pub-PC im Browser auf "Stempeln"
+2. Browser ruft `http://localhost:47000/identify` mit `pub_id`
+3. Companion lädt alle Templates der MA dieses Pubs (gecached, alle 5 min refresh)
+4. MA scannt Finger → 1:N Matching lokal in der Companion-App
+5. Bei Match: Companion sendet `{staff_id, confidence}` an Pub Ops → `stamp_in/out`
+6. Browser zeigt Bestätigung
 
-### 3. Auth + Rollen (DSGVO-Pflicht)
-- Login-Seite (E-Mail + Passwort)
-- Tabelle `user_roles` (`hr_admin`, `pub_manager`, `viewer`) + `has_role`-Funktion
-- Pub-Manager sieht nur Name/Telefon/Schicht — **keine** IBAN, Steuerklasse, Religion
-- HR-Admin (1–2 Personen): Vollzugriff
+## Sicherheit / DSGVO
+- Templates sind **keine Bilder**, nur mathematische Hashes — biometrisch nicht rekonstruierbar
+- AES-256 verschlüsselt at rest (Schlüssel in Lovable Cloud Secrets)
+- Trotzdem: **biometrische Daten = Art. 9 DSGVO** → Auftragsverarbeitungsvertrag (AVV) mit Lovable nötig + explizite Einwilligung jedes MA (Formular in Personalakte)
+- Audit-Log: jeder Match wird mit Confidence-Score geloggt
+- Recht auf Löschung: 1-Klick "Biometrie löschen" in Personalakte
 
-### 4. UI-Erweiterung im HR-Tab
-- **Personalakte-Drawer** pro MA: alle Stammdatenfelder + Dokumenten-Upload
-- **Neueinstellungs-Wizard**: Pflichtfelder-Formular, erzeugt am Ende den Stammdaten-Export für P&I
-- **"Lohn-Export Supervista"** (ersetzt P&I-Connector-Tab): Monatsauswahl → Vorschau-Tabelle → CSV-Download im P&I-Format
+## Datenmodell (neu)
 
-### 5. P&I-Exporte (zwei Formate)
+**Tabelle `staff_biometrics`:**
+- staff_id (FK staff_members)
+- finger_index (0–9, welcher Finger)
+- template_encrypted (bytea, AES-verschlüsselt)
+- consent_signed_at (timestamp)
+- enrolled_at, enrolled_by
 
-**A) Stammdaten-Export** (bei Neueinstellung/Änderung)
-Eine Zeile pro Mitarbeiter mit allen abrechnungsrelevanten Feldern (Personalnr., Name, Adresse, Geburtsdatum, IBAN, Steuer-ID, SV-Nr, KK, Steuerklasse, Kinder, Religion, Vertragsart, Std/Woche, Stundenlohn, Eintritt/Austritt).
+**Tabelle `stamp_events`** (falls noch nicht da):
+- staff_id, pub_id, type (in/out), timestamp, method (fingerprint/pin/manual), confidence
 
-**B) Monats-Stunden-Export** (zum Monatsende)
-Eine Zeile pro MA × Tag × Schichtart mit: Personalnr., Datum, Std, Zuschlagsschlüssel (Nacht/Sonntag/Feiertag), Kostenstelle (Pub).
+## Companion-App (Windows)
+- **Electron + Node** (Empfehlung: gleicher Web-Stack, schnellere Entwicklung)
+- Bibliothek: `node-secugen` Wrapper für SecuGen FDx SDK Pro (kostenlos)
+- Auto-Start, Tray-Icon, Auto-Update via electron-updater
+- Lokaler HTTPS-Endpoint mit self-signed cert (oder HTTP nur localhost)
+- Login mit Pub-API-Token (einmalig konfiguriert)
 
-**Format**: CSV (Semikolon, Windows-1252, deutsches Zahlenformat) — Standard für P&I-Imports. Das **genaue Spalten-Layout** muss in einem 15-Min-Termin mit Supervistas Lohnbuchhaltung abgestimmt werden (jeder P&I-Mandant hat oft eine eigene Import-Maske). Bis dahin bauen wir das **gängige P&I-LogaHR-Standardformat**; Anpassung später per Mapping-Config ohne Code-Änderung.
+## Fallback
+Empfehlung: **Finger + PIN-Fallback** (4-stellig, pro MA). Aktiviert nur bei:
+- Sensor-Defekt
+- Verletzung am Finger (Pflaster)
+- Neue MA noch nicht enrolled
 
-### 6. Migration der 20 bestehenden MA
-Import-Maske: CSV aus P&I exportieren → in Pub Ops hochladen → Felder mappen → bestätigen.
+## Pub Ops Änderungen (Web)
+1. **Personalakte**: neuer Tab "Biometrie" — Status, Enroll-Button, Löschen, PIN setzen
+2. **Stempel-Screen** (`/pub?mode=staff`): aktueller Mitarbeiter-Picker wird ersetzt durch "Finger auflegen" Prompt + PIN-Fallback-Button
+3. **HQ Dashboard**: Übersicht "MA mit Biometrie enrolled: X / Y"
+4. **Server Functions**:
+   - `enrollBiometric({staff_id, template})` — Admin-only
+   - `identifyAndStamp({pub_id, template_candidate})` — vergleicht serverseitig nicht; bekommt fertige `staff_id` von Companion
+   - `deleteBiometric({staff_id})` — Admin-only
 
-## Zugriff & DSGVO
+## Aufwand
+- DB-Migration + Server Functions: 1 Tag
+- Personalakte Biometrie-Tab: 1 Tag
+- Stempel-Screen Umbau + PIN-Fallback: 1 Tag
+- Companion-App (Electron + SecuGen + Auto-Update + Installer): 3–4 Tage
+- Tests, Rollout-Doku, Schulung: 1–2 Tage
+- **Gesamt: ~1,5 Wochen**
 
-- Personalakten enthalten besondere Daten (IBAN, Religion, Gesundheitszeugnis) → Rollen-Trennung Pflicht
-- Audit-Log: wer hat wann welches Feld geändert (kleine `staff_audit_log`-Tabelle)
-- Aufbewahrung: lohnrelevante Daten 10 Jahre, sonst 3 Jahre nach Austritt (Archiv-Flag, nicht in Phase 1)
-- AV-Vertrag mit Supervista intern klären (zwischen den Konzern-Töchtern; meist via Konzern-Rahmenvertrag abgedeckt)
+## Offene Punkte vor Start
+1. Hardware bestellen: 1× SecuGen Hamster Pro 20 zum Testen (~100 €)
+2. AVV-Vorlage + MA-Einwilligungsformular vorbereiten (rechtlich)
+3. Pilot-Pub festlegen (1 Standort, 2–3 Wochen Probebetrieb vor Rollout)
 
-## Reihenfolge der Umsetzung
+## Was ich JETZT umsetzen kann
+Web-Seite (Pub Ops): DB-Schema + Personalakte-Tab + Stempel-Screen-Umbau + PIN-Fallback. **Companion-App ist Windows-Entwicklung außerhalb Lovable** — die müsste extern entwickelt werden (oder ich liefere ein Spec-Dokument für einen Windows-Dev).
 
-1. **DB-Migration** (staff_members-Felder, staff_documents, user_roles, has_role, Storage-Bucket, RLS) — Grundlage
-2. **Auth + Login + Rollen-UI** — Pflicht bevor echte Personaldaten rein dürfen
-3. **Personalakte-UI + Dokumenten-Upload** — Pflege wird möglich
-4. **Neueinstellungs-Wizard + Stammdaten-Export (P&I-Format)**
-5. **Monats-Stunden-Export (P&I-Format)** — ersetzt alten Mock-Tab
-6. **Import-Maske für die 20 Bestands-MA**
-7. **Audit-Log + Feinschliff Rollen-Sichtbarkeit**
-
-Schritte 1+2 müssen zusammen produktiv gehen. Danach kann jede Stufe einzeln getestet und mit Supervista abgestimmt werden.
-
-## Offen / vor Schritt 4 zu klären mit Supervista-Lohnbuchhaltung
-
-- **Genaues P&I-Importformat**: gibt es eine vorhandene Import-Vorlage (Spalten, Trennzeichen, Codepage)?
-- **Zuschlagsschlüssel**: welche Kennziffern nutzt Supervista für Nacht-/Sonntags-/Feiertagszuschlag?
-- **Kostenstellen-Schema**: pro Pub eine eigene Kostenstelle? Welche Nummernlogik?
-- **Personalnummern-Vergabe**: vergibt Supervista zentral, oder dürfen wir einen Pub&Go-Nummernkreis nutzen?
-
-Diese vier Antworten brauchen wir, **bevor** der echte Export scharf geschaltet wird. UI und Datenmodell können wir aber sofort starten.
-
-## Bestätigung von dir
-
-- Reihenfolge 1–7 ok, oder willst du eine Stufe vorziehen?
-- Soll ich vor Schritt 1 ein kurzes **Fragen-Sheet für die Lohnbuchhaltung** vorbereiten (die 4 offenen Punkte oben als 1-Seiter), damit du es ihnen weiterleiten kannst?
+Soll ich mit dem Web-Teil starten (DB + UI + Server Functions), sodass die Companion-App später nur noch andocken muss?
