@@ -18,6 +18,7 @@ import {
 } from "@/lib/hr-mock";
 import { PUBS } from "@/lib/pubs-mock";
 import { useRangeLabels, type DateRange } from "@/components/date-range-picker";
+import { PubScheduleDialog } from "@/components/hq/pub-schedule-dialog";
 
 // Scale factors relative to the base mock data.
 // Shifts base = 1 week; sick stats base = 1 month.
