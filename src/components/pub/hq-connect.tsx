@@ -106,9 +106,8 @@ export function HQConnect() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="it">IT</SelectItem>
-                      <SelectItem value="hr">HR</SelectItem>
                       <SelectItem value="facility">{tt("Facility", "Facility")}</SelectItem>
-                      <SelectItem value="logistics">{tt("Logistik", "Logistics")}</SelectItem>
+                      <SelectItem value="logistics">{tt("Operations", "Operations")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
