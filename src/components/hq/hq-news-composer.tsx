@@ -352,15 +352,17 @@ export function HQNewsComposer() {
                     {n.author} · {n.authorRole} · {formatDistanceToNow(new Date(n.publishedAt), { addSuffix: true, locale })}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-red-600"
-                  onClick={() => hqNewsStore.remove(n.id)}
-                  title={tt("Löschen", "Delete")}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {canPublish && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                    onClick={() => hqNewsStore.remove(n.id)}
+                    title={tt("Löschen", "Delete")}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             );
           })}
