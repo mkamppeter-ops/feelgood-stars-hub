@@ -27,15 +27,19 @@ const INITIAL: Ticket[] = [
   { id: "T-097", title: "Lieferung Reinigungsmittel", desc: "Eingegangen und eingeräumt.", category: "logistics", status: "done", priority: "low", author: "Sarah L.", pubId: "whistling-kettle", ago: "vor 5 Tagen" },
 ];
 
-const STORAGE_KEY = "pubgo.tickets";
+const STORAGE_KEY = "pubgo.tickets.v2";
 
 function loadInitial(): Ticket[] {
   if (typeof window === "undefined") return INITIAL;
   try {
+    // Clear legacy v1 store (contained removed "hr" category)
+    window.localStorage.removeItem("pubgo.tickets");
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return INITIAL;
     const parsed = JSON.parse(raw) as Ticket[];
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL;
+    if (!Array.isArray(parsed) || parsed.length === 0) return INITIAL;
+    // Drop any stale "hr" categorised tickets just in case
+    return parsed.filter((t) => t.category !== ("hr" as unknown as TicketCategory));
   } catch {
     return INITIAL;
   }
