@@ -118,12 +118,16 @@ function HQPage() {
               </button>
             );
           })}
-        </nav>
-        <div className="p-3 border-t space-y-2">
-          <Link to="/pub" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
-            → {t("nav.localView", "Lokale Pub-Ansicht")}
+          <Link
+            to="/pub"
+            className="mt-3 pt-3 border-t w-full flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <Store className="h-4 w-4" />
+            {t("nav.localView", "Lokale Pub-Ansicht")}
           </Link>
-          <Link to="/admin" className="block text-xs text-muted-foreground hover:text-foreground">← {t("nav.admin")}</Link>
+        </nav>
+        <div className="p-3 border-t">
+          <Link to="/admin" className="text-xs text-muted-foreground hover:text-foreground">← {t("nav.admin")}</Link>
         </div>
       </aside>
 
