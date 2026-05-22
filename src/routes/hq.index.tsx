@@ -124,7 +124,8 @@ function HQPage() {
             { icon: Settings, label: t("nav.dataSettings"), tab: "settings", badge: undefined as number | undefined },
           ]).map(({ icon: Icon, label, tab, badge }) => {
             const active = activeTab === tab;
-            const owner = TAB_OWNER[tab];
+            // For the per-category inbox, the effective owner is the logged-in role itself.
+            const owner = tab === "inbox" && role && ROLE_TICKET_CATEGORY[role] ? role : TAB_OWNER[tab];
             const isMine = !!role && owner === role;
             return (
               <button
@@ -174,8 +175,10 @@ function HQPage() {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-semibold tracking-tight truncate">{t("hq.title")}</h1>
-              {role && TAB_OWNER[activeTab] && (
-                TAB_OWNER[activeTab] === role ? (
+              {role && (() => {
+                const ownerForTitle = activeTab === "inbox" && ROLE_TICKET_CATEGORY[role] ? role : TAB_OWNER[activeTab];
+                if (!ownerForTitle) return null;
+                return ownerForTitle === role ? (
                   <span className="hidden md:inline-flex items-center gap-1 text-[10px] uppercase tracking-wider bg-primary/15 text-primary px-1.5 py-0.5 rounded font-semibold">
                     {t("hq.owner.yours", "Dein Bereich")}
                   </span>
@@ -185,10 +188,10 @@ function HQPage() {
                     title={t("hq.owner.hint", "Tab-Lead")}
                   >
                     <span className="opacity-60">{t("hq.owner.label", "Lead")}:</span>
-                    <span className="font-medium text-foreground/80">{ROLE_PERSON[TAB_OWNER[activeTab]].name}</span>
+                    <span className="font-medium text-foreground/80">{ROLE_PERSON[ownerForTitle].name}</span>
                   </span>
-                )
-              )}
+                );
+              })()}
             </div>
             <p className="text-xs text-muted-foreground truncate">{t("common.period")}: {rangeLabels[range]}</p>
           </div>
