@@ -28,6 +28,10 @@ import { ActiveOps } from "@/components/active-ops";
 import { RequireRole, LogoutButton } from "@/components/auth-guard";
 import { DataSettings } from "@/components/data-settings";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { TicketInbox } from "@/components/hq/ticket-inbox";
+import { Inbox } from "lucide-react";
+import { useSession, ROLE_TICKET_CATEGORY, type Role } from "@/lib/auth-mock";
+import { useTickets } from "@/lib/tickets-store";
 
 export const Route = createFileRoute("/hq/")({
   head: () => ({
@@ -48,9 +52,16 @@ function HQPage() {
   const { t } = useTranslation();
   const rangeLabels = useRangeLabels();
   const navigate = useNavigate();
+  const session = useSession();
+  const tickets = useTickets();
+  const isSuper = session?.role === "hq_admin";
+  const myCat = session ? ROLE_TICKET_CATEGORY[session.role as Role] : undefined;
+  const myTicketCount = (isSuper ? tickets : tickets.filter((t) => t.category === myCat))
+    .filter((t) => t.status !== "done").length;
+  const isSubAdmin = !!myCat;
   const [range, setRange] = useState<DateRange>("last7");
   const [pulseKey, setPulseKey] = useState(0);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(isSubAdmin ? "inbox" : "overview");
   const factor = RANGE_FACTOR[range];
 
   const kpis = useMemo(() => {
@@ -95,6 +106,7 @@ function HQPage() {
         <nav className="flex-1 p-3 space-y-1 text-sm">
           {[
             { icon: LayoutDashboard, label: t("nav.overview"), tab: "overview" },
+            { icon: Inbox, label: t("nav.inbox", "Inbox"), tab: "inbox", badge: myTicketCount },
             { icon: Building2, label: t("nav.pubs"), tab: "pubs" },
             { icon: Activity, label: t("nav.activeOps"), tab: "active-ops" },
             { icon: TrendingUp, label: t("nav.salesOps"), tab: "sales" },
@@ -103,7 +115,7 @@ function HQPage() {
             { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback" },
             { icon: Megaphone, label: t("nav.marketing", "Marketing"), tab: "marketing" },
             { icon: Settings, label: t("nav.dataSettings"), tab: "settings" },
-          ].map(({ icon: Icon, label, tab }) => {
+          ].map(({ icon: Icon, label, tab, badge }) => {
             const active = activeTab === tab;
             return (
               <button
@@ -114,7 +126,12 @@ function HQPage() {
                 }`}
               >
                 <Icon className="h-4 w-4" />
-                {label}
+                <span className="flex-1 text-left">{label}</span>
+                {typeof badge === "number" && badge > 0 && (
+                  <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">
+                    {badge}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -156,6 +173,15 @@ function HQPage() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList>
               <TabsTrigger value="overview">{t("nav.overview")}</TabsTrigger>
+              <TabsTrigger value="inbox" className="gap-2">
+                <Inbox className="h-3.5 w-3.5" />
+                {t("nav.inbox", "Inbox")}
+                {myTicketCount > 0 && (
+                  <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">
+                    {myTicketCount}
+                  </span>
+                )}
+              </TabsTrigger>
               <TabsTrigger value="pubs" className="gap-1.5">
                 <Building2 className="h-3.5 w-3.5" />
                 {t("nav.pubs")}
@@ -172,6 +198,10 @@ function HQPage() {
                 <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="inbox" className="mt-0">
+              <TicketInbox />
+            </TabsContent>
 
             <TabsContent value="pubs" className="mt-0">
               <PubsGrid onOpen={(id) => navigate({ to: "/hq/$pubId", params: { pubId: id } })} />
