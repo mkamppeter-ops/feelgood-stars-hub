@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Laptop, Users, Wrench, Truck, Inbox, AlertCircle } from "lucide-react";
+import { Laptop, Users, Wrench, Truck, Inbox, AlertCircle, Phone } from "lucide-react";
+import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { useT } from "@/lib/use-t";
 import { useSession, ROLE_TICKET_CATEGORY, type Role } from "@/lib/auth-mock";
 import { useTickets, ticketsStore, type TicketCategory, type TicketStatus, type TicketPriority } from "@/lib/tickets-store";
+import { PUBS } from "@/lib/pubs-mock";
 
 const CAT_ICON = { it: Laptop, hr: Users, facility: Wrench, logistics: Truck };
 
