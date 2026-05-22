@@ -402,15 +402,16 @@ export function DataSettings() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Clock className="h-4 w-4 text-emerald-600" />
-                  Ziel-Auslastung pro Stunde
+                  {t("settings.occupancyTitle")}
                 </CardTitle>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Wunsch-Auslastung in % je Öffnungsstunde — Basis für spätere Performance-Berechnungen.
+                  {t("settings.occupancySub")}
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
                 {hours.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Bitte Öffnungs- und Schließzeit setzen.</p>
+                  <p className="text-sm text-muted-foreground">{t("settings.setHours")}</p>
+
                 ) : (
                   hours.map((h) => {
                     const val = form.occupancy_targets[String(h)] ?? 60;
