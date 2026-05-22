@@ -171,6 +171,7 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
               <CardTitle className="text-base">{tt("Dienstplan-Übersicht", "Schedule overview")}</CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
                 {tt("Stunden pro Filiale · Soll vs. Ist", "Hours per branch · target vs. actual")} · <span className="font-medium text-foreground">{periodLabel}</span>
+                <span className="ml-2 text-muted-foreground/70">· {tt("Zeile klicken für Wochen-Dienstplan", "Click a row to open the weekly schedule")}</span>
               </p>
             </CardHeader>
             <CardContent>
