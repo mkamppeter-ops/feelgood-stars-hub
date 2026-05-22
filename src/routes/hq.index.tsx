@@ -11,7 +11,7 @@ import {
 
 import {
   Trophy, TrendingUp, Users, Star, Gauge, Phone, LayoutDashboard,
-  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone, Gift, Activity, Megaphone,
+  Building2, MessageSquare, Settings, Bell, Search, Target, CalendarCheck, Smartphone, Gift, Activity, Megaphone, UserCog,
 } from "lucide-react";
 import { Marketing } from "@/components/marketing";
 import { PUBS, computeScore, getAppReach } from "@/lib/pubs-mock";
