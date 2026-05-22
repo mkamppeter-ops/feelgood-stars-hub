@@ -30,6 +30,7 @@ import { DataSettings } from "@/components/data-settings";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { TicketInbox } from "@/components/hq/ticket-inbox";
 import { HROverview } from "@/components/hq/hr-overview";
+import { HQNewsComposer } from "@/components/hq/hq-news-composer";
 import { Inbox } from "lucide-react";
 import { useSession, ROLE_TICKET_CATEGORY, type Role } from "@/lib/auth-mock";
 import { useTickets } from "@/lib/tickets-store";
