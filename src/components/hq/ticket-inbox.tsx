@@ -149,5 +149,7 @@ export function TicketInbox() {
         )}
       </CardContent>
     </Card>
+    </div>
   );
 }
+
