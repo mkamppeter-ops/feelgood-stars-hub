@@ -160,7 +160,8 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {SHIFT_SUMMARY.map((s) => {
+                  {scaledShifts.map((s) => {
+                    if (s.weekTargetHours === 0) return null;
                     const util = Math.round((s.weekActualHours / s.weekTargetHours) * 100);
                     const utilTone = util >= 95 ? "text-emerald-600" : util >= 85 ? "text-foreground" : "text-amber-600";
                     return (
