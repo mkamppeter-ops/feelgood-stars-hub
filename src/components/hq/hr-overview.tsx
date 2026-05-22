@@ -54,6 +54,7 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
   const rangeLabels = useRangeLabels();
   const [tab, setTab] = useState("employees");
   const [vacations, setVacations] = useState(VACATION_REQUESTS);
+  const [scheduleFor, setScheduleFor] = useState<string | null>(null);
   const periodLabel = rangeLabels[range];
   const shiftFactor = SHIFT_PERIOD_FACTOR[range];
   const sickFactor = SICK_PERIOD_FACTOR[range];
