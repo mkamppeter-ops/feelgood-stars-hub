@@ -1,65 +1,69 @@
-# Operatives Intranet für /pub
+# HR & Operations sauber trennen
 
-Erweiterung der bestehenden `/pub`-Route um vier neue Bereiche per Tab-Navigation. **Keine Änderungen** an Login, `/hq` oder bestehenden Umsatz-Dashboards. Sichtbar für alle /pub-Nutzer (Manager + Staff). Vollständig bilingual (DE/EN) über den bestehenden `useT()`-Helper.
+## Ausgangslage
+HR ist aktuell ein Ticket-Empfänger (Schürzen, Onboarding) und Reviews liegen unklar im Dashboard. Das passt nicht: Personalthemen sind etwas anderes als operative Probleme.
 
-## Tab-Struktur in /pub
+## Neue Rollen-Logik
 
-Die aktuelle innere `Tabs`-Komponente (Sales / Feedback) wird in eine übergeordnete Top-Level-Tableiste eingebettet:
+| Rolle | Verantwortlich für |
+|---|---|
+| **ops_admin** | Alle Gäste-Reviews, operative Tickets (inkl. der bisherigen HR-Tickets), Logistik |
+| **hr_admin** | Dienstplan-Übersicht aller Bars · Urlaubs- & Krankmeldungs-Verwaltung |
+| **it_admin** | nur IT-Tickets |
+| **facility_admin** | nur Facility-Tickets |
+| **hq_admin** | sieht alles |
 
-```text
-[ Dashboard ] [ HQ Connect ] [ Academy ] [ Marketing Hub ] [ Team & HR ]
-```
+## Konkrete Änderungen
 
-- "Dashboard" enthält den heutigen Inhalt unverändert (Gamification-Hero, Mini-KPIs, Sales/Feedback-Sub-Tabs).
-- Im Staff-Modus bleibt der bisherige Reviews-Only-View als Default, die 4 neuen Tabs sind zusätzlich erreichbar.
-- Tab-State über URL-Search-Param `tab=` (deep-linkbar), Default `dashboard`.
+### 1. Ticket-System
+- HR-Kategorie aus den Ticket-Filtern entfernen
+- Bestehende HR-Tickets („Schürzen", „Onboarding neuer Aushilfskraft") wandern zu `logistics` bzw. werden zu Operations-Tickets
+- Im „Neues Ticket"-Dialog im Pub-View: HR-Option raus, dafür „Operations" als klare Kategorie
+- `ROLE_TICKET_CATEGORY`-Mapping: `hr_admin` bekommt keine Kategorie mehr, `ops_admin` deckt sowohl Logistik als auch operative HR-nahe Themen ab
 
-## 1. HQ Connect — Support & Tickets
+### 2. Reviews & Feedback → klar an Operations
+- Live-Feedback und Review-Übersicht zeigen ein „Zuständig: Operations"-Label
+- ops_admin landet nach Login direkt auf dem Feedback-Tab
+- Badge mit offenen Reviews erscheint im Sidebar-Menü von ops_admin
 
-- Header: Titel + Button **„Neues Ticket"** (öffnet Dialog mit Kategorie-Select: IT / HR / Facility / Logistik, Titel, Beschreibung, Priorität).
-- Kanban-Board mit 3 Spalten: **Offen**, **In Bearbeitung**, **Gelöst** (Status-Badges in den bekannten Ampelfarben des Designsystems).
-- Ticket-Karten zeigen: Kategorie-Icon, Titel, Kurzbeschreibung, Ersteller, Zeitstempel, Priority-Dot.
-- Mock-Daten: ~8 Tickets über die Spalten verteilt. State lokal in React (kein Backend), Karten per simplem Status-Wechsel-Menü verschiebbar.
+### 3. Neuer HR-Bereich im HQ
+Ein eigener Tab/Sidebar-Eintrag „HR" mit drei Karten-Sektionen:
 
-## 2. Pub&Go Academy — Training & Rewards
+**a) Dienstplan-Übersicht (alle Bars)**
+- Tabelle: Pub · Wochen-Sollstunden · Ist-Stunden · Auslastung
+- Pro Bar aufklappbar: aktuelle Woche, Schichten pro Tag, wer arbeitet
+- Quelle: aggregiert aus bestehender `TeamHR`-Komponente, plus `pub_settings.opening_hour`/`closing_hour`
 
-- Gamification-Banner oben: **„Dein Punktestand: 450 🪙"** + Button **„Belohnungen"** (öffnet Dialog mit Mock-Reward-Liste: Gutscheine, Merch, freie Schicht).
-- Grid (3-spaltig auf Desktop, 1 auf Mobile) mit Trainings-Karten:
-  - Cover-Thumbnail, Titel (z. B. *Kassensystem 101*, *Perfekt Zapfen*, *Hygiene-Basics*, *Cocktail-Grundlagen*, *Gästekommunikation*, *Inventur*), Dauer, Punktwert.
-  - **Progress Bar** unten (Mix aus 0% / 30% / 70% / 100%).
-  - „Weiterlernen"-Button bzw. „Abgeschlossen"-Badge.
+**b) Urlaubsanträge**
+- Liste aller offenen Anträge bar-übergreifend (Mitarbeiter, Pub, Zeitraum)
+- Aktionen: Genehmigen / Ablehnen
+- Filter: offen · genehmigt · abgelehnt
 
-## 3. Marketing Hub — Werbematerial
+**c) Krankmeldungen**
+- Aktuelle Krankmeldungen (heute, diese Woche)
+- Monats-Statistik pro Bar: Krankheitstage, Quote
+- Hinweisbadge wenn ein Pub auffällig hohe Quote hat
 
-- Highlight-Banner oben: **„Aktuelle Kampagne: Happy Hour"** mit Zeitraum + CTA „Material ansehen".
-- Zwei-Spalten-Layout:
-  - **Digitale Vorlagen**: Liste/Grid von Social-Media-Templates (Instagram Story, Post, Reel-Cover) mit Vorschau-Thumbnail und Download-Icon.
-  - **Print bestellen**: Bierdeckel, Tischaufsteller, Plakat A3, Flyer mit Mengenangabe und **„Nachbestellen"**-Button (Toast-Feedback).
+### 4. Sidebar-Navigation
+- Neuer Eintrag „HR" mit `UserCog`-Icon
+- Für `hr_admin` ist HR der Standard-Tab nach Login
+- Für `hq_admin` sichtbar zwischen „Pubs" und „Active Ops"
+- Andere Sub-Admins sehen den HR-Tab nicht
 
-## 4. Team & HR — Personalwesen (Mock im eigenen Design)
+## Daten (vorerst Mock)
+Da noch keine echten Schicht-/Urlaubs-Daten in der DB liegen, wird der HR-Bereich erst mit Mock-Daten in `src/lib/hr-mock.ts` aufgebaut (Dienstpläne, Urlaubsanträge, Krankmeldungen pro Pub). So sieht man das Konzept sofort und kann später auf echte Tabellen migrieren.
 
-- **Zeiterfassung-Widget** (oben, markant): großer Status-Block mit Live-Uhr; primärer Button wechselt zustandsabhängig zwischen **„Schicht starten"** → **„Pause"** / **„Ausstempeln"**. Anzeige aktueller Schichtdauer, letzte Stempelung.
-- **Dienstplan (Roster)**: Wochentabelle Mo–So × Schichten (Früh/Spät/Nacht), Zellen zeigen Initialen-Avatare der eingeteilten Mitarbeiter. Eigene Schichten visuell hervorgehoben.
-- **Abwesenheiten**: Zwei Action-Buttons **„Krankmeldung"** und **„Urlaub beantragen"** (öffnen je einen kleinen Dialog mit Datums-/Zeitraumauswahl + Toast-Bestätigung). Darunter Status-Liste eigener Anträge (Beantragt / Genehmigt / Abgelehnt).
-- Hinweis: rein UI-Mock, später gegen Crewmeister/Personio-API austauschbar — Struktur ist bereits darauf vorbereitet (Datenobjekte zentral in einer Mock-Datei).
+## Betroffene Dateien
+- `src/lib/auth-mock.ts` – Mapping `hr_admin` entfernen, Default-Route auf `/hq?tab=hr` setzen
+- `src/lib/tickets-store.ts` – HR-Seeds umkategorisieren
+- `src/components/pub/hq-connect.tsx` – HR-Option im Dialog entfernen, Operations hinzu
+- `src/components/hq/ticket-inbox.tsx` – HR-Filter raus
+- `src/components/hq/hr-overview.tsx` (neu) – Dienstplan/Urlaub/Krank
+- `src/lib/hr-mock.ts` (neu) – Mock-Daten
+- `src/routes/hq.index.tsx` – neuer HR-Tab, Sidebar-Eintrag, ops_admin → feedback als Default
+- `src/lib/i18n.ts` – Strings DE/EN
 
-## Technische Details
-
-**Neue Dateien:**
-- `src/components/pub/hq-connect.tsx`
-- `src/components/pub/academy.tsx`
-- `src/components/pub/marketing-hub.tsx`
-- `src/components/pub/team-hr.tsx`
-- `src/lib/pub-intranet-mock.ts` (zentrale Mock-Daten: Tickets, Trainings, Materialien, Roster, Anträge)
-
-**Geänderte Dateien:**
-- `src/routes/pub.tsx`: äußere Tabs ergänzen (`tab` Search-Param), bestehende Sections unter dem `dashboard`-Tab gruppieren. Staff-Branch behält den Reviews-Default, bekommt aber dieselbe Tab-Leiste.
-
-**Design-Konsistenz:**
-- Nutzt ausschließlich vorhandene shadcn-Komponenten (`Tabs`, `Card`, `Badge`, `Button`, `Dialog`, `Progress`, `Select`, `Avatar`, `Table`).
-- Farben über semantische Tokens (`bg-card`, `text-muted-foreground`, `bg-primary/10` etc.) — keine Hardcoded-Hex-Werte.
-- Icons aus `lucide-react` (Ticket, GraduationCap, Megaphone, Users, Clock, etc.).
-- Alle Strings über `useT()` bilingual.
-
-**Out of scope (explizit nicht angefasst):**
-- Login, `/hq`, `/admin`, `/feedback`, Marketing-Sektion im Admin, bestehende Sales/Feedback-Komponenten, Supabase-Schema, Auth-Logik.
+## Was NICHT Teil dieses Schritts ist
+- Echte DB-Tabellen für Schichten/Urlaub/Krank (separater Schritt, sobald das UI-Konzept steht)
+- Stundenexport für Lohnbuchhaltung
+- Mitarbeiterstammdaten/Verträge
