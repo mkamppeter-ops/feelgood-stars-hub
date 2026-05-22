@@ -13,9 +13,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Trash2, Users } from "lucide-react";
 import {
-  STAFF_ROLES, SHIFT_SLOTS, SHIFT_SLOT_META,
-  addDaysISO, isoWeekNumber, listShifts, listStaff, setStaffActive, shiftHours, toISODate, upsertShift, upsertStaff, weekDays, weekStartISO,
-  type ShiftAssignment, type ShiftSlot, type StaffMember,
+  STAFF_ROLES, SHIFT_SLOTS, SHIFT_SLOT_META, DEFAULT_PUB_HOURS,
+  addDaysISO, formatPubHours, getPubHours, isoWeekNumber, isWithinPubHours,
+  listShifts, listStaff, setStaffActive, shiftHours, slotDefaults,
+  toISODate, upsertShift, upsertStaff, weekDays, weekStartISO,
+  type PubHours, type ShiftAssignment, type ShiftSlot, type StaffMember,
 } from "@/lib/staff-schedule";
 
 const WEEKDAY_LABEL = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
@@ -24,6 +26,7 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
   const [weekStart, setWeekStart] = useState(() => weekStartISO());
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [shifts, setShifts] = useState<ShiftAssignment[]>([]);
+  const [hours, setHours] = useState<PubHours>(DEFAULT_PUB_HOURS);
   const [loading, setLoading] = useState(true);
   const [editor, setEditor] = useState<{
     staff: StaffMember; date: string; slot: ShiftSlot; existing?: ShiftAssignment;
@@ -37,9 +40,14 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
   async function reload() {
     setLoading(true);
     try {
-      const [s, sh] = await Promise.all([listStaff(pubId), listShifts(pubId, weekStart)]);
+      const [s, sh, h] = await Promise.all([
+        listStaff(pubId),
+        listShifts(pubId, weekStart),
+        getPubHours(pubId),
+      ]);
       setStaff(s);
       setShifts(sh);
+      setHours(h);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Fehler beim Laden";
       toast.error(message);
@@ -77,7 +85,7 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
                 Personalplan · {pubName}
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
-                KW {week} · {formatRange(weekStart, weekEndDate)} · {staff.length} aktive Mitarbeiter
+                KW {week} · {formatRange(weekStart, weekEndDate)} · {staff.length} aktive Mitarbeiter · Öffnungszeiten: {formatPubHours(hours)}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -192,6 +200,7 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
         <ShiftEditorDialog
           editor={editor}
           pubId={pubId}
+          hours={hours}
           onClose={() => setEditor(null)}
           onSaved={() => { setEditor(null); void reload(); }}
         />
@@ -210,28 +219,30 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
 
 // -------------------- Editor --------------------
 function ShiftEditorDialog({
-  editor, pubId, onClose, onSaved,
+  editor, pubId, hours, onClose, onSaved,
 }: {
   editor: { staff: StaffMember; date: string; slot: ShiftSlot; existing?: ShiftAssignment };
   pubId: string;
+  hours: PubHours;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const meta = SHIFT_SLOT_META[editor.slot];
+  const defaults = useMemo(() => slotDefaults(hours), [hours]);
   const [slot, setSlot] = useState<ShiftSlot>(editor.slot);
-  const [start, setStart] = useState(editor.existing ? fmtTime(editor.existing.start_time) : meta.defaultStart);
-  const [end, setEnd] = useState(editor.existing ? fmtTime(editor.existing.end_time) : meta.defaultEnd);
+  const [start, setStart] = useState(editor.existing ? fmtTime(editor.existing.start_time) : defaults[editor.slot].start);
+  const [end, setEnd] = useState(editor.existing ? fmtTime(editor.existing.end_time) : defaults[editor.slot].end);
   const [note, setNote] = useState(editor.existing?.note ?? "");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!editor.existing) {
-      const m = SHIFT_SLOT_META[slot];
-      setStart(m.defaultStart);
-      setEnd(m.defaultEnd);
+      setStart(defaults[slot].start);
+      setEnd(defaults[slot].end);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slot]);
+
+  const withinHours = isWithinPubHours(start + ":00", end + ":00", hours);
 
   async function save() {
     setSaving(true);
@@ -307,6 +318,11 @@ function ShiftEditorDialog({
               ≈ {shiftHours(start + ":00", end + ":00").toFixed(1)} h
             </div>
           </div>
+          {!withinHours && (
+            <div className="rounded-md border border-amber-300 bg-amber-500/10 text-amber-800 text-xs px-3 py-2">
+              Achtung: Schicht liegt außerhalb der Öffnungszeiten ({formatPubHours(hours)}). Bei Bedarf in den Settings anpassen.
+            </div>
+          )}
           <div>
             <Label className="text-xs">Notiz (optional)</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
