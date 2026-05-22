@@ -47,6 +47,7 @@ export const Route = createFileRoute("/pub")({
 
 function PubLocalView() {
   const { t } = useTranslation();
+  const tt = useT();
   const rangeLabels = useRangeLabels();
   const { mode } = Route.useSearch();
   const session = useSession();
@@ -55,6 +56,7 @@ function PubLocalView() {
   const lockedPubId = session?.pubId ?? PUBS[2].id;
   const [pubId, setPubId] = useState(lockedPubId);
   const [range, setRange] = useState<DateRange>("last7");
+  const [outerTab, setOuterTab] = useState("dashboard");
   const factor = RANGE_FACTOR[range];
 
   // Enforce locked pub for manager/staff
