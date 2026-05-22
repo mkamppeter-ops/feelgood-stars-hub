@@ -66,10 +66,19 @@ export const ROLE_LABEL: Record<Role, string> = {
   hq_admin: "HQ Admin",
   pub_manager: "Pub Manager",
   bar_staff: "Bar Staff",
+  it_admin: "IT Admin",
+  hr_admin: "HR Admin",
+  facility_admin: "Facility Admin",
+  ops_admin: "Logistik Admin",
 };
 
+const HQ_ROLES: Role[] = ["hq_admin", "it_admin", "hr_admin", "facility_admin", "ops_admin"];
+export function isHqRole(role: Role): boolean {
+  return HQ_ROLES.includes(role);
+}
+
 export function defaultRouteForRole(role: Role): string {
-  if (role === "hq_admin") return "/hq";
+  if (isHqRole(role)) return "/hq";
   if (role === "pub_manager") return "/pub?mode=manager";
   return "/pub?mode=staff";
 }
