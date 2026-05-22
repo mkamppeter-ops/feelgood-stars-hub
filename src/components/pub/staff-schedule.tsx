@@ -219,28 +219,30 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
 
 // -------------------- Editor --------------------
 function ShiftEditorDialog({
-  editor, pubId, onClose, onSaved,
+  editor, pubId, hours, onClose, onSaved,
 }: {
   editor: { staff: StaffMember; date: string; slot: ShiftSlot; existing?: ShiftAssignment };
   pubId: string;
+  hours: PubHours;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const meta = SHIFT_SLOT_META[editor.slot];
+  const defaults = useMemo(() => slotDefaults(hours), [hours]);
   const [slot, setSlot] = useState<ShiftSlot>(editor.slot);
-  const [start, setStart] = useState(editor.existing ? fmtTime(editor.existing.start_time) : meta.defaultStart);
-  const [end, setEnd] = useState(editor.existing ? fmtTime(editor.existing.end_time) : meta.defaultEnd);
+  const [start, setStart] = useState(editor.existing ? fmtTime(editor.existing.start_time) : defaults[editor.slot].start);
+  const [end, setEnd] = useState(editor.existing ? fmtTime(editor.existing.end_time) : defaults[editor.slot].end);
   const [note, setNote] = useState(editor.existing?.note ?? "");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!editor.existing) {
-      const m = SHIFT_SLOT_META[slot];
-      setStart(m.defaultStart);
-      setEnd(m.defaultEnd);
+      setStart(defaults[slot].start);
+      setEnd(defaults[slot].end);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slot]);
+
+  const withinHours = isWithinPubHours(start + ":00", end + ":00", hours);
 
   async function save() {
     setSaving(true);
