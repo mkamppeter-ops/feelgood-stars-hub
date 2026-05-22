@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { CalendarDays, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, AlertCircle, UserPlus, Pencil } from "lucide-react";
+import { PersonalakteSheet } from "@/components/hq/staff-personalakte";
 import { PUBS } from "@/lib/pubs-mock";
 import { supabase } from "@/integrations/supabase/client";
 import {
