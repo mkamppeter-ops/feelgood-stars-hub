@@ -44,7 +44,7 @@ export function HQConnect() {
   ];
 
   const catLabel = (c: Category) => ({
-    it: "IT", hr: "HR", facility: tt("Facility", "Facility"), logistics: tt("Logistik", "Logistics"),
+    it: "IT", facility: tt("Facility", "Facility"), logistics: tt("Operations", "Operations"),
   }[c]);
 
   const prioTone = (p: Priority) => ({
