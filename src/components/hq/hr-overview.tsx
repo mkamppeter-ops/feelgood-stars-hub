@@ -129,6 +129,10 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList>
+          <TabsTrigger value="employees" className="gap-1.5">
+            <Users className="h-3.5 w-3.5" />
+            {tt("Mitarbeiter", "Employees")}
+          </TabsTrigger>
           <TabsTrigger value="shifts" className="gap-1.5">
             <CalendarRange className="h-3.5 w-3.5" />
             {tt("Dienstpläne", "Schedules")}
@@ -152,6 +156,11 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
             )}
           </TabsTrigger>
         </TabsList>
+
+        {/* Employee roster (Crewmeister-style) */}
+        <TabsContent value="employees" className="mt-0">
+          <EmployeeRoster range={range} periodLabel={periodLabel} shiftFactor={shiftFactor} />
+        </TabsContent>
 
         {/* Schedule overview */}
         <TabsContent value="shifts" className="mt-0">
