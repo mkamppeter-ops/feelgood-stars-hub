@@ -265,6 +265,11 @@ function HQPage() {
               <HROverview range={range} />
             </TabsContent>
 
+            <TabsContent value="staff" className="mt-0">
+              <StaffOverview />
+            </TabsContent>
+
+
             <TabsContent value="inbox" className="mt-0">
               <TicketInbox />
             </TabsContent>
