@@ -351,7 +351,7 @@ function PubLocalView() {
           <TabsContent value="events" className="mt-0"><PubEvents pubName={pub.name} /></TabsContent>
           <TabsContent value="werbemittel" className="mt-0"><PromoShop pubId={effectivePubId} pubName={pub.name} /></TabsContent>
           <TabsContent value="staff" className="mt-0"><StaffSchedule pubId={effectivePubId} pubName={pub.name} /></TabsContent>
-          <TabsContent value="hr" className="mt-0"><TeamHR /></TabsContent>
+          <TabsContent value="hr" className="mt-0"><TeamHR pubId={effectivePubId} /></TabsContent>
         </Tabs>
       </main>
     </div>
