@@ -120,6 +120,7 @@ function HQPage() {
             { icon: Building2, label: t("nav.sortiment"), tab: "sortiment", show: !isHR, badge: undefined as number | undefined },
             { icon: CalendarCheck, label: t("nav.events"), tab: "events", show: !isHR, badge: undefined as number | undefined },
             { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback", show: !isHR, badge: undefined as number | undefined },
+            { icon: Megaphone, label: t("nav.hqNews", "HQ News"), tab: "hq-news", show: !isHR, badge: undefined as number | undefined },
             { icon: Megaphone, label: t("nav.marketing", "Marketing"), tab: "marketing", show: !isHR, badge: undefined as number | undefined },
             { icon: Settings, label: t("nav.dataSettings"), tab: "settings", show: !isHR, badge: undefined as number | undefined },
           ]).filter((i) => i.show).map(({ icon: Icon, label, tab, badge }) => {
