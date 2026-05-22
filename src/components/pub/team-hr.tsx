@@ -9,10 +9,11 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Play, Pause, LogOut, Clock, Thermometer, Plane, CalendarDays, Tablet, Smartphone, Delete } from "lucide-react";
+import { Play, Pause, LogOut, Clock, Thermometer, Plane, CalendarDays, Tablet, Smartphone, Delete, Fingerprint, KeyRound, CheckCircle2, XCircle, AlertCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/lib/use-t";
 import { supabase } from "@/integrations/supabase/client";
+import { pingFingerprintBridge, identifyFingerprint, enrollFingerprint, type FingerprintHealth } from "@/lib/fingerprint-bridge";
 
 type ShiftState = "off" | "working" | "paused";
 type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
