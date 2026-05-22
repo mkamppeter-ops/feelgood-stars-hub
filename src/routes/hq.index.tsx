@@ -124,16 +124,28 @@ function HQPage() {
             { icon: Settings, label: t("nav.dataSettings"), tab: "settings", badge: undefined as number | undefined },
           ]).map(({ icon: Icon, label, tab, badge }) => {
             const active = activeTab === tab;
+            const owner = TAB_OWNER[tab];
+            const isMine = !!role && owner === role;
             return (
               <button
                 key={label}
                 onClick={() => setActiveTab(tab)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-                  active ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted"
+                className={`w-full flex items-center gap-3 pr-3 py-2 rounded-md transition-colors border-l-[3px] ${
+                  active
+                    ? "bg-primary/10 text-primary font-medium border-primary pl-[calc(0.75rem-3px)]"
+                    : isMine
+                      ? "bg-primary/5 text-foreground border-primary/60 pl-[calc(0.75rem-3px)] hover:bg-primary/10"
+                      : "text-muted-foreground border-transparent pl-3 hover:bg-muted"
                 }`}
+                title={isMine ? t("hq.owner.yours", "Dein Bereich") : owner ? `${t("hq.owner.label", "Lead")}: ${ROLE_PERSON[owner].name}` : undefined}
               >
                 <Icon className="h-4 w-4" />
                 <span className="flex-1 text-left">{label}</span>
+                {isMine && person && (
+                  <span className="inline-flex items-center justify-center h-4 px-1.5 rounded bg-primary/15 text-primary text-[9px] font-semibold tracking-wider">
+                    {person.initials}
+                  </span>
+                )}
                 {typeof badge === "number" && badge > 0 && (
                   <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">
                     {badge}
@@ -163,13 +175,19 @@ function HQPage() {
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-semibold tracking-tight truncate">{t("hq.title")}</h1>
               {role && TAB_OWNER[activeTab] && (
-                <span
-                  className="hidden md:inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded"
-                  title={t("hq.owner.hint", "Tab-Lead")}
-                >
-                  <span className="opacity-60">{t("hq.owner.label", "Lead")}:</span>
-                  <span className="font-medium text-foreground/80">{ROLE_PERSON[TAB_OWNER[activeTab]].name}</span>
-                </span>
+                TAB_OWNER[activeTab] === role ? (
+                  <span className="hidden md:inline-flex items-center gap-1 text-[10px] uppercase tracking-wider bg-primary/15 text-primary px-1.5 py-0.5 rounded font-semibold">
+                    {t("hq.owner.yours", "Dein Bereich")}
+                  </span>
+                ) : (
+                  <span
+                    className="hidden md:inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded"
+                    title={t("hq.owner.hint", "Tab-Lead")}
+                  >
+                    <span className="opacity-60">{t("hq.owner.label", "Lead")}:</span>
+                    <span className="font-medium text-foreground/80">{ROLE_PERSON[TAB_OWNER[activeTab]].name}</span>
+                  </span>
+                )
               )}
             </div>
             <p className="text-xs text-muted-foreground truncate">{t("common.period")}: {rangeLabels[range]}</p>
