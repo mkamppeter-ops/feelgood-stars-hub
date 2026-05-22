@@ -318,6 +318,11 @@ function ShiftEditorDialog({
               ≈ {shiftHours(start + ":00", end + ":00").toFixed(1)} h
             </div>
           </div>
+          {!withinHours && (
+            <div className="rounded-md border border-amber-300 bg-amber-500/10 text-amber-800 text-xs px-3 py-2">
+              Achtung: Schicht liegt außerhalb der Öffnungszeiten ({formatPubHours(hours)}). Bei Bedarf in den Settings anpassen.
+            </div>
+          )}
           <div>
             <Label className="text-xs">Notiz (optional)</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
