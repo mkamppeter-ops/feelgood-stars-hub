@@ -1,6 +1,21 @@
 import { useEffect, useState } from "react";
 
-export type Role = "hq_admin" | "pub_manager" | "bar_staff";
+export type Role =
+  | "hq_admin"
+  | "pub_manager"
+  | "bar_staff"
+  | "it_admin"
+  | "hr_admin"
+  | "facility_admin"
+  | "ops_admin";
+
+/** Sub-admins in HQ each own one ticket category. */
+export const ROLE_TICKET_CATEGORY: Partial<Record<Role, "it" | "hr" | "facility" | "logistics">> = {
+  it_admin: "it",
+  hr_admin: "hr",
+  facility_admin: "facility",
+  ops_admin: "logistics",
+};
 export type Session = { role: Role; loggedInAt: number; pubId?: string };
 
 const KEY = "pubgo.session";
