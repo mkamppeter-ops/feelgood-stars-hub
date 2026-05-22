@@ -40,9 +40,14 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
   async function reload() {
     setLoading(true);
     try {
-      const [s, sh] = await Promise.all([listStaff(pubId), listShifts(pubId, weekStart)]);
+      const [s, sh, h] = await Promise.all([
+        listStaff(pubId),
+        listShifts(pubId, weekStart),
+        getPubHours(pubId),
+      ]);
       setStaff(s);
       setShifts(sh);
+      setHours(h);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Fehler beim Laden";
       toast.error(message);
