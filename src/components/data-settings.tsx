@@ -14,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PUBS } from "@/lib/pubs-mock";
 import { supabase } from "@/integrations/supabase/client";
 import { PromoCatalogManager } from "@/components/hq/promo-fulfillment";
-import { PIHRIntegration } from "@/components/hq/pi-hr-integration";
+import { PayrollExport } from "@/components/hq/payroll-export";
 
 
 type PubSettings = {
@@ -188,7 +188,7 @@ export function DataSettings() {
       <TabsList>
         <TabsTrigger value="pubs" className="gap-1.5"><Building2 className="h-3.5 w-3.5" />{t("nav.pubs")}</TabsTrigger>
         <TabsTrigger value="promo-catalog" className="gap-1.5"><Package className="h-3.5 w-3.5" />{t("settings.tabPromo")}</TabsTrigger>
-        <TabsTrigger value="pi-hr" className="gap-1.5"><Plug className="h-3.5 w-3.5" />{t("settings.tabPI")}</TabsTrigger>
+        <TabsTrigger value="pi-hr" className="gap-1.5"><Plug className="h-3.5 w-3.5" />Lohn-Export Supervista</TabsTrigger>
 
       </TabsList>
 
@@ -197,7 +197,7 @@ export function DataSettings() {
       </TabsContent>
 
       <TabsContent value="pi-hr" className="mt-2">
-        <PIHRIntegration />
+        <PayrollExport />
       </TabsContent>
 
       <TabsContent value="pubs" className="mt-2">
