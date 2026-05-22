@@ -39,7 +39,7 @@ export const Route = createFileRoute("/pub")({
     ],
   }),
   component: () => (
-    <RequireRole roles={["pub_manager", "bar_staff"]}>
+    <RequireRole roles={["pub_manager", "bar_staff", "hq_admin"]}>
       <PubLocalView />
     </RequireRole>
   ),

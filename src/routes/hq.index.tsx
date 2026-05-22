@@ -119,8 +119,11 @@ function HQPage() {
             );
           })}
         </nav>
-        <div className="p-3 border-t">
-          <Link to="/admin" className="text-xs text-muted-foreground hover:text-foreground">← {t("nav.admin")}</Link>
+        <div className="p-3 border-t space-y-2">
+          <Link to="/pub" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
+            → {t("nav.localView", "Lokale Pub-Ansicht")}
+          </Link>
+          <Link to="/admin" className="block text-xs text-muted-foreground hover:text-foreground">← {t("nav.admin")}</Link>
         </div>
       </aside>
 
