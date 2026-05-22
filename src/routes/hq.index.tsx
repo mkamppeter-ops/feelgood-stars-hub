@@ -225,7 +225,7 @@ function HQPage() {
                 { value: "feedback", label: t("nav.liveFeedback"), icon: null, badge: 3, badgeAlways: true },
               ] as const).map((it) => {
                 const Icon = it.icon;
-                const owner = TAB_OWNER[it.value];
+                const owner = it.value === "inbox" && role && ROLE_TICKET_CATEGORY[role] ? role : TAB_OWNER[it.value];
                 const isMine = !!role && owner === role;
                 return (
                   <TabsTrigger
