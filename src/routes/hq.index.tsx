@@ -220,6 +220,10 @@ function HQPage() {
                 <UserCog className="h-3.5 w-3.5" />
                 {t("nav.hr", "HR")}
               </TabsTrigger>
+              <TabsTrigger value="marketing" className="gap-1.5">
+                <Megaphone className="h-3.5 w-3.5" />
+                {t("nav.marketing", "Marketing")}
+              </TabsTrigger>
               <TabsTrigger value="hq-news" className="gap-1.5">
                 <Megaphone className="h-3.5 w-3.5" />
                 {t("nav.hqNews", "HQ News")}
