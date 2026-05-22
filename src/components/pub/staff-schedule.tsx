@@ -85,7 +85,7 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
                 Personalplan · {pubName}
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
-                KW {week} · {formatRange(weekStart, weekEndDate)} · {staff.length} aktive Mitarbeiter
+                KW {week} · {formatRange(weekStart, weekEndDate)} · {staff.length} aktive Mitarbeiter · Öffnungszeiten: {formatPubHours(hours)}
               </p>
             </div>
             <div className="flex items-center gap-2">
