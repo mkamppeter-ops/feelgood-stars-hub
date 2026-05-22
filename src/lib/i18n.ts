@@ -50,9 +50,9 @@ const de = {
     pub_manager: "Pub Manager",
     bar_staff: "Bar Staff",
     it_admin: "IT Admin",
-    hr_admin: "HR Admin",
+    ops_admin_de_placeholder: "",
     facility_admin: "Facility Admin",
-    ops_admin: "Logistik Admin",
+    ops_admin: "Operations",
   },
   login: {
     welcome: "Willkommen zurück",
@@ -313,9 +313,8 @@ const en: typeof de = {
     pub_manager: "Pub Manager",
     bar_staff: "Bar Staff",
     it_admin: "IT Admin",
-    hr_admin: "HR Admin",
     facility_admin: "Facility Admin",
-    ops_admin: "Logistics Admin",
+    ops_admin: "Operations",
   },
   login: {
     welcome: "Welcome back",
