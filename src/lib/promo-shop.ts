@@ -156,7 +156,7 @@ export async function updateOrder(
   id: string,
   patch: Partial<Pick<PromoOrder, "status" | "internal_note" | "tracking_carrier" | "tracking_number" | "handled_by" | "shipped_at" | "delivered_at">>,
 ): Promise<void> {
-  const finalPatch: Record<string, unknown> = { ...patch };
+  const finalPatch = { ...patch };
   if (patch.status === "shipped" && !patch.shipped_at) finalPatch.shipped_at = new Date().toISOString();
   if (patch.status === "delivered" && !patch.delivered_at) finalPatch.delivered_at = new Date().toISOString();
   const { error } = await supabase.from("promo_orders").update(finalPatch).eq("id", id);
