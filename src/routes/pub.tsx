@@ -11,7 +11,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   Trophy, Gauge, Star, TrendingUp, MapPin, ArrowUp, Sparkles, Globe, Smartphone,
-  LayoutDashboard, Ticket, GraduationCap, Users, Newspaper, Package, CalendarCheck,
+  LayoutDashboard, Ticket, GraduationCap, Users, Newspaper, Package, CalendarCheck, CalendarDays,
 } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
