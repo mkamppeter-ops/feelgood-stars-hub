@@ -72,6 +72,7 @@ export function HQConnect() {
       category: form.category,
       priority: form.priority,
       author: tt("Du", "You"),
+      pubId: session?.pubId,
     });
     setForm({ title: "", desc: "", category: "it", priority: "med" });
     setOpen(false);
