@@ -178,7 +178,7 @@ export function PersonalakteSheet({ staffId, open, onOpenChange, onSaved }: Prop
       tax_class: form.tax_class ? parseInt(form.tax_class, 10) : null,
       children_allowance: form.children_allowance ? parseFloat(form.children_allowance.replace(",", ".")) : 0,
       religion: form.religion || null,
-      contract_type: form.contract_type || null,
+      contract_type: (form.contract_type || null) as "vollzeit" | "teilzeit" | "minijob" | "werkstudent" | "aushilfe" | null,
       weekly_hours: form.weekly_hours ? parseFloat(form.weekly_hours.replace(",", ".")) : null,
       hourly_wage: form.hourly_wage ? parseFloat(form.hourly_wage.replace(",", ".")) : null,
       start_date: form.start_date || null,
