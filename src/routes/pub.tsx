@@ -11,12 +11,18 @@ import {
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   Trophy, Gauge, Star, TrendingUp, MapPin, ArrowUp, Sparkles, Globe, Smartphone,
+  LayoutDashboard, Ticket, GraduationCap, Megaphone, Users,
 } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
 import { SALES_BY_PUB } from "@/lib/sales-mock";
 import { FEEDBACK, CATEGORY_META, CATEGORY_ORDER, type FeedbackItem } from "@/lib/feedback-mock";
 import { DateRangePicker, RANGE_FACTOR, useRangeLabels, type DateRange } from "@/components/date-range-picker";
 import { SalesOps } from "@/components/sales-ops";
+import { HQConnect } from "@/components/pub/hq-connect";
+import { Academy } from "@/components/pub/academy";
+import { MarketingHub } from "@/components/pub/marketing-hub";
+import { TeamHR } from "@/components/pub/team-hr";
+import { useT } from "@/lib/use-t";
 
 import { RequireRole, LogoutButton } from "@/components/auth-guard";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -41,6 +47,7 @@ export const Route = createFileRoute("/pub")({
 
 function PubLocalView() {
   const { t } = useTranslation();
+  const tt = useT();
   const rangeLabels = useRangeLabels();
   const { mode } = Route.useSearch();
   const session = useSession();
@@ -49,6 +56,7 @@ function PubLocalView() {
   const lockedPubId = session?.pubId ?? PUBS[2].id;
   const [pubId, setPubId] = useState(lockedPubId);
   const [range, setRange] = useState<DateRange>("last7");
+  const [outerTab, setOuterTab] = useState("dashboard");
   const factor = RANGE_FACTOR[range];
 
   // Enforce locked pub for manager/staff
@@ -125,7 +133,17 @@ function PubLocalView() {
       </header>
 
 
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <Tabs value={outerTab} onValueChange={setOuterTab} className="space-y-6">
+          <TabsList className="flex flex-wrap h-auto p-1">
+            <TabsTrigger value="dashboard"><LayoutDashboard className="h-4 w-4 mr-1.5" />{tt("Dashboard", "Dashboard")}</TabsTrigger>
+            <TabsTrigger value="hq"><Ticket className="h-4 w-4 mr-1.5" />{tt("HQ Connect", "HQ Connect")}</TabsTrigger>
+            <TabsTrigger value="academy"><GraduationCap className="h-4 w-4 mr-1.5" />{tt("Academy", "Academy")}</TabsTrigger>
+            <TabsTrigger value="marketing"><Megaphone className="h-4 w-4 mr-1.5" />{tt("Marketing Hub", "Marketing Hub")}</TabsTrigger>
+            <TabsTrigger value="hr"><Users className="h-4 w-4 mr-1.5" />{tt("Team & HR", "Team & HR")}</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-8 mt-0">
         {isStaff ? (
           <>
             <section>
@@ -319,6 +337,13 @@ function PubLocalView() {
             </Tabs>
           </>
         )}
+          </TabsContent>
+
+          <TabsContent value="hq" className="mt-0"><HQConnect /></TabsContent>
+          <TabsContent value="academy" className="mt-0"><Academy /></TabsContent>
+          <TabsContent value="marketing" className="mt-0"><MarketingHub /></TabsContent>
+          <TabsContent value="hr" className="mt-0"><TeamHR /></TabsContent>
+        </Tabs>
       </main>
     </div>
   );
