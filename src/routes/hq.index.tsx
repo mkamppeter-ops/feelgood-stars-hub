@@ -16,7 +16,7 @@ import {
 import { Marketing } from "@/components/marketing";
 import { PUBS, computeScore, getAppReach } from "@/lib/pubs-mock";
 import { SALES_GLOBAL, SALES_BY_PUB, formatEUR } from "@/lib/sales-mock";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Store } from "lucide-react";
 import { DateRangePicker, RANGE_FACTOR, useRangeLabels, type DateRange } from "@/components/date-range-picker";
 import { LiveFeedback } from "@/components/live-feedback";
 import { SalesOps } from "@/components/sales-ops";
