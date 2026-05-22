@@ -56,8 +56,9 @@ export function slotDefaults(hours: PubHours): Record<ShiftSlot, { start: string
 }
 
 export function formatPubHours(hours: PubHours): string {
-  return `${fmtHour(hours.opening)} – ${fmtHour(hours.closing)} Uhr`;
+  return `${fmtHour(hours.opening)} – ${fmtHour(hours.closing)}`;
 }
+
 
 /** Returns true if start/end fall within (or exactly match) the pub's opening window. */
 export function isWithinPubHours(start: string, end: string, hours: PubHours): boolean {
