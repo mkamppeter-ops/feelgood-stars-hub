@@ -52,9 +52,16 @@ function HQPage() {
   const { t } = useTranslation();
   const rangeLabels = useRangeLabels();
   const navigate = useNavigate();
+  const session = useSession();
+  const tickets = useTickets();
+  const isSuper = session?.role === "hq_admin";
+  const myCat = session ? ROLE_TICKET_CATEGORY[session.role as Role] : undefined;
+  const myTicketCount = (isSuper ? tickets : tickets.filter((t) => t.category === myCat))
+    .filter((t) => t.status !== "done").length;
+  const isSubAdmin = !!myCat;
   const [range, setRange] = useState<DateRange>("last7");
   const [pulseKey, setPulseKey] = useState(0);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(isSubAdmin ? "inbox" : "overview");
   const factor = RANGE_FACTOR[range];
 
   const kpis = useMemo(() => {
