@@ -2,13 +2,21 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type ShiftSlot = "early" | "late" | "night";
 
+export const SHIFT_SLOT_TONE: Record<ShiftSlot, string> = {
+  early: "bg-amber-500/15 text-amber-700 border-amber-300",
+  late:  "bg-sky-500/15 text-sky-700 border-sky-300",
+  night: "bg-violet-500/15 text-violet-700 border-violet-300",
+};
+
+/** @deprecated Use SHIFT_SLOT_TONE + t("staff.slots.<slot>") instead. */
 export const SHIFT_SLOT_META: Record<ShiftSlot, { label: string; tone: string }> = {
-  early: { label: "Früh",  tone: "bg-amber-500/15 text-amber-700 border-amber-300" },
-  late:  { label: "Spät",  tone: "bg-sky-500/15 text-sky-700 border-sky-300" },
-  night: { label: "Nacht", tone: "bg-violet-500/15 text-violet-700 border-violet-300" },
+  early: { label: "Früh",  tone: SHIFT_SLOT_TONE.early },
+  late:  { label: "Spät",  tone: SHIFT_SLOT_TONE.late  },
+  night: { label: "Nacht", tone: SHIFT_SLOT_TONE.night },
 };
 
 export const SHIFT_SLOTS: ShiftSlot[] = ["early", "late", "night"];
+
 
 // ---------- Pub opening hours → slot defaults ----------
 export type PubHours = { opening: number; closing: number };
@@ -48,8 +56,9 @@ export function slotDefaults(hours: PubHours): Record<ShiftSlot, { start: string
 }
 
 export function formatPubHours(hours: PubHours): string {
-  return `${fmtHour(hours.opening)} – ${fmtHour(hours.closing)} Uhr`;
+  return `${fmtHour(hours.opening)} – ${fmtHour(hours.closing)}`;
 }
+
 
 /** Returns true if start/end fall within (or exactly match) the pub's opening window. */
 export function isWithinPubHours(start: string, end: string, hours: PubHours): boolean {

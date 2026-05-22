@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,23 +7,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Trash2, Users } from "lucide-react";
 import {
-  STAFF_ROLES, SHIFT_SLOTS, SHIFT_SLOT_META, DEFAULT_PUB_HOURS,
+  STAFF_ROLES, SHIFT_SLOTS, SHIFT_SLOT_TONE, DEFAULT_PUB_HOURS,
   addDaysISO, formatPubHours, getPubHours, isoWeekNumber, isWithinPubHours,
   listShifts, listStaff, setStaffActive, shiftHours, slotDefaults,
   toISODate, upsertShift, upsertStaff, weekDays, weekStartISO,
   type PubHours, type ShiftAssignment, type ShiftSlot, type StaffMember,
 } from "@/lib/staff-schedule";
 
-const WEEKDAY_LABEL = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+const WEEKDAY_LABEL_DE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const WEEKDAY_LABEL_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: string }) {
+  const { t, i18n } = useTranslation();
+  const isEN = (i18n.resolvedLanguage || "de").toLowerCase().startsWith("en");
+  const weekdayLabels = isEN ? WEEKDAY_LABEL_EN : WEEKDAY_LABEL_DE;
+
   const [weekStart, setWeekStart] = useState(() => weekStartISO());
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [shifts, setShifts] = useState<ShiftAssignment[]>([]);
@@ -49,8 +56,7 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
       setShifts(sh);
       setHours(h);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Fehler beim Laden";
-      toast.error(message);
+      toast.error(err instanceof Error ? err.message : t("staff.editor.loadError"));
     } finally {
       setLoading(false);
     }
@@ -82,22 +88,26 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
             <div>
               <CardTitle className="text-base flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
-                Personalplan · {pubName}
+                {t("staff.title")} · {pubName}
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
-                KW {week} · {formatRange(weekStart, weekEndDate)} · {staff.length} aktive Mitarbeiter · Öffnungszeiten: {formatPubHours(hours)}
+                {t("staff.weekShort")} {week} · {formatRange(weekStart, weekEndDate, isEN)} ·{" "}
+                {t("staff.activeCount", { count: staff.length })} ·{" "}
+                {t("staff.openingHours")}: {formatPubHours(hours)}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setWeekStart(addDaysISO(weekStart, -7))}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setWeekStart(weekStartISO())}>Heute</Button>
+              <Button variant="outline" size="sm" onClick={() => setWeekStart(weekStartISO())}>
+                {t("staff.today")}
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setWeekStart(addDaysISO(weekStart, 7))}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
               <Button size="sm" onClick={() => setManageOpen(true)}>
-                <Users className="h-4 w-4 mr-1.5" /> Mitarbeiter
+                <Users className="h-4 w-4 mr-1.5" /> {t("staff.staff")}
               </Button>
             </div>
           </div>
@@ -115,19 +125,19 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
             </div>
           ) : staff.length === 0 ? (
             <div className="p-10 text-center text-sm text-muted-foreground">
-              Noch keine Mitarbeiter gepflegt. Über „Mitarbeiter" anlegen oder später aus P&I synchronisieren.
+              {t("staff.emptyHint")}
             </div>
           ) : (
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="text-left font-medium px-3 py-2 sticky left-0 bg-muted/40 min-w-[180px]">Mitarbeiter</th>
+                  <th className="text-left font-medium px-3 py-2 sticky left-0 bg-muted/40 min-w-[180px]">{t("staff.staff")}</th>
                   {days.map((d, i) => {
                     const date = new Date(d + "T00:00:00");
                     const isToday = d === toISODate(new Date());
                     return (
                       <th key={d} className={`text-left font-medium px-2 py-2 min-w-[140px] ${isToday ? "text-primary" : ""}`}>
-                        <div>{WEEKDAY_LABEL[i]}</div>
+                        <div>{weekdayLabels[i]}</div>
                         <div className="text-[10px] text-muted-foreground normal-case">
                           {date.getDate()}.{date.getMonth() + 1}.
                         </div>
@@ -141,14 +151,15 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
                   <tr key={m.id} className="border-t">
                     <td className="px-3 py-2 sticky left-0 bg-card">
                       <div className="font-medium">{m.first_name} {m.last_name}</div>
-                      <div className="text-[11px] text-muted-foreground">{m.role}</div>
+                      <div className="text-[11px] text-muted-foreground">{t(`staff.roles.${m.role}`, m.role)}</div>
                     </td>
                     {days.map((d) => (
                       <td key={d} className="px-2 py-2 align-top border-l">
                         <div className="space-y-1">
                           {SHIFT_SLOTS.map((slot) => {
                             const existing = getShift(m.id, d, slot);
-                            const meta = SHIFT_SLOT_META[slot];
+                            const slotLabel = t(`staff.slots.${slot}`);
+                            const tone = SHIFT_SLOT_TONE[slot];
                             if (!existing) {
                               return (
                                 <button
@@ -156,7 +167,7 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
                                   onClick={() => setEditor({ staff: m, date: d, slot })}
                                   className="w-full text-left text-[10px] text-muted-foreground/60 hover:text-foreground hover:bg-muted rounded px-1.5 py-1 flex items-center gap-1"
                                 >
-                                  <Plus className="h-2.5 w-2.5" /> {meta.label}
+                                  <Plus className="h-2.5 w-2.5" /> {slotLabel}
                                 </button>
                               );
                             }
@@ -164,10 +175,10 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
                               <button
                                 key={slot}
                                 onClick={() => setEditor({ staff: m, date: d, slot, existing })}
-                                className={`w-full text-left text-[11px] rounded border px-1.5 py-1 ${meta.tone} hover:opacity-80`}
+                                className={`w-full text-left text-[11px] rounded border px-1.5 py-1 ${tone} hover:opacity-80`}
                                 title={existing.note ?? undefined}
                               >
-                                <span className="font-semibold">{meta.label}</span>
+                                <span className="font-semibold">{slotLabel}</span>
                                 <span className="ml-1">{fmtTime(existing.start_time)}–{fmtTime(existing.end_time)}</span>
                               </button>
                             );
@@ -178,9 +189,9 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
                   </tr>
                 ))}
                 <tr className="border-t bg-muted/30 text-xs font-medium">
-                  <td className="px-3 py-2 sticky left-0 bg-muted/30">Stunden gesamt</td>
+                  <td className="px-3 py-2 sticky left-0 bg-muted/30">{t("staff.hoursTotal")}</td>
                   {dailyHours.map((h, i) => (
-                    <td key={i} className="px-2 py-2 border-l tabular-nums">{h.toFixed(1)} h</td>
+                    <td key={i} className="px-2 py-2 border-l tabular-nums">{h.toFixed(1)} {t("staff.hoursUnit")}</td>
                   ))}
                 </tr>
               </tbody>
@@ -191,7 +202,10 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
 
       {staff.length > 0 && !loading && (
         <div className="text-xs text-muted-foreground text-right">
-          Wochensumme: <span className="font-semibold text-foreground tabular-nums">{weekTotal.toFixed(1)} Std.</span>
+          {t("staff.weekSum")}:{" "}
+          <span className="font-semibold text-foreground tabular-nums">
+            {weekTotal.toFixed(1)} {t("staff.hoursUnit")}
+          </span>
         </div>
       )}
 
@@ -201,6 +215,7 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
           editor={editor}
           pubId={pubId}
           hours={hours}
+          isEN={isEN}
           onClose={() => setEditor(null)}
           onSaved={() => { setEditor(null); void reload(); }}
         />
@@ -219,14 +234,16 @@ export function StaffSchedule({ pubId, pubName }: { pubId: string; pubName: stri
 
 // -------------------- Editor --------------------
 function ShiftEditorDialog({
-  editor, pubId, hours, onClose, onSaved,
+  editor, pubId, hours, isEN, onClose, onSaved,
 }: {
   editor: { staff: StaffMember; date: string; slot: ShiftSlot; existing?: ShiftAssignment };
   pubId: string;
   hours: PubHours;
+  isEN: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t } = useTranslation();
   const defaults = useMemo(() => slotDefaults(hours), [hours]);
   const [slot, setSlot] = useState<ShiftSlot>(editor.slot);
   const [start, setStart] = useState(editor.existing ? fmtTime(editor.existing.start_time) : defaults[editor.slot].start);
@@ -243,6 +260,7 @@ function ShiftEditorDialog({
   }, [slot]);
 
   const withinHours = isWithinPubHours(start + ":00", end + ":00", hours);
+  const { common } = { common: { cancel: t("common.cancel"), save: t("common.save") } };
 
   async function save() {
     setSaving(true);
@@ -257,10 +275,10 @@ function ShiftEditorDialog({
         end_time: end + ":00",
         note: note.trim() || null,
       });
-      toast.success("Schicht gespeichert");
+      toast.success(t("staff.editor.saved"));
       onSaved();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Fehler beim Speichern");
+      toast.error(err instanceof Error ? err.message : t("staff.editor.saveError"));
     } finally {
       setSaving(false);
     }
@@ -272,10 +290,10 @@ function ShiftEditorDialog({
     try {
       const { deleteShift } = await import("@/lib/staff-schedule");
       await deleteShift(editor.existing.id);
-      toast.success("Schicht entfernt");
+      toast.success(t("staff.editor.removed"));
       onSaved();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Fehler beim Löschen");
+      toast.error(err instanceof Error ? err.message : t("staff.editor.deleteError"));
     } finally {
       setSaving(false);
     }
@@ -286,56 +304,58 @@ function ShiftEditorDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {editor.existing ? "Schicht bearbeiten" : "Schicht hinzufügen"}
+            {editor.existing ? t("staff.editor.edit") : t("staff.editor.add")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="text-sm">
             <div className="font-medium">{editor.staff.first_name} {editor.staff.last_name}</div>
-            <div className="text-muted-foreground text-xs">{editor.staff.role} · {formatDateLong(editor.date)}</div>
+            <div className="text-muted-foreground text-xs">
+              {t(`staff.roles.${editor.staff.role}`, editor.staff.role)} · {formatDateLong(editor.date, isEN)}
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-3">
-              <Label className="text-xs">Slot</Label>
+              <Label className="text-xs">{t("staff.editor.slot")}</Label>
               <Select value={slot} onValueChange={(v) => setSlot(v as ShiftSlot)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {SHIFT_SLOTS.map((s) => (
-                    <SelectItem key={s} value={s}>{SHIFT_SLOT_META[s].label}</SelectItem>
+                    <SelectItem key={s} value={s}>{t(`staff.slots.${s}`)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Von</Label>
+              <Label className="text-xs">{t("staff.editor.from")}</Label>
               <Input type="time" value={start} onChange={(e) => setStart(e.target.value)} />
             </div>
             <div>
-              <Label className="text-xs">Bis</Label>
+              <Label className="text-xs">{t("staff.editor.to")}</Label>
               <Input type="time" value={end} onChange={(e) => setEnd(e.target.value)} />
             </div>
             <div className="flex items-end text-xs text-muted-foreground">
-              ≈ {shiftHours(start + ":00", end + ":00").toFixed(1)} h
+              ≈ {shiftHours(start + ":00", end + ":00").toFixed(1)} {t("staff.hoursUnit")}
             </div>
           </div>
           {!withinHours && (
             <div className="rounded-md border border-amber-300 bg-amber-500/10 text-amber-800 text-xs px-3 py-2">
-              Achtung: Schicht liegt außerhalb der Öffnungszeiten ({formatPubHours(hours)}). Bei Bedarf in den Settings anpassen.
+              {t("staff.editor.outsideHours", { hours: formatPubHours(hours) })}
             </div>
           )}
           <div>
-            <Label className="text-xs">Notiz (optional)</Label>
+            <Label className="text-xs">{t("staff.editor.note")}</Label>
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
           </div>
         </div>
         <DialogFooter className="gap-2 sm:gap-0">
           {editor.existing && (
             <Button variant="destructive" onClick={remove} disabled={saving} className="mr-auto">
-              <Trash2 className="h-4 w-4 mr-1.5" /> Löschen
+              <Trash2 className="h-4 w-4 mr-1.5" /> {t("staff.editor.delete")}
             </Button>
           )}
-          <Button variant="outline" onClick={onClose} disabled={saving}>Abbrechen</Button>
-          <Button onClick={save} disabled={saving}>Speichern</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>{common.cancel}</Button>
+          <Button onClick={save} disabled={saving}>{common.save}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -351,6 +371,7 @@ function StaffManagerDialog({
   pubId: string;
   onChanged: () => void;
 }) {
+  const { t } = useTranslation();
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [first, setFirst] = useState("");
@@ -364,7 +385,7 @@ function StaffManagerDialog({
       const s = await listStaff(pubId, { includeInactive: true });
       setStaff(s);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Fehler");
+      toast.error(err instanceof Error ? err.message : t("staff.editor.loadError"));
     } finally {
       setLoading(false);
     }
@@ -374,7 +395,7 @@ function StaffManagerDialog({
 
   async function add() {
     if (!first.trim() || !last.trim()) {
-      toast.error("Bitte Vor- und Nachname angeben");
+      toast.error(t("staff.manager.validateName"));
       return;
     }
     setSaving(true);
@@ -383,9 +404,9 @@ function StaffManagerDialog({
       setFirst(""); setLast(""); setRole("Bar");
       await reload();
       onChanged();
-      toast.success("Mitarbeiter hinzugefügt");
+      toast.success(t("staff.manager.added"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Fehler");
+      toast.error(err instanceof Error ? err.message : t("staff.editor.saveError"));
     } finally {
       setSaving(false);
     }
@@ -397,7 +418,7 @@ function StaffManagerDialog({
       await reload();
       onChanged();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Fehler");
+      toast.error(err instanceof Error ? err.message : t("staff.editor.saveError"));
     }
   }
 
@@ -405,28 +426,30 @@ function StaffManagerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Mitarbeiter verwalten</DialogTitle>
+          <DialogTitle>{t("staff.manager.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="rounded-md border p-3 bg-muted/30 text-xs text-muted-foreground">
-            Mitarbeiterstammdaten werden später automatisch aus P&I LogaHR übernommen. Aktuell manuelle Pflege.
+            {t("staff.manager.piNote")}
           </div>
 
           <div className="grid grid-cols-12 gap-2 items-end">
             <div className="col-span-4">
-              <Label className="text-xs">Vorname</Label>
+              <Label className="text-xs">{t("staff.manager.firstName")}</Label>
               <Input value={first} onChange={(e) => setFirst(e.target.value)} placeholder="Lena" />
             </div>
             <div className="col-span-4">
-              <Label className="text-xs">Nachname</Label>
+              <Label className="text-xs">{t("staff.manager.lastName")}</Label>
               <Input value={last} onChange={(e) => setLast(e.target.value)} placeholder="Hofbauer" />
             </div>
             <div className="col-span-3">
-              <Label className="text-xs">Rolle</Label>
+              <Label className="text-xs">{t("staff.manager.role")}</Label>
               <Select value={role} onValueChange={setRole}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {STAFF_ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                  {STAFF_ROLES.map((r) => (
+                    <SelectItem key={r} value={r}>{t(`staff.roles.${r}`, r)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -437,9 +460,9 @@ function StaffManagerDialog({
 
           <div className="max-h-[300px] overflow-y-auto border rounded-md">
             {loading ? (
-              <div className="p-4 text-sm text-muted-foreground">Lade…</div>
+              <div className="p-4 text-sm text-muted-foreground">{t("staff.manager.loading")}</div>
             ) : staff.length === 0 ? (
-              <div className="p-4 text-sm text-muted-foreground">Noch keine Mitarbeiter.</div>
+              <div className="p-4 text-sm text-muted-foreground">{t("staff.manager.empty")}</div>
             ) : (
               <table className="w-full text-sm">
                 <tbody>
@@ -447,18 +470,18 @@ function StaffManagerDialog({
                     <tr key={m.id} className="border-t">
                       <td className="px-3 py-2">
                         <div className="font-medium">{m.first_name} {m.last_name}</div>
-                        <div className="text-[11px] text-muted-foreground">{m.role}</div>
+                        <div className="text-[11px] text-muted-foreground">{t(`staff.roles.${m.role}`, m.role)}</div>
                       </td>
                       <td className="px-3 py-2 text-right">
                         {m.active ? (
-                          <Badge variant="secondary">Aktiv</Badge>
+                          <Badge variant="secondary">{t("staff.manager.active")}</Badge>
                         ) : (
-                          <Badge variant="outline" className="text-muted-foreground">Inaktiv</Badge>
+                          <Badge variant="outline" className="text-muted-foreground">{t("staff.manager.inactive")}</Badge>
                         )}
                       </td>
                       <td className="px-3 py-2 text-right">
                         <Button size="sm" variant="ghost" onClick={() => toggle(m)}>
-                          {m.active ? "Deaktivieren" : "Aktivieren"}
+                          {m.active ? t("staff.manager.deactivate") : t("staff.manager.activate")}
                         </Button>
                       </td>
                     </tr>
@@ -469,7 +492,7 @@ function StaffManagerDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Schließen</Button>
+          <Button onClick={() => onOpenChange(false)}>{t("staff.manager.close")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -480,11 +503,16 @@ function StaffManagerDialog({
 function fmtTime(t: string): string {
   return t.slice(0, 5);
 }
-function formatRange(startISO: string, endDate: Date): string {
+function formatRange(startISO: string, endDate: Date, isEN: boolean): string {
   const s = new Date(startISO + "T00:00:00");
+  if (isEN) {
+    return `${s.getMonth() + 1}/${s.getDate()} – ${endDate.getMonth() + 1}/${endDate.getDate()}/${endDate.getFullYear()}`;
+  }
   return `${s.getDate()}.${s.getMonth() + 1}. – ${endDate.getDate()}.${endDate.getMonth() + 1}.${endDate.getFullYear()}`;
 }
-function formatDateLong(iso: string): string {
+function formatDateLong(iso: string, isEN: boolean): string {
   const d = new Date(iso + "T00:00:00");
-  return d.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+  return d.toLocaleDateString(isEN ? "en-US" : "de-DE", { weekday: "long", day: "numeric", month: "long" });
 }
+// WEEKDAY_KEYS reserved for future namespaced day translations
+void WEEKDAY_KEYS;
