@@ -302,7 +302,10 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
 
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle className="text-base">{tt("Krankheitsquote pro Filiale (Monat)", "Sick leave rate per branch (month)")}</CardTitle>
+              <CardTitle className="text-base">{tt("Krankheitsquote pro Filiale", "Sick leave rate per branch")}</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                {tt("Zeitraum", "Period")}: <span className="font-medium text-foreground">{periodLabel}</span>
+              </p>
             </CardHeader>
             <CardContent>
               <Table>
@@ -314,7 +317,7 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {[...SICK_STATS].sort((a, b) => b.ratePct - a.ratePct).map((s) => {
+                  {[...scaledSick].sort((a, b) => b.ratePct - a.ratePct).map((s) => {
                     const high = s.ratePct >= 5;
                     return (
                       <TableRow key={s.pubId}>
