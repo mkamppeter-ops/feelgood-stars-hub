@@ -243,7 +243,7 @@ function HQPage() {
                         {person.initials}
                       </span>
                     )}
-                    {"badge" in it && typeof it.badge === "number" && (it.badgeAlways || it.badge > 0) && (
+                    {"badge" in it && typeof it.badge === "number" && (("badgeAlways" in it && it.badgeAlways) || it.badge > 0) && (
                       <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">
                         {it.badge}
                       </span>
