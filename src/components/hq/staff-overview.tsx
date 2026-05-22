@@ -265,6 +265,13 @@ export function StaffOverview() {
           onClose={() => setDrilldown(null)}
         />
       )}
+
+      <PersonalakteSheet
+        staffId={editStaffId}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        onSaved={() => void reload()}
+      />
     </div>
   );
 }
