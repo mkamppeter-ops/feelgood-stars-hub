@@ -294,7 +294,7 @@ function TabletClockIn({ staff }: { staff: StaffEntry[] }) {
           <p className="text-xs text-muted-foreground">{tt("Tippe deinen Namen, dann PIN eingeben.", "Tap your name, then enter PIN.")}</p>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-          {STAFF.map((s) => {
+          {staff.map((s) => {
             const since = clockedIn[s.id];
             return (
               <button
@@ -324,7 +324,7 @@ function TabletClockIn({ staff }: { staff: StaffEntry[] }) {
 
 /* -------------------- Roster derived from opening hours -------------------- */
 
-function RosterTable({ shifts, closedDays }: { shifts: { key: string; de: string; en: string; time: string }[]; closedDays: DayKey[] }) {
+function RosterTable({ shifts, closedDays, staff }: { shifts: { key: string; de: string; en: string; time: string }[]; closedDays: DayKey[]; staff: StaffEntry[] }) {
   const tt = useT();
   const days: { key: DayKey; deLabel: string; enLabel: string }[] = [
     { key: "mon", deLabel: "Mo", enLabel: "Mon" },
@@ -338,11 +338,12 @@ function RosterTable({ shifts, closedDays }: { shifts: { key: string; de: string
 
   // Pseudo-randomized but stable roster: hash day+shift -> pick 1-3 staff
   const pickStaff = (day: DayKey, shiftKey: string): string[] => {
+    if (staff.length === 0) return [];
     const seed = (day + shiftKey).split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-    const count = (seed % 3) + 1;
+    const count = Math.min(staff.length, (seed % 3) + 1);
     const ids: string[] = [];
     for (let i = 0; i < count; i++) {
-      ids.push(STAFF[(seed + i * 3) % STAFF.length].id);
+      ids.push(staff[(seed + i * 3) % staff.length].id);
     }
     return [...new Set(ids)];
   };
@@ -390,7 +391,7 @@ function RosterTable({ shifts, closedDays }: { shifts: { key: string; de: string
                       <td key={d.key} className={`p-2 border-l align-top ${ids.includes("u5") ? "bg-primary/5" : ""}`}>
                         <div className="flex flex-wrap gap-1 justify-center">
                           {ids.map((id) => {
-                            const s = STAFF.find((x) => x.id === id)!;
+                            const s = staff.find((x) => x.id === id)!;
                             return (
                               <span key={id} title={s.name} className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-semibold ${s.color} ${id === "u5" ? "ring-2 ring-primary" : ""}`}>
                                 {s.initials}
