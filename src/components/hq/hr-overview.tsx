@@ -192,8 +192,14 @@ export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
                     const util = Math.round((s.weekActualHours / s.weekTargetHours) * 100);
                     const utilTone = util >= 95 ? "text-emerald-600" : util >= 85 ? "text-foreground" : "text-amber-600";
                     return (
-                      <TableRow key={s.pubId}>
-                        <TableCell className="font-medium">{getPubName(s.pubId)}</TableCell>
+                      <TableRow
+                        key={s.pubId}
+                        onClick={() => setScheduleFor(s.pubId)}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <TableCell className="font-medium">
+                          <span className="underline-offset-2 hover:underline">{getPubName(s.pubId)}</span>
+                        </TableCell>
                         <TableCell className="text-right tabular-nums">{s.staffCount}</TableCell>
                         <TableCell className="text-right tabular-nums hidden sm:table-cell text-muted-foreground">{s.weekTargetHours}</TableCell>
                         <TableCell className="text-right tabular-nums">{s.weekActualHours}</TableCell>
