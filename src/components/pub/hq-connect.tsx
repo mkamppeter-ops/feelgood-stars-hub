@@ -16,40 +16,20 @@ import {
 import { Plus, Laptop, Users, Wrench, Truck, MoreHorizontal, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/lib/use-t";
-
-type Status = "open" | "progress" | "done";
-type Category = "it" | "hr" | "facility" | "logistics";
-type Priority = "low" | "med" | "high";
-
-interface Ticket {
-  id: string;
-  title: string;
-  desc: string;
-  category: Category;
-  status: Status;
-  priority: Priority;
-  author: string;
-  ago: string;
-}
+import {
+  useTickets, ticketsStore,
+  type TicketCategory as Category,
+  type TicketStatus as Status,
+  type TicketPriority as Priority,
+} from "@/lib/tickets-store";
 
 const CAT_ICON: Record<Category, React.ComponentType<{ className?: string }>> = {
   it: Laptop, hr: Users, facility: Wrench, logistics: Truck,
 };
 
-const INITIAL: Ticket[] = [
-  { id: "T-104", title: "Kasse Terminal 2 hängt sich auf", desc: "Beim Stornieren friert das Display ein.", category: "it", status: "open", priority: "high", author: "Lisa M.", ago: "vor 2h" },
-  { id: "T-103", title: "Neue Schürzen fehlen", desc: "3 Mitarbeiter ohne saubere Schürzen für Wochenende.", category: "hr", status: "open", priority: "med", author: "Tom B.", ago: "vor 5h" },
-  { id: "T-102", title: "Zapfanlage tropft", desc: "Hahn 4 zieht nach. Sammelschale läuft schnell voll.", category: "facility", status: "progress", priority: "high", author: "Markus K.", ago: "gestern" },
-  { id: "T-101", title: "Biernachschub Augustiner", desc: "Bestellung für Mi noch nicht bestätigt.", category: "logistics", status: "progress", priority: "med", author: "Sarah L.", ago: "gestern" },
-  { id: "T-100", title: "WLAN Gäste-Netz instabil", desc: "Mehrfach Beschwerden am Wochenende.", category: "it", status: "progress", priority: "low", author: "Lisa M.", ago: "vor 2 Tagen" },
-  { id: "T-099", title: "Stuhl Tisch 7 wackelt", desc: "Schraube nachziehen oder austauschen.", category: "facility", status: "done", priority: "low", author: "Tom B.", ago: "vor 3 Tagen" },
-  { id: "T-098", title: "Onboarding neuer Aushilfskraft", desc: "Unterlagen fehlen noch im System.", category: "hr", status: "done", priority: "med", author: "Markus K.", ago: "vor 4 Tagen" },
-  { id: "T-097", title: "Lieferung Reinigungsmittel", desc: "Eingegangen und eingeräumt.", category: "logistics", status: "done", priority: "low", author: "Sarah L.", ago: "vor 5 Tagen" },
-];
-
 export function HQConnect() {
   const tt = useT();
-  const [tickets, setTickets] = useState<Ticket[]>(INITIAL);
+  const tickets = useTickets();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<{ title: string; desc: string; category: Category; priority: Priority }>({
     title: "", desc: "", category: "it", priority: "med",
