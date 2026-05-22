@@ -115,6 +115,7 @@ function HQPage() {
             { icon: LayoutDashboard, label: t("nav.overview"), tab: "overview", badge: undefined as number | undefined },
             { icon: Inbox, label: t("nav.inbox", "Inbox"), tab: "inbox", badge: myTicketCount },
             { icon: UserCog, label: t("nav.hr", "HR"), tab: "hr", badge: undefined as number | undefined },
+            { icon: CalendarDays, label: t("nav.staff", "Personalplan"), tab: "staff", badge: undefined as number | undefined },
             { icon: Building2, label: t("nav.pubs"), tab: "pubs", badge: undefined as number | undefined },
             { icon: Activity, label: t("nav.activeOps"), tab: "active-ops", badge: undefined as number | undefined },
             { icon: TrendingUp, label: t("nav.salesOps"), tab: "sales", badge: undefined as number | undefined },
