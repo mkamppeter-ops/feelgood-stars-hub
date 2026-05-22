@@ -12,17 +12,70 @@ import {
 import { Play, Pause, LogOut, Clock, Thermometer, Plane, CalendarDays, Tablet, Smartphone, Delete } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/lib/use-t";
+import { supabase } from "@/integrations/supabase/client";
 
 type ShiftState = "off" | "working" | "paused";
 type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
-const STAFF = [
-  { id: "u1", name: "Lisa M.",    initials: "LM", color: "bg-rose-500/20 text-rose-700",       pin: "1111" },
-  { id: "u2", name: "Tom B.",     initials: "TB", color: "bg-amber-500/20 text-amber-700",     pin: "2222" },
-  { id: "u3", name: "Sarah L.",   initials: "SL", color: "bg-emerald-500/20 text-emerald-700", pin: "3333" },
-  { id: "u4", name: "Markus K.",  initials: "MK", color: "bg-blue-500/20 text-blue-700",       pin: "4444" },
-  { id: "u5", name: "Du",         initials: "ME", color: "bg-primary/20 text-primary",         pin: "0000" },
+type StaffEntry = {
+  id: string;
+  name: string;
+  initials: string;
+  color: string;
+  pin: string;
+};
+
+const COLORS = [
+  "bg-rose-500/20 text-rose-700",
+  "bg-amber-500/20 text-amber-700",
+  "bg-emerald-500/20 text-emerald-700",
+  "bg-blue-500/20 text-blue-700",
+  "bg-violet-500/20 text-violet-700",
+  "bg-cyan-500/20 text-cyan-700",
+  "bg-fuchsia-500/20 text-fuchsia-700",
 ];
+
+const MOCK_STAFF: StaffEntry[] = [
+  { id: "u1", name: "Lisa M.",    initials: "LM", color: COLORS[0], pin: "1111" },
+  { id: "u2", name: "Tom B.",     initials: "TB", color: COLORS[1], pin: "2222" },
+  { id: "u3", name: "Sarah L.",   initials: "SL", color: COLORS[2], pin: "3333" },
+  { id: "u4", name: "Markus K.",  initials: "MK", color: COLORS[3], pin: "4444" },
+  { id: "u5", name: "Du",         initials: "ME", color: "bg-primary/20 text-primary", pin: "0000" },
+];
+
+function useStaff(pubId?: string): StaffEntry[] {
+  const [list, setList] = useState<StaffEntry[]>(MOCK_STAFF);
+  useEffect(() => {
+    if (!pubId) return;
+    let active = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from("staff_members")
+        .select("id, first_name, last_name, active")
+        .eq("pub_id", pubId)
+        .eq("active", true)
+        .order("first_name");
+      if (!active || error || !data || data.length === 0) return;
+      const mapped: StaffEntry[] = data.map((row, i) => {
+        const name = `${row.first_name} ${row.last_name.charAt(0)}.`;
+        const initials = `${row.first_name.charAt(0)}${row.last_name.charAt(0)}`.toUpperCase();
+        return {
+          id: row.id,
+          name,
+          initials,
+          color: COLORS[i % COLORS.length],
+          // Demo-PIN: last 4 digits of the row id; in real flows you'd store hashed PINs server-side
+          pin: row.id.replace(/\D/g, "").slice(-4).padStart(4, "0") || "0000",
+        };
+      });
+      // Always include "Du" so the personal phone view still works
+      const me = MOCK_STAFF.find((s) => s.id === "u5")!;
+      setList([...mapped, me]);
+    })();
+    return () => { active = false; };
+  }, [pubId]);
+  return list;
+}
 
 const REQUESTS_INIT = [
   { id: "r1", typeDe: "Urlaub", typeEn: "Vacation", range: "12.06. – 18.06.", status: "pending" as const },
@@ -37,6 +90,8 @@ interface TeamHRProps {
   closingHour?: number;
   /** Days the pub is closed. */
   closedDays?: DayKey[];
+  /** Pub id used to load real staff_members. */
+  pubId?: string;
 }
 
 const fmtHour = (h: number) => `${String(h % 24).padStart(2, "0")}`;
