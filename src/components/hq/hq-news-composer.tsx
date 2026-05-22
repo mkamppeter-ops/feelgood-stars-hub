@@ -110,13 +110,28 @@ export function HQNewsComposer() {
             </p>
           </div>
         </div>
-        <Button onClick={() => setOpen((v) => !v)} className="gap-2">
-          {open ? "—" : <Plus className="h-4 w-4" />}
-          {open ? tt("Schließen", "Close") : tt("Neue Nachricht", "New post")}
-        </Button>
+        {canPublish ? (
+          <Button onClick={() => setOpen((v) => !v)} className="gap-2">
+            {open ? "—" : <Plus className="h-4 w-4" />}
+            {open ? tt("Schließen", "Close") : tt("Neue Nachricht", "New post")}
+          </Button>
+        ) : (
+          <Badge variant="outline" className="text-xs gap-1">
+            {tt("Nur Lesezugriff", "Read-only")}
+          </Badge>
+        )}
       </div>
 
-      {open && (
+      {!canPublish && (
+        <div className="rounded-md border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+          {tt(
+            "Nur Marketing (Louis) und Operations (Felix & Paul) können Nachrichten veröffentlichen.",
+            "Only Marketing (Louis) and Operations (Felix & Paul) can publish posts.",
+          )}
+        </div>
+      )}
+
+      {canPublish && open && (
         <Card className="shadow-sm border-primary/40">
           <CardHeader>
             <CardTitle className="text-base">
