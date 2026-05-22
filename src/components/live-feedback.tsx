@@ -136,9 +136,58 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   // Local state für Reward-Flows
-  const [rewards, setRewards] = useState<Record<string, ApologyReward>>({});
-  // Pro Feedback: aktueller Google-Status (überschreibt mock-default)
-  const [googleStatus, setGoogleStatus] = useState<Record<string, GoogleStatus>>({});
+export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
+  const tt = useT();
+  const lang: "de" | "en" = tt("de", "en") as "de" | "en";
+  const [source, setSource] = useState<"all" | "app" | "google">("all");
+  const [rating, setRating] = useState<"all" | "low" | "high">("all");
+  const [pubId, setPubId] = useState<string>(lockedPubId ?? "all");
+  const [done, setDone] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [liveItems, setLiveItems] = useState<FeedbackItem[]>([]);
+
+  // Pull real customer-submitted feedbacks + subscribe to new ones
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from("feedbacks")
+        .select("id, created_at, rating_drinks, rating_atmosphere, rating_service, rating_cleanliness, problem_tags, free_text, location")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (!active || error || !data) return;
+      const mapped = (data as DbFeedbackRow[])
+        .map((row) => dbRowToFeedbackItem(row, lang))
+        .filter((x): x is FeedbackItem => x !== null);
+      setLiveItems(mapped);
+    })();
+
+    const channel = supabase
+      .channel("feedbacks-live")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "feedbacks" },
+        (payload) => {
+          const item = dbRowToFeedbackItem(payload.new as DbFeedbackRow, lang);
+          if (!item) return;
+          setLiveItems((prev) => [item, ...prev]);
+          toast.info(tt("Neues Gäste-Feedback eingegangen", "New guest feedback received"), {
+            description: PUBS.find((p) => p.id === item.pubId)?.name ?? "",
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  }, [lang, tt]);
+
+  const allFeedback = useMemo<FeedbackItem[]>(
+    () => [...liveItems, ...FEEDBACK],
+    [liveItems],
+  );
 
   const effectivePubId = lockedPubId ?? pubId;
 
