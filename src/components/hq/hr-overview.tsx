@@ -12,19 +12,59 @@ import {
   SHIFT_SUMMARY, VACATION_REQUESTS, SICK_LEAVES, SICK_STATS, getPubName,
   type VacationStatus,
 } from "@/lib/hr-mock";
+import { useRangeLabels, type DateRange } from "@/components/date-range-picker";
 
-export function HROverview() {
+// How HR period scales relative to the base mock data (week / month)
+const SHIFT_PERIOD_FACTOR: Record<DateRange, number> = {
+  today: 1 / 7,
+  yesterday: 1 / 7,
+  last7: 1,
+  thisMonth: 30 / 7,
+};
+const SICK_PERIOD_FACTOR: Record<DateRange, number> = {
+  today: 1 / 30,
+  yesterday: 1 / 30,
+  last7: 7 / 30,
+  thisMonth: 1,
+};
+
+export function HROverview({ range = "last7" }: { range?: DateRange } = {}) {
   const tt = useT();
+  const rangeLabels = useRangeLabels();
   const [tab, setTab] = useState("shifts");
   const [vacations, setVacations] = useState(VACATION_REQUESTS);
+  const periodLabel = rangeLabels[range];
+  const shiftFactor = SHIFT_PERIOD_FACTOR[range];
+  const sickFactor = SICK_PERIOD_FACTOR[range];
+
+  const scaledShifts = useMemo(
+    () =>
+      SHIFT_SUMMARY.map((s) => ({
+        ...s,
+        weekTargetHours: Math.round(s.weekTargetHours * shiftFactor),
+        weekActualHours: Math.round(s.weekActualHours * shiftFactor),
+        openShifts: Math.max(0, Math.round(s.openShifts * shiftFactor)),
+      })),
+    [shiftFactor]
+  );
+  const scaledSick = useMemo(
+    () =>
+      SICK_STATS.map((s) => {
+        const sickDaysMonth = Math.max(0, Math.round(s.sickDaysMonth * sickFactor));
+        const monthWorkdays = s.staffCount * 22 * sickFactor;
+        const ratePct = monthWorkdays > 0 ? +((sickDaysMonth / monthWorkdays) * 100).toFixed(1) : 0;
+        return { ...s, sickDaysMonth, ratePct };
+      }),
+    [sickFactor]
+  );
 
   const totals = useMemo(() => {
-    const target = SHIFT_SUMMARY.reduce((s, x) => s + x.weekTargetHours, 0);
-    const actual = SHIFT_SUMMARY.reduce((s, x) => s + x.weekActualHours, 0);
-    const openShifts = SHIFT_SUMMARY.reduce((s, x) => s + x.openShifts, 0);
-    const staff = SHIFT_SUMMARY.reduce((s, x) => s + x.staffCount, 0);
-    return { target, actual, openShifts, staff, util: Math.round((actual / target) * 100) };
-  }, []);
+    const target = scaledShifts.reduce((s, x) => s + x.weekTargetHours, 0);
+    const actual = scaledShifts.reduce((s, x) => s + x.weekActualHours, 0);
+    const openShifts = scaledShifts.reduce((s, x) => s + x.openShifts, 0);
+    const staff = scaledShifts.reduce((s, x) => s + x.staffCount, 0);
+    return { target, actual, openShifts, staff, util: target > 0 ? Math.round((actual / target) * 100) : 0 };
+  }, [scaledShifts]);
 
   const pending = vacations.filter((v) => v.status === "pending");
   const decided = vacations.filter((v) => v.status !== "pending");
@@ -35,16 +75,21 @@ export function HROverview() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-          <UserCog className="h-5 w-5" />
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+            <UserCog className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">{tt("HR-Übersicht", "HR Overview")}</h2>
+            <p className="text-xs text-muted-foreground">
+              {tt("Dienstpläne, Urlaub & Krankmeldungen über alle Filialen", "Schedules, vacation & sick leave across all branches")}
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">{tt("HR-Übersicht", "HR Overview")}</h2>
-          <p className="text-xs text-muted-foreground">
-            {tt("Dienstpläne, Urlaub & Krankmeldungen über alle Filialen", "Schedules, vacation & sick leave across all branches")}
-          </p>
-        </div>
+        <Badge variant="outline" className="shrink-0 font-normal">
+          {tt("Zeitraum", "Period")}: {periodLabel}
+        </Badge>
       </div>
 
       {/* KPI strip */}
@@ -99,7 +144,7 @@ export function HROverview() {
             <CardHeader>
               <CardTitle className="text-base">{tt("Dienstplan-Übersicht", "Schedule overview")}</CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
-                {tt("Wochenstunden pro Filiale · Soll vs. Ist", "Weekly hours per branch · target vs. actual")}
+                {tt("Stunden pro Filiale · Soll vs. Ist", "Hours per branch · target vs. actual")} · <span className="font-medium text-foreground">{periodLabel}</span>
               </p>
             </CardHeader>
             <CardContent>
@@ -115,7 +160,8 @@ export function HROverview() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {SHIFT_SUMMARY.map((s) => {
+                  {scaledShifts.map((s) => {
+                    if (s.weekTargetHours === 0) return null;
                     const util = Math.round((s.weekActualHours / s.weekTargetHours) * 100);
                     const utilTone = util >= 95 ? "text-emerald-600" : util >= 85 ? "text-foreground" : "text-amber-600";
                     return (
@@ -256,7 +302,10 @@ export function HROverview() {
 
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle className="text-base">{tt("Krankheitsquote pro Filiale (Monat)", "Sick leave rate per branch (month)")}</CardTitle>
+              <CardTitle className="text-base">{tt("Krankheitsquote pro Filiale", "Sick leave rate per branch")}</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                {tt("Zeitraum", "Period")}: <span className="font-medium text-foreground">{periodLabel}</span>
+              </p>
             </CardHeader>
             <CardContent>
               <Table>
@@ -268,7 +317,7 @@ export function HROverview() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {[...SICK_STATS].sort((a, b) => b.ratePct - a.ratePct).map((s) => {
+                  {[...scaledSick].sort((a, b) => b.ratePct - a.ratePct).map((s) => {
                     const high = s.ratePct >= 5;
                     return (
                       <TableRow key={s.pubId}>
