@@ -16,6 +16,7 @@ import {
 import { Plus, Laptop, Users, Wrench, Truck, MoreHorizontal, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/lib/use-t";
+import { useSession } from "@/lib/auth-mock";
 import {
   useTickets, ticketsStore,
   type TicketCategory as Category,
