@@ -19,6 +19,7 @@ import { de as deLocale, enUS } from "date-fns/locale";
 import { NEWS_CATEGORY_META, type NewsCategory } from "@/lib/hq-news-mock";
 import { useHQNews, hqNewsStore } from "@/lib/hq-news-store";
 import { PUBS } from "@/lib/pubs-mock";
+import { useSession, ROLE_PERSON, NEWS_PUBLISHER_ROLES } from "@/lib/auth-mock";
 
 
 const CATEGORIES: NewsCategory[] = ["urgent", "marketing", "product", "event", "policy", "ops"];
@@ -28,6 +29,9 @@ export function HQNewsComposer() {
   const { i18n } = useTranslation();
   const locale = i18n.language?.startsWith("de") ? deLocale : enUS;
   const news = useHQNews();
+  const session = useSession();
+  const canPublish = !!session && NEWS_PUBLISHER_ROLES.includes(session.role);
+  const me = session ? ROLE_PERSON[session.role] : null;
 
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState<NewsCategory>("ops");
@@ -37,8 +41,8 @@ export function HQNewsComposer() {
   const [excerptEn, setExcerptEn] = useState("");
   const [pinned, setPinned] = useState(false);
   const [requiresAck, setRequiresAck] = useState(false);
-  const [author, setAuthor] = useState("Marlene Roth");
-  const [authorRole, setAuthorRole] = useState("Head of Operations");
+  const [author, setAuthor] = useState(me?.name ?? "HQ");
+  const [authorRole, setAuthorRole] = useState(me?.subtitle ?? "HQ");
   const [audience, setAudience] = useState<"all" | "select">("all");
   const [selectedPubs, setSelectedPubs] = useState<Set<string>>(new Set());
 
