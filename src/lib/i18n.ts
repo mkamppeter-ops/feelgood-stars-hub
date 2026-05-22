@@ -76,6 +76,7 @@ const de = {
     liveFeedback: "Live Feedback",
     dataSettings: "Data Settings",
     admin: "Admin",
+    hr: "HR",
   },
   hq: {
     title: "HQ Dashboard",
@@ -331,6 +332,7 @@ const en: typeof de = {
     liveFeedback: "Live Feedback",
     dataSettings: "Data Settings",
     admin: "Admin",
+    hr: "HR",
   },
   hq: {
     title: "HQ Dashboard",
