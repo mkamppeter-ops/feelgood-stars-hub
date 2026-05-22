@@ -110,19 +110,19 @@ function HQPage() {
         </div>
         <nav className="flex-1 p-3 space-y-1 text-sm">
           {([
-            { icon: LayoutDashboard, label: t("nav.overview"), tab: "overview", show: !isHR, badge: undefined as number | undefined },
-            { icon: Inbox, label: t("nav.inbox", "Inbox"), tab: "inbox", badge: myTicketCount, show: !isHR },
-            { icon: UserCog, label: t("nav.hr", "HR"), tab: "hr", show: showHRTab, badge: undefined as number | undefined },
-            { icon: Building2, label: t("nav.pubs"), tab: "pubs", show: !isHR, badge: undefined as number | undefined },
-            { icon: Activity, label: t("nav.activeOps"), tab: "active-ops", show: !isHR, badge: undefined as number | undefined },
-            { icon: TrendingUp, label: t("nav.salesOps"), tab: "sales", show: !isHR, badge: undefined as number | undefined },
-            { icon: Building2, label: t("nav.sortiment"), tab: "sortiment", show: !isHR, badge: undefined as number | undefined },
-            { icon: CalendarCheck, label: t("nav.events"), tab: "events", show: !isHR, badge: undefined as number | undefined },
-            { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback", show: !isHR, badge: undefined as number | undefined },
-            { icon: Megaphone, label: t("nav.hqNews", "HQ News"), tab: "hq-news", show: !isHR, badge: undefined as number | undefined },
-            { icon: Megaphone, label: t("nav.marketing", "Marketing"), tab: "marketing", show: !isHR, badge: undefined as number | undefined },
-            { icon: Settings, label: t("nav.dataSettings"), tab: "settings", show: !isHR, badge: undefined as number | undefined },
-          ]).filter((i) => i.show).map(({ icon: Icon, label, tab, badge }) => {
+            { icon: LayoutDashboard, label: t("nav.overview"), tab: "overview", badge: undefined as number | undefined },
+            { icon: Inbox, label: t("nav.inbox", "Inbox"), tab: "inbox", badge: myTicketCount },
+            { icon: UserCog, label: t("nav.hr", "HR"), tab: "hr", badge: undefined as number | undefined },
+            { icon: Building2, label: t("nav.pubs"), tab: "pubs", badge: undefined as number | undefined },
+            { icon: Activity, label: t("nav.activeOps"), tab: "active-ops", badge: undefined as number | undefined },
+            { icon: TrendingUp, label: t("nav.salesOps"), tab: "sales", badge: undefined as number | undefined },
+            { icon: Building2, label: t("nav.sortiment"), tab: "sortiment", badge: undefined as number | undefined },
+            { icon: CalendarCheck, label: t("nav.events"), tab: "events", badge: undefined as number | undefined },
+            { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback", badge: undefined as number | undefined },
+            { icon: Megaphone, label: t("nav.hqNews", "HQ News"), tab: "hq-news", badge: undefined as number | undefined },
+            { icon: Megaphone, label: t("nav.marketing", "Marketing"), tab: "marketing", badge: undefined as number | undefined },
+            { icon: Settings, label: t("nav.dataSettings"), tab: "settings", badge: undefined as number | undefined },
+          ]).map(({ icon: Icon, label, tab, badge }) => {
             const active = activeTab === tab;
             return (
               <button
@@ -160,7 +160,18 @@ function HQPage() {
         {/* Topbar */}
         <header className="h-16 border-b bg-card/60 backdrop-blur flex items-center justify-between px-6 gap-4">
           <div className="min-w-0">
-            <h1 className="text-lg font-semibold tracking-tight truncate">{t("hq.title")}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold tracking-tight truncate">{t("hq.title")}</h1>
+              {role && TAB_OWNER[activeTab] && (
+                <span
+                  className="hidden md:inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded"
+                  title={t("hq.owner.hint", "Tab-Lead")}
+                >
+                  <span className="opacity-60">{t("hq.owner.label", "Lead")}:</span>
+                  <span className="font-medium text-foreground/80">{ROLE_PERSON[TAB_OWNER[activeTab]].name}</span>
+                </span>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground truncate">{t("common.period")}: {rangeLabels[range]}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -171,7 +182,12 @@ function HQPage() {
             <LanguageSwitcher />
             <Button variant="outline" size="icon" className="hidden sm:inline-flex"><Search className="h-4 w-4" /></Button>
             <Button variant="outline" size="icon" className="hidden sm:inline-flex"><Bell className="h-4 w-4" /></Button>
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground flex items-center justify-center text-sm font-semibold">HQ</div>
+            <div
+              className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground flex items-center justify-center text-sm font-semibold"
+              title={person?.name ?? "HQ"}
+            >
+              {person?.initials ?? "HQ"}
+            </div>
             <LogoutButton />
           </div>
         </header>
