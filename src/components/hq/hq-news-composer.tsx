@@ -10,7 +10,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Megaphone, Pin, AlertTriangle, CheckCircle2, Send, Trash2, Plus,
+  Megaphone, Pin, AlertTriangle, CheckCircle2, Send, Trash2, Plus, Building2, Users2,
 } from "lucide-react";
 import { useT } from "@/lib/use-t";
 import { useTranslation } from "react-i18next";
