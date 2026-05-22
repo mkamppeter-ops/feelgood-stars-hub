@@ -301,6 +301,48 @@ export type Database = {
           },
         ]
       }
+      staff_biometrics: {
+        Row: {
+          consent_signed_at: string | null
+          consent_signed_by: string | null
+          enrolled_at: string
+          enrolled_by: string | null
+          finger_index: number
+          id: string
+          pin_hash: string | null
+          staff_id: string
+          template_encrypted: string
+          template_format: string
+          updated_at: string
+        }
+        Insert: {
+          consent_signed_at?: string | null
+          consent_signed_by?: string | null
+          enrolled_at?: string
+          enrolled_by?: string | null
+          finger_index?: number
+          id?: string
+          pin_hash?: string | null
+          staff_id: string
+          template_encrypted: string
+          template_format?: string
+          updated_at?: string
+        }
+        Update: {
+          consent_signed_at?: string | null
+          consent_signed_by?: string | null
+          enrolled_at?: string
+          enrolled_by?: string | null
+          finger_index?: number
+          id?: string
+          pin_hash?: string | null
+          staff_id?: string
+          template_encrypted?: string
+          template_format?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       staff_members: {
         Row: {
           active: boolean
@@ -406,6 +448,42 @@ export type Database = {
           tax_id?: string | null
           updated_at?: string
           weekly_hours?: number | null
+        }
+        Relationships: []
+      }
+      stamp_events: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          event_type: string
+          id: string
+          method: string
+          note: string | null
+          occurred_at: string
+          pub_id: string
+          staff_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          event_type: string
+          id?: string
+          method?: string
+          note?: string | null
+          occurred_at?: string
+          pub_id: string
+          staff_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          method?: string
+          note?: string | null
+          occurred_at?: string
+          pub_id?: string
+          staff_id?: string
         }
         Relationships: []
       }
