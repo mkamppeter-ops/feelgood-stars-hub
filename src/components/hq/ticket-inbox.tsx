@@ -93,28 +93,31 @@ export function TicketInbox() {
                 </div>
                 <div className="text-sm font-medium leading-tight mt-1">{tk.title}</div>
                 <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{tk.desc}</p>
-                <div className="text-[11px] text-muted-foreground mt-1">
-                  {tk.author}{tk.pub ? ` · ${tk.pub}` : ""} · {tk.ago}
-                </div>
                 {(() => {
-                  const pub = tk.pub ? PUBS.find((p) => p.name === tk.pub) : undefined;
-                  if (!pub) return null;
+                  const pub = tk.pubId ? PUBS.find((p) => p.id === tk.pubId) : undefined;
                   return (
-                    <div className="flex items-center gap-2 mt-2 flex-wrap">
-                      <span className="text-[11px] text-muted-foreground">
-                        {tt("Manager", "Manager")}: <span className="font-medium text-foreground">{pub.manager}</span>
-                      </span>
-                      <a href={`https://wa.me/${pub.whatsapp}`} target="_blank" rel="noreferrer">
-                        <Button size="icon" className="h-7 w-7 bg-emerald-500 hover:bg-emerald-600 text-white">
-                          <WhatsAppIcon className="h-3.5 w-3.5" />
-                        </Button>
-                      </a>
-                      <a href={`tel:${pub.phone}`}>
-                        <Button size="icon" className="h-7 w-7 bg-blue-500 hover:bg-blue-600 text-white">
-                          <Phone className="h-3.5 w-3.5" />
-                        </Button>
-                      </a>
-                    </div>
+                    <>
+                      <div className="text-[11px] text-muted-foreground mt-1">
+                        {tk.author}{pub ? ` · ${pub.name}` : ""} · {tk.ago}
+                      </div>
+                      {pub && (
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <span className="text-[11px] text-muted-foreground">
+                            {tt("Manager", "Manager")}: <span className="font-medium text-foreground">{pub.manager}</span>
+                          </span>
+                          <a href={`https://wa.me/${pub.whatsapp}`} target="_blank" rel="noreferrer">
+                            <Button size="icon" className="h-7 w-7 bg-emerald-500 hover:bg-emerald-600 text-white">
+                              <WhatsAppIcon className="h-3.5 w-3.5" />
+                            </Button>
+                          </a>
+                          <a href={`tel:${pub.phone}`}>
+                            <Button size="icon" className="h-7 w-7 bg-blue-500 hover:bg-blue-600 text-white">
+                              <Phone className="h-3.5 w-3.5" />
+                            </Button>
+                          </a>
+                        </div>
+                      )}
+                    </>
                   );
                 })()}
               </div>
