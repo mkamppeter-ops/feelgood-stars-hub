@@ -30,6 +30,7 @@ import { DataSettings } from "@/components/data-settings";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { TicketInbox } from "@/components/hq/ticket-inbox";
 import { HROverview } from "@/components/hq/hr-overview";
+import { HQNewsComposer } from "@/components/hq/hq-news-composer";
 import { Inbox } from "lucide-react";
 import { useSession, ROLE_TICKET_CATEGORY, type Role } from "@/lib/auth-mock";
 import { useTickets } from "@/lib/tickets-store";
@@ -119,6 +120,7 @@ function HQPage() {
             { icon: Building2, label: t("nav.sortiment"), tab: "sortiment", show: !isHR, badge: undefined as number | undefined },
             { icon: CalendarCheck, label: t("nav.events"), tab: "events", show: !isHR, badge: undefined as number | undefined },
             { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback", show: !isHR, badge: undefined as number | undefined },
+            { icon: Megaphone, label: t("nav.hqNews", "HQ News"), tab: "hq-news", show: !isHR, badge: undefined as number | undefined },
             { icon: Megaphone, label: t("nav.marketing", "Marketing"), tab: "marketing", show: !isHR, badge: undefined as number | undefined },
             { icon: Settings, label: t("nav.dataSettings"), tab: "settings", show: !isHR, badge: undefined as number | undefined },
           ]).filter((i) => i.show).map(({ icon: Icon, label, tab, badge }) => {
@@ -203,11 +205,19 @@ function HQPage() {
                 <UserCog className="h-3.5 w-3.5" />
                 {t("nav.hr", "HR")}
               </TabsTrigger>
+              <TabsTrigger value="hq-news" className="gap-1.5">
+                <Megaphone className="h-3.5 w-3.5" />
+                {t("nav.hqNews", "HQ News")}
+              </TabsTrigger>
               <TabsTrigger value="feedback" className="gap-2">
                 {t("nav.liveFeedback")}
                 <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="hq-news" className="mt-0">
+              <HQNewsComposer />
+            </TabsContent>
 
             <TabsContent value="hr" className="mt-0">
               <HROverview range={range} />
