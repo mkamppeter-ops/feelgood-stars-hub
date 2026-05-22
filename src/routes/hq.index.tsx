@@ -173,6 +173,15 @@ function HQPage() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList>
               <TabsTrigger value="overview">{t("nav.overview")}</TabsTrigger>
+              <TabsTrigger value="inbox" className="gap-2">
+                <Inbox className="h-3.5 w-3.5" />
+                {t("nav.inbox", "Inbox")}
+                {myTicketCount > 0 && (
+                  <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">
+                    {myTicketCount}
+                  </span>
+                )}
+              </TabsTrigger>
               <TabsTrigger value="pubs" className="gap-1.5">
                 <Building2 className="h-3.5 w-3.5" />
                 {t("nav.pubs")}
@@ -189,6 +198,10 @@ function HQPage() {
                 <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-medium">3</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="inbox" className="mt-0">
+              <TicketInbox />
+            </TabsContent>
 
             <TabsContent value="pubs" className="mt-0">
               <PubsGrid onOpen={(id) => navigate({ to: "/hq/$pubId", params: { pubId: id } })} />
