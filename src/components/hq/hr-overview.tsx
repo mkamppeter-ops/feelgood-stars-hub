@@ -12,6 +12,21 @@ import {
   SHIFT_SUMMARY, VACATION_REQUESTS, SICK_LEAVES, SICK_STATS, getPubName,
   type VacationStatus,
 } from "@/lib/hr-mock";
+import { useRangeLabels, type DateRange } from "@/components/date-range-picker";
+
+// How HR period scales relative to the base mock data (week / month)
+const SHIFT_PERIOD_FACTOR: Record<DateRange, number> = {
+  today: 1 / 7,
+  yesterday: 1 / 7,
+  last7: 1,
+  thisMonth: 30 / 7,
+};
+const SICK_PERIOD_FACTOR: Record<DateRange, number> = {
+  today: 1 / 30,
+  yesterday: 1 / 30,
+  last7: 7 / 30,
+  thisMonth: 1,
+};
 
 export function HROverview() {
   const tt = useT();
