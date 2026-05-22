@@ -109,18 +109,19 @@ function HQPage() {
           </div>
         </div>
         <nav className="flex-1 p-3 space-y-1 text-sm">
-          {[
-            { icon: LayoutDashboard, label: t("nav.overview"), tab: "overview" },
-            { icon: Inbox, label: t("nav.inbox", "Inbox"), tab: "inbox", badge: myTicketCount },
-            { icon: Building2, label: t("nav.pubs"), tab: "pubs" },
-            { icon: Activity, label: t("nav.activeOps"), tab: "active-ops" },
-            { icon: TrendingUp, label: t("nav.salesOps"), tab: "sales" },
-            { icon: Building2, label: t("nav.sortiment"), tab: "sortiment" },
-            { icon: CalendarCheck, label: t("nav.events"), tab: "events" },
-            { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback" },
-            { icon: Megaphone, label: t("nav.marketing", "Marketing"), tab: "marketing" },
-            { icon: Settings, label: t("nav.dataSettings"), tab: "settings" },
-          ].map(({ icon: Icon, label, tab, badge }) => {
+          {([
+            { icon: LayoutDashboard, label: t("nav.overview"), tab: "overview", show: !isHR },
+            { icon: Inbox, label: t("nav.inbox", "Inbox"), tab: "inbox", badge: myTicketCount, show: !isHR },
+            { icon: UserCog, label: t("nav.hr", "HR"), tab: "hr", show: showHRTab },
+            { icon: Building2, label: t("nav.pubs"), tab: "pubs", show: !isHR },
+            { icon: Activity, label: t("nav.activeOps"), tab: "active-ops", show: !isHR },
+            { icon: TrendingUp, label: t("nav.salesOps"), tab: "sales", show: !isHR },
+            { icon: Building2, label: t("nav.sortiment"), tab: "sortiment", show: !isHR },
+            { icon: CalendarCheck, label: t("nav.events"), tab: "events", show: !isHR },
+            { icon: MessageSquare, label: t("nav.feedback"), tab: "feedback", show: !isHR },
+            { icon: Megaphone, label: t("nav.marketing", "Marketing"), tab: "marketing", show: !isHR },
+            { icon: Settings, label: t("nav.dataSettings"), tab: "settings", show: !isHR },
+          ] as const).filter((i) => i.show).map(({ icon: Icon, label, tab, badge }) => {
             const active = activeTab === tab;
             return (
               <button
