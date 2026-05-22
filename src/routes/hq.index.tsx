@@ -60,9 +60,13 @@ function HQPage() {
   const myTicketCount = (isSuper ? tickets : tickets.filter((t) => t.category === myCat))
     .filter((t) => t.status !== "done").length;
   const isSubAdmin = !!myCat;
+  const isHR = session?.role === "hr_admin";
+  const isOps = session?.role === "ops_admin";
+  const showHRTab = isSuper || isHR;
+  const defaultTab = isHR ? "hr" : isOps ? "feedback" : isSubAdmin ? "inbox" : "overview";
   const [range, setRange] = useState<DateRange>("last7");
   const [pulseKey, setPulseKey] = useState(0);
-  const [activeTab, setActiveTab] = useState(isSubAdmin ? "inbox" : "overview");
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const factor = RANGE_FACTOR[range];
 
   const kpis = useMemo(() => {
