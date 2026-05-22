@@ -224,6 +224,7 @@ function HQPage() {
                 { value: "sortiment", label: t("nav.sortiment"), icon: null },
                 { value: "events", label: t("nav.events"), icon: null },
                 { value: "hr", label: t("nav.hr", "HR"), icon: UserCog },
+                { value: "staff", label: t("nav.staff", "Personalplan"), icon: CalendarDays },
                 { value: "marketing", label: t("nav.marketing", "Marketing"), icon: Megaphone },
                 { value: "hq-news", label: t("nav.hqNews", "HQ News"), icon: Megaphone },
 
