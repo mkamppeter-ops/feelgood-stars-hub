@@ -27,7 +27,6 @@ export function HQNewsComposer() {
   const { i18n } = useTranslation();
   const locale = i18n.language?.startsWith("de") ? deLocale : enUS;
   const news = useHQNews();
-  const session = useSession();
 
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState<NewsCategory>("ops");
@@ -37,7 +36,7 @@ export function HQNewsComposer() {
   const [excerptEn, setExcerptEn] = useState("");
   const [pinned, setPinned] = useState(false);
   const [requiresAck, setRequiresAck] = useState(false);
-  const [author, setAuthor] = useState(session?.name ?? "HQ");
+  const [author, setAuthor] = useState("Marlene Roth");
   const [authorRole, setAuthorRole] = useState("Head of Operations");
 
   const sorted = useMemo(
