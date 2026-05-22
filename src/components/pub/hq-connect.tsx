@@ -16,6 +16,7 @@ import {
 import { Plus, Laptop, Users, Wrench, Truck, MoreHorizontal, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/lib/use-t";
+import { useSession } from "@/lib/auth-mock";
 import {
   useTickets, ticketsStore,
   type TicketCategory as Category,
@@ -30,6 +31,7 @@ const CAT_ICON: Record<Category, React.ComponentType<{ className?: string }>> = 
 export function HQConnect() {
   const tt = useT();
   const tickets = useTickets();
+  const session = useSession();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<{ title: string; desc: string; category: Category; priority: Priority }>({
     title: "", desc: "", category: "it", priority: "med",
@@ -70,6 +72,7 @@ export function HQConnect() {
       category: form.category,
       priority: form.priority,
       author: tt("Du", "You"),
+      pubId: session?.pubId,
     });
     setForm({ title: "", desc: "", category: "it", priority: "med" });
     setOpen(false);
