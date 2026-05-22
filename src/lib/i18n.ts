@@ -42,6 +42,10 @@ const de = {
     hq_admin: "HQ Admin",
     pub_manager: "Pub Manager",
     bar_staff: "Bar Staff",
+    it_admin: "IT Admin",
+    hr_admin: "HR Admin",
+    facility_admin: "Facility Admin",
+    ops_admin: "Logistik Admin",
   },
   login: {
     welcome: "Willkommen zurück",
@@ -293,6 +297,10 @@ const en: typeof de = {
     hq_admin: "HQ Admin",
     pub_manager: "Pub Manager",
     bar_staff: "Bar Staff",
+    it_admin: "IT Admin",
+    hr_admin: "HR Admin",
+    facility_admin: "Facility Admin",
+    ops_admin: "Logistics Admin",
   },
   login: {
     welcome: "Welcome back",

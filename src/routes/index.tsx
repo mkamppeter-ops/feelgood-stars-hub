@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Building2, Beer, User, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Building2, Beer, User, Eye, EyeOff, Lock, Mail, Laptop, Users as UsersIcon, Wrench, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -147,6 +147,24 @@ function LoginPage() {
               <span className="flex-1 text-left">{t("login.loginAs", { role: t("roles.bar_staff") })}</span>
               <span className="text-xs text-muted-foreground">/pub</span>
             </Button>
+
+            <div className="pt-2 mt-2 border-t">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 pb-1.5">HQ Sub-Admins</div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button type="button" variant="ghost" size="sm" className="justify-start gap-2 h-9" onClick={() => loginAs("it_admin")}>
+                  <Laptop className="h-3.5 w-3.5 text-primary" /><span className="text-xs">IT</span>
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="justify-start gap-2 h-9" onClick={() => loginAs("hr_admin")}>
+                  <UsersIcon className="h-3.5 w-3.5 text-primary" /><span className="text-xs">HR</span>
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="justify-start gap-2 h-9" onClick={() => loginAs("facility_admin")}>
+                  <Wrench className="h-3.5 w-3.5 text-primary" /><span className="text-xs">Facility</span>
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="justify-start gap-2 h-9" onClick={() => loginAs("ops_admin")}>
+                  <Truck className="h-3.5 w-3.5 text-primary" /><span className="text-xs">Logistik</span>
+                </Button>
+              </div>
+            </div>
           </div>
         </Card>
 
