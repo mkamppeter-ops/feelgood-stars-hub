@@ -222,13 +222,13 @@ function PhoneShiftWidget() {
 
 /* -------------------- Tablet mode: pick staff + PIN -------------------- */
 
-function TabletClockIn() {
+function TabletClockIn({ staff }: { staff: StaffEntry[] }) {
   const tt = useT();
   const [selected, setSelected] = useState<string | null>(null);
   const [pin, setPin] = useState("");
   const [clockedIn, setClockedIn] = useState<Record<string, number>>({});
 
-  const selectedStaff = STAFF.find((s) => s.id === selected);
+  const selectedStaff = staff.find((s) => s.id === selected);
 
   const submitPin = (next: string) => {
     if (!selectedStaff) return;
