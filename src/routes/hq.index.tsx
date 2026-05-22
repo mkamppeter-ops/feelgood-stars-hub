@@ -32,7 +32,7 @@ import { TicketInbox } from "@/components/hq/ticket-inbox";
 import { HROverview } from "@/components/hq/hr-overview";
 import { HQNewsComposer } from "@/components/hq/hq-news-composer";
 import { Inbox } from "lucide-react";
-import { useSession, ROLE_TICKET_CATEGORY, type Role } from "@/lib/auth-mock";
+import { useSession, ROLE_TICKET_CATEGORY, ROLE_PERSON, ROLE_DEFAULT_TAB, TAB_OWNER, type Role } from "@/lib/auth-mock";
 import { useTickets } from "@/lib/tickets-store";
 
 export const Route = createFileRoute("/hq/")({
@@ -43,7 +43,7 @@ export const Route = createFileRoute("/hq/")({
     ],
   }),
   component: () => (
-    <RequireRole roles={["hq_admin", "it_admin", "hr_admin", "facility_admin", "ops_admin"]}>
+    <RequireRole roles={["hq_admin", "it_admin", "facility_admin", "ops_admin"]}>
       <HQPage />
     </RequireRole>
   ),
@@ -56,15 +56,14 @@ function HQPage() {
   const navigate = useNavigate();
   const session = useSession();
   const tickets = useTickets();
-  const isSuper = session?.role === "hq_admin";
-  const myCat = session ? ROLE_TICKET_CATEGORY[session.role as Role] : undefined;
+  const role = session?.role as Role | undefined;
+  const isSuper = role === "hq_admin";
+  const myCat = role ? ROLE_TICKET_CATEGORY[role] : undefined;
   const myTicketCount = (isSuper ? tickets : tickets.filter((t) => t.category === myCat))
     .filter((t) => t.status !== "done").length;
-  const isSubAdmin = !!myCat;
-  const isHR = session?.role === "hr_admin";
-  const isOps = session?.role === "ops_admin";
-  const showHRTab = isSuper || isHR;
-  const defaultTab = isHR ? "hr" : isOps ? "feedback" : isSubAdmin ? "inbox" : "overview";
+  // Every HQ role sees every tab; only the default landing differs.
+  const defaultTab = (role && ROLE_DEFAULT_TAB[role]) || "overview";
+  const person = role ? ROLE_PERSON[role] : null;
   const [range, setRange] = useState<DateRange>("last7");
   const [pulseKey, setPulseKey] = useState(0);
   const [activeTab, setActiveTab] = useState(defaultTab);
