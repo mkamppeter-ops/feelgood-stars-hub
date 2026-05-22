@@ -190,13 +190,13 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
   // Globale Sicht pro Kunde — höchster Status gewinnt (siehe STATUS_RANK).
   const customerLatest = useMemo(() => {
     const map = new Map<string, GoogleStatus>();
-    for (const f of FEEDBACK) {
+    for (const f of allFeedback) {
       const current = (googleStatus[f.id] ?? f.googleStatus ?? "none") as GoogleStatus;
       const prev = map.get(f.customerId) ?? "none";
       if (STATUS_RANK[current] > STATUS_RANK[prev]) map.set(f.customerId, current);
     }
     return map;
-  }, [googleStatus]);
+  }, [googleStatus, allFeedback]);
 
   // Auto-Trigger: 4–5⭐ App-Reviews automatisch zur Google-Einladung anstoßen
   useEffect(() => {
@@ -228,14 +228,14 @@ export function LiveFeedback({ lockedPubId }: { lockedPubId?: string } = {}) {
   }, []);
 
   const filtered = useMemo(() => {
-    return FEEDBACK.filter((f) => {
+    return allFeedback.filter((f) => {
       if (source !== "all" && f.source !== source) return false;
       if (rating === "low" && f.stars > 2) return false;
       if (rating === "high" && f.stars < 4) return false;
       if (effectivePubId !== "all" && f.pubId !== effectivePubId) return false;
       return true;
     });
-  }, [source, rating, effectivePubId]);
+  }, [source, rating, effectivePubId, allFeedback]);
 
   const toggleDone = (id: string) =>
     setDone((prev) => {
