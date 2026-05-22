@@ -133,10 +133,13 @@ export function TeamHR({ openingHour = 17, closingHour = 24, closedDays = ["mon"
       </div>
 
       {deviceMode === "tablet" ? (
-        <TabletClockIn staff={staff} />
+        <TabletClockIn staff={staff} pubId={pubId} />
       ) : (
         <PhoneShiftWidget />
       )}
+
+      {/* Biometrie-Verwaltung (nur Tablet-Modus) */}
+      {deviceMode === "tablet" && <BiometricsManager staff={staff} />}
 
       {/* Roster */}
       <RosterTable shifts={shifts} closedDays={closedDays} staff={staff} />
