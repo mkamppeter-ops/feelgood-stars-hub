@@ -1,69 +1,71 @@
-# HR & Operations sauber trennen
+## Ziel
 
-## Ausgangslage
-HR ist aktuell ein Ticket-Empfänger (Schürzen, Onboarding) und Reviews liegen unklar im Dashboard. Das passt nicht: Personalthemen sind etwas anderes als operative Probleme.
+1. Alle Mock-Inhalte (Pubs, Menü, Events, Aktionen, HR) auf das **echte Pub&Go-Konzept** ausrichten — Quelle ist das Schwesterprojekt `Pub&Go-Operations_ES`.
+2. **HQ-Rechte** so vereinfachen, dass jede Person *alles* sehen kann, aber mit einem klaren Standard-Bereich landet, der zu ihrer Aufgabe passt.
 
-## Neue Rollen-Logik
+---
 
-| Rolle | Verantwortlich für |
+## Teil 1 — Inhalte an Pub&Go anpassen
+
+Quelle: `Pub&Go-Operations_ES` (gleicher Owner, kanonische Pub&Go-Daten, nur spanisch lokalisiert). DE/EN-Sprache und aktuelles UI bleiben — nur die Inhalte werden 1:1 übernommen und übersetzt.
+
+| Bereich | Übernahme aus ES-Projekt |
 |---|---|
-| **ops_admin** | Alle Gäste-Reviews, operative Tickets (inkl. der bisherigen HR-Tickets), Logistik |
-| **hr_admin** | Dienstplan-Übersicht aller Bars · Urlaubs- & Krankmeldungs-Verwaltung |
-| **it_admin** | nur IT-Tickets |
-| **facility_admin** | nur Facility-Tickets |
-| **hq_admin** | sieht alles |
+| **Pubs** (`pubs-mock.ts`) | Pub&Go-Namens­konvention "Pub&Go {Stadt} {Bezirk}" — auf den DACH-Markt portiert: Berlin Mitte, Berlin Prenzlauer Berg, Hamburg Schanze, München Glockenbach, Köln Belgisches Viertel, Frankfurt Bahnhofs­viertel, Stuttgart Westend, Düsseldorf Altstadt. Manager-Namen / Telefon / KPIs aus ES als Vorlage. |
+| **Sortiment / Top-Seller** (`sales-mock.ts`, evtl. `sortiment.tsx`) | Echte Pub&Go-Karte: Caña 0,3l, Tinto de Verano, Vermut, Patatas Bravas, Tortilla, Tabla Ibérica … in DE-Übersetzung wo nötig (z. B. Caña → "Bier 0,3l", Tabla Ibérica behalten). |
+| **Events** (`events-mock.ts`) | 14-Tage-Programm aus `events-data.ts` der App: Pub Quiz, Karaoke Night, Live Sports (La Liga / Bundesliga), DJ-Set, Comedy, Tasting. Tisch-Layout 6×2 + 8×4 + 4×6 = 68 Plätze beibehalten. |
+| **Active Ops / Marketing** (`active-ops-mock.ts`, Marketing-Tab) | Pub&Go-typische Frequenz-Aktionen: Happy Hour, Stamp-Card-Push, Event-Boost, Walk-In-Challenge. |
+| **HQ News / Briefings** (`hq-news-mock.ts`) | Beispiel-Briefings die zum Konzept passen: neue Karte, neues Quiz-Format, Saison-Aktion, Stamp-Card-Update. |
+| **HR** (`hr-mock.ts`) | Rollen (Bartender, Bar Manager, Kellner:in, Küche, Barista) bleiben — Namen DE-typisch, sonst wie heute. |
 
-## Konkrete Änderungen
+Output: bilingual (DE primär, EN als Übersetzung in `i18n.ts`). Keine Logik-Änderungen, nur Daten.
 
-### 1. Ticket-System
-- HR-Kategorie aus den Ticket-Filtern entfernen
-- Bestehende HR-Tickets („Schürzen", „Onboarding neuer Aushilfskraft") wandern zu `logistics` bzw. werden zu Operations-Tickets
-- Im „Neues Ticket"-Dialog im Pub-View: HR-Option raus, dafür „Operations" als klare Kategorie
-- `ROLE_TICKET_CATEGORY`-Mapping: `hr_admin` bekommt keine Kategorie mehr, `ops_admin` deckt sowohl Logistik als auch operative HR-nahe Themen ab
+---
 
-### 2. Reviews & Feedback → klar an Operations
-- Live-Feedback und Review-Übersicht zeigen ein „Zuständig: Operations"-Label
-- ops_admin landet nach Login direkt auf dem Feedback-Tab
-- Badge mit offenen Reviews erscheint im Sidebar-Menü von ops_admin
+## Teil 2 — Rollen & Rechte
 
-### 3. Neuer HR-Bereich im HQ
-Ein eigener Tab/Sidebar-Eintrag „HR" mit drei Karten-Sektionen:
+### Personen → Rollen
 
-**a) Dienstplan-Übersicht (alle Bars)**
-- Tabelle: Pub · Wochen-Sollstunden · Ist-Stunden · Auslastung
-- Pro Bar aufklappbar: aktuelle Woche, Schichten pro Tag, wer arbeitet
-- Quelle: aggregiert aus bestehender `TeamHR`-Komponente, plus `pub_settings.opening_hour`/`closing_hour`
+| Person | Rolle (technisch) | Default-Landing | Sichtbarkeit | Schreibrecht |
+|---|---|---|---|---|
+| **Louis Kamppeter** | `hq_admin` (Super) | Tab **Marketing** | alle Tabs | alle |
+| **Felix Hartmann + Paul Karwinkel** | `ops_admin` (gemeinsame Rolle) | Tab **HR / Operations Hub** | alle Tabs | HR, Sortiment, Live Feedback, HQ News, Logistik-Inbox |
+| **Tomasz Kaplanski** | `facility_admin` | Tab **Inbox** (gefiltert: Facility) | alle Tabs (read) | Facility-Inbox, eigene Tickets |
+| **Supervista IA** | `it_admin` | Tab **Inbox** (gefiltert: IT) | alle Tabs (read) | IT-Inbox |
 
-**b) Urlaubsanträge**
-- Liste aller offenen Anträge bar-übergreifend (Mitarbeiter, Pub, Zeitraum)
-- Aktionen: Genehmigen / Ablehnen
-- Filter: offen · genehmigt · abgelehnt
+Keine `pub_manager`/`bar_staff`-Änderung — bleibt wie heute.
 
-**c) Krankmeldungen**
-- Aktuelle Krankmeldungen (heute, diese Woche)
-- Monats-Statistik pro Bar: Krankheitstage, Quote
-- Hinweisbadge wenn ein Pub auffällig hohe Quote hat
+### Was sich konkret ändert
 
-### 4. Sidebar-Navigation
-- Neuer Eintrag „HR" mit `UserCog`-Icon
-- Für `hr_admin` ist HR der Standard-Tab nach Login
-- Für `hq_admin` sichtbar zwischen „Pubs" und „Active Ops"
-- Andere Sub-Admins sehen den HR-Tab nicht
+1. **`hr_admin` entfällt** — verschmilzt in `ops_admin`. Felix+Paul nutzen *dasselbe* Login "Operations" (eine Rolle, ein Avatar). HR-Tab gehört jetzt zu ops, Tickets-Kategorie `logistics` ebenfalls.
+2. **Sidebar zeigt für alle HQ-Rollen alle Tabs** (heute werden bei `hr_admin` viele Tabs versteckt — entfällt). Damit niemand "verloren" geht.
+3. **Default-Tab pro Rolle** statt heute nur „overview": Louis → `marketing`, Ops → `hr`, Facility → `inbox`, IT → `inbox`. Inbox wird automatisch nach Kategorie der Rolle vor­gefiltert.
+4. **Owner-Badge pro Tab** (subtiler Pill rechts oben im Tab-Header, z. B. „Owner: Operations" / „Owner: Marketing") — macht ohne Re­strik­tio­nen sichtbar, wer für den Bereich Lead ist. Reduziert Verwirrung, ohne Zugriff zu blockieren.
+5. **HQ-News-Composer** (Senden) bleibt sichtbar für alle HQ-Rollen, aber „Veröffentlichen"-Button ist nur für `hq_admin` (Louis) und `ops_admin` (Felix/Paul) aktiv — Tomasz/Supervista sehen Read-only-Liste.
+6. **Login-Screen** zeigt jetzt Personen statt Rollen-Bezeichnung:
+   - „Louis Kamppeter — Marketing & Active Ops"
+   - „Felix & Paul — Operations"
+   - „Tomasz Kaplanski — Facility"
+   - „Supervista IA — IT"
+   plus weiterhin Pub Manager / Bar Staff Demo-Buttons.
+7. **Topbar-Avatar** zeigt Initialen der Person (LK / OP / TK / IT) statt generisch „HQ".
 
-## Daten (vorerst Mock)
-Da noch keine echten Schicht-/Urlaubs-Daten in der DB liegen, wird der HR-Bereich erst mit Mock-Daten in `src/lib/hr-mock.ts` aufgebaut (Dienstpläne, Urlaubsanträge, Krankmeldungen pro Pub). So sieht man das Konzept sofort und kann später auf echte Tabellen migrieren.
+### Technische Details
 
-## Betroffene Dateien
-- `src/lib/auth-mock.ts` – Mapping `hr_admin` entfernen, Default-Route auf `/hq?tab=hr` setzen
-- `src/lib/tickets-store.ts` – HR-Seeds umkategorisieren
-- `src/components/pub/hq-connect.tsx` – HR-Option im Dialog entfernen, Operations hinzu
-- `src/components/hq/ticket-inbox.tsx` – HR-Filter raus
-- `src/components/hq/hr-overview.tsx` (neu) – Dienstplan/Urlaub/Krank
-- `src/lib/hr-mock.ts` (neu) – Mock-Daten
-- `src/routes/hq.index.tsx` – neuer HR-Tab, Sidebar-Eintrag, ops_admin → feedback als Default
-- `src/lib/i18n.ts` – Strings DE/EN
+- `src/lib/auth-mock.ts`: `Role` ohne `hr_admin`; neue Konstanten `ROLE_PERSON` (Anzeige­name) und `ROLE_DEFAULT_TAB`; `isHqRole` unverändert.
+- `src/routes/hq.index.tsx`: Tab-Filter `show:` für HQ-Rollen immer `true`; `defaultTab` aus `ROLE_DEFAULT_TAB[session.role]`; neuer kleiner `<OwnerBadge owner="…">`-Helper im Tab-Header.
+- `src/routes/index.tsx` (Login): Button-Liste auf Personen umgestellt, Icons bleiben.
+- `src/components/hq/hq-news-composer.tsx`: `canPublish = role === "hq_admin" || role === "ops_admin"`; sonst Read-only-Hinweis.
+- `src/lib/tickets-store.ts` + `ROLE_TICKET_CATEGORY`: HR-Mapping entfernen, `ops_admin → logistics` bleibt.
 
-## Was NICHT Teil dieses Schritts ist
-- Echte DB-Tabellen für Schichten/Urlaub/Krank (separater Schritt, sobald das UI-Konzept steht)
-- Stundenexport für Lohnbuchhaltung
-- Mitarbeiterstammdaten/Verträge
+### Migration / Demo
+
+Vorhandene `localStorage`-Sessions mit Rolle `hr_admin` werden beim Laden auf `ops_admin` gemappt (`getSession()` patcht still) — kein Login-Bruch.
+
+---
+
+## Was *nicht* Teil dieses Plans ist
+
+- Echtes Auth-System (bleibt Mock).
+- Multi-User pro Rolle / Audit-Log wer was geändert hat.
+- Granulare Per-Tab-Permissions (alle HQ-Rollen sehen weiterhin alles read-only).
