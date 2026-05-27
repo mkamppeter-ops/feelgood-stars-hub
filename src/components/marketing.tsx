@@ -7,7 +7,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Megaphone, Users, Euro, TrendingDown, Activity, AlertCircle } from "lucide-react";
+import { Megaphone, Users, Euro, TrendingDown } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
 import { formatEUR } from "@/lib/sales-mock";
 import { useT } from "@/lib/use-t";
@@ -15,8 +15,23 @@ import { getPlausibleRegistrations } from "@/lib/plausible.functions";
 
 type Period = "7d" | "30d" | "month";
 
-// Map Plausible utm_source values → internal channel keys
-const UTM_TO_CHANNEL: Record<string, ChannelKey> = {
+// Match a Plausible utm_campaign value to a pub.
+// Campaigns are expected to contain the pub id, the city name, or a recognizable slug.
+function matchCampaignToPub(campaign: string): string | null {
+  const c = campaign.toLowerCase();
+  for (const p of PUBS) {
+    const idSlug = p.id.toLowerCase();
+    const citySlug = p.city.toLowerCase();
+    const nameSlug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    if (c.includes(idSlug) || c.includes(citySlug) || c.includes(nameSlug)) {
+      return p.id;
+    }
+  }
+  return null;
+}
+
+// (unused placeholder kept to satisfy earlier types — channel mapping removed)
+const _UTM_TO_CHANNEL_UNUSED: Record<string, ChannelKey> = {
   meta: "meta", facebook: "meta", instagram: "meta", fb: "meta", ig: "meta",
   google: "google", googleads: "google", google_ads: "google", adwords: "google",
   tiktok: "tiktok", tt: "tiktok",
