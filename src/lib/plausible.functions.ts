@@ -6,26 +6,25 @@ const GOAL_NAME = "Download Click";
 
 const InputSchema = z.object({
   period: z.enum(["7d", "30d", "month"]).default("30d"),
-  pubId: z.string().optional(),
 });
 
-type ChannelMap = Record<string, number>;
+type CampaignMap = Record<string, number>;
 
 export const getPlausibleRegistrations = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }) => {
     const apiKey = process.env.PLAUSIBLE_API_KEY;
     if (!apiKey) {
-      return { ok: false as const, error: "PLAUSIBLE_API_KEY missing", byChannel: {} as ChannelMap, total: 0 };
+      return {
+        ok: false as const,
+        error: "PLAUSIBLE_API_KEY missing",
+        byCampaign: {} as CampaignMap,
+        total: 0,
+      };
     }
 
     const date_range =
       data.period === "7d" ? "7d" : data.period === "month" ? "month" : "30d";
-
-    const filters: unknown[] = [["is", "event:goal", [GOAL_NAME]]];
-    if (data.pubId) {
-      filters.push(["contains", "visit:utm_campaign", [data.pubId]]);
-    }
 
     try {
       const res = await fetch("https://plausible.io/api/v2/query", {
@@ -38,8 +37,8 @@ export const getPlausibleRegistrations = createServerFn({ method: "POST" })
           site_id: SITE_ID,
           metrics: ["events"],
           date_range,
-          filters,
-          dimensions: ["visit:utm_source"],
+          filters: [["is", "event:goal", [GOAL_NAME]]],
+          dimensions: ["visit:utm_campaign"],
         }),
       });
 
@@ -48,7 +47,7 @@ export const getPlausibleRegistrations = createServerFn({ method: "POST" })
         return {
           ok: false as const,
           error: `Plausible ${res.status}: ${text.slice(0, 200)}`,
-          byChannel: {} as ChannelMap,
+          byCampaign: {} as CampaignMap,
           total: 0,
         };
       }
@@ -57,21 +56,21 @@ export const getPlausibleRegistrations = createServerFn({ method: "POST" })
         results?: Array<{ metrics: number[]; dimensions: string[] }>;
       };
 
-      const byChannel: ChannelMap = {};
+      const byCampaign: CampaignMap = {};
       let total = 0;
       for (const row of json.results ?? []) {
-        const src = (row.dimensions[0] || "direct").toLowerCase().trim();
+        const key = (row.dimensions[0] || "(none)").toLowerCase().trim();
         const count = Number(row.metrics[0]) || 0;
-        byChannel[src] = (byChannel[src] || 0) + count;
+        byCampaign[key] = (byCampaign[key] || 0) + count;
         total += count;
       }
 
-      return { ok: true as const, byChannel, total, period: date_range };
+      return { ok: true as const, byCampaign, total, period: date_range };
     } catch (err) {
       return {
         ok: false as const,
         error: err instanceof Error ? err.message : "Unknown error",
-        byChannel: {} as ChannelMap,
+        byCampaign: {} as CampaignMap,
         total: 0,
       };
     }
