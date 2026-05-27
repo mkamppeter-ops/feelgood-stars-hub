@@ -1,14 +1,31 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Megaphone, Users, Euro, TrendingDown } from "lucide-react";
+import { Megaphone, Users, Euro, TrendingDown, Activity, AlertCircle } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
 import { formatEUR } from "@/lib/sales-mock";
 import { useT } from "@/lib/use-t";
+import { getPlausibleRegistrations } from "@/lib/plausible.functions";
+
+type Period = "7d" | "30d" | "month";
+
+// Map Plausible utm_source values → internal channel keys
+const UTM_TO_CHANNEL: Record<string, ChannelKey> = {
+  meta: "meta", facebook: "meta", instagram: "meta", fb: "meta", ig: "meta",
+  google: "google", googleads: "google", google_ads: "google", adwords: "google",
+  tiktok: "tiktok", tt: "tiktok",
+  paid_newsletter: "paid_newsletter", paidnewsletter: "paid_newsletter",
+  united_internet: "united_internet", unitedinternet: "united_internet", web_de: "united_internet", gmx: "united_internet",
+  direct: "direct", "(direct)": "direct", "": "direct",
+  whatsapp: "whatsapp", wa: "whatsapp",
+  newsletter: "newsletter", crm: "newsletter", email: "newsletter",
+};
 
 type ChannelGroup = "paid" | "crm";
 type ChannelKey =
