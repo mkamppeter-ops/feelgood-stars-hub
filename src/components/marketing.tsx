@@ -260,22 +260,6 @@ export function Marketing() {
         >
           {tt("Gesamt (alle Stores)", "Total (all stores)")}
         </button>
-  const paidCpr = current.regsPaid > 0 ? current.spendPaid / current.regsPaid : 0;
-  const crmCpr = current.regsCrm > 0 ? current.spendCrm / current.regsCrm : 0;
-
-  return (
-    <div className="space-y-6">
-      {/* Scope selector */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-medium">{tt("Bereich", "Scope")}:</span>
-        <button
-          onClick={() => setScope("all")}
-          className={`px-3 py-1.5 text-xs rounded-md border ${
-            scope === "all" ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
-          }`}
-        >
-          {tt("Gesamt (alle Stores)", "Total (all stores)")}
-        </button>
         {rows.map((r) => (
           <button
             key={r.pubId}
