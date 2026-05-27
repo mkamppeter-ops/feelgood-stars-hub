@@ -1,14 +1,31 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Megaphone, Users, Euro, TrendingDown } from "lucide-react";
+import { Megaphone, Users, Euro, TrendingDown, Activity, AlertCircle } from "lucide-react";
 import { PUBS } from "@/lib/pubs-mock";
 import { formatEUR } from "@/lib/sales-mock";
 import { useT } from "@/lib/use-t";
+import { getPlausibleRegistrations } from "@/lib/plausible.functions";
+
+type Period = "7d" | "30d" | "month";
+
+// Map Plausible utm_source values → internal channel keys
+const UTM_TO_CHANNEL: Record<string, ChannelKey> = {
+  meta: "meta", facebook: "meta", instagram: "meta", fb: "meta", ig: "meta",
+  google: "google", googleads: "google", google_ads: "google", adwords: "google",
+  tiktok: "tiktok", tt: "tiktok",
+  paid_newsletter: "paid_newsletter", paidnewsletter: "paid_newsletter",
+  united_internet: "united_internet", unitedinternet: "united_internet", web_de: "united_internet", gmx: "united_internet",
+  direct: "direct", "(direct)": "direct", "": "direct",
+  whatsapp: "whatsapp", wa: "whatsapp",
+  newsletter: "newsletter", crm: "newsletter", email: "newsletter",
+};
 
 type ChannelGroup = "paid" | "crm";
 type ChannelKey =
@@ -149,14 +166,89 @@ export function Marketing() {
   const tt = useT();
   const { rows, totals } = useMarketingData();
   const [scope, setScope] = useState<"all" | string>("all");
+  const [period, setPeriod] = useState<Period>("30d");
 
-  const current = scope === "all" ? totals : rows.find((r) => r.pubId === scope) ?? totals;
+  // Live Plausible data
+  const fetchPlausible = useServerFn(getPlausibleRegistrations);
+  const plausibleQuery = useQuery({
+    queryKey: ["plausible-registrations", period, scope],
+    queryFn: () =>
+      fetchPlausible({ data: { period, pubId: scope === "all" ? undefined : scope } }),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Override mock registrations with real Plausible data when available
+  const liveByChannel = useMemo<Partial<Record<ChannelKey, number>>>(() => {
+    if (!plausibleQuery.data?.ok) return {};
+    const out: Partial<Record<ChannelKey, number>> = {};
+    for (const [utm, count] of Object.entries(plausibleQuery.data.byChannel)) {
+      const key = UTM_TO_CHANNEL[utm.toLowerCase()];
+      if (key) out[key] = (out[key] || 0) + count;
+    }
+    return out;
+  }, [plausibleQuery.data]);
+
+  const baseCurrent = scope === "all" ? totals : rows.find((r) => r.pubId === scope) ?? totals;
+
+  // Merge: keep spend from mock, replace registrations with live data per channel
+  const current = useMemo<Row>(() => {
+    if (!plausibleQuery.data?.ok) return baseCurrent;
+    const byChannel = {} as Row["byChannel"];
+    let regsPaid = 0, regsCrm = 0;
+    for (const c of CHANNELS) {
+      const live = liveByChannel[c.key];
+      const registrations = typeof live === "number" ? live : baseCurrent.byChannel[c.key].registrations;
+      byChannel[c.key] = { spend: baseCurrent.byChannel[c.key].spend, registrations };
+      if (c.group === "paid") regsPaid += registrations;
+      else regsCrm += registrations;
+    }
+    return {
+      ...baseCurrent,
+      byChannel,
+      regsPaid, regsCrm, regsTotal: regsPaid + regsCrm,
+    };
+  }, [baseCurrent, liveByChannel, plausibleQuery.data]);
+
   const cpr = current.regsTotal > 0 ? current.spendTotal / current.regsTotal : 0;
   const paidCpr = current.regsPaid > 0 ? current.spendPaid / current.regsPaid : 0;
   const crmCpr = current.regsCrm > 0 ? current.spendCrm / current.regsCrm : 0;
 
   return (
     <div className="space-y-6">
+      {/* Plausible status */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs">
+          {plausibleQuery.isLoading ? (
+            <Badge variant="secondary" className="gap-1.5"><Activity className="h-3 w-3 animate-pulse" />{tt("Lade Plausible…", "Loading Plausible…")}</Badge>
+          ) : plausibleQuery.data?.ok ? (
+            <Badge variant="default" className="gap-1.5 bg-emerald-600 hover:bg-emerald-700">
+              <Activity className="h-3 w-3" />
+              {tt(`Live aus Plausible · ${plausibleQuery.data.total.toLocaleString()} Downloads`, `Live from Plausible · ${plausibleQuery.data.total.toLocaleString()} downloads`)}
+            </Badge>
+          ) : (
+            <Badge variant="destructive" className="gap-1.5" title={plausibleQuery.data?.error}>
+              <AlertCircle className="h-3 w-3" />
+              {tt("Plausible offline – Mockdaten", "Plausible offline – mock data")}
+            </Badge>
+          )}
+        </div>
+        {/* Period selector */}
+        <div className="flex items-center gap-1 rounded-md border p-0.5">
+          {(["7d", "30d", "month"] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={`px-3 py-1 text-xs rounded ${
+                period === p ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+              }`}
+            >
+              {p === "7d" ? tt("7 Tage", "7d") : p === "30d" ? tt("30 Tage", "30d") : tt("Monat", "Month")}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Scope selector */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-medium">{tt("Bereich", "Scope")}:</span>
